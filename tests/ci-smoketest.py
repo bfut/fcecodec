@@ -3,10 +3,7 @@
 """
   ci-smoketest.py - smoke-testing fcecodec module
 
-  NOTE: module should be built with setup.py
-
-  Show module help:
-  python tests.py help
+  NOTE: module should be built with setup.py build|install
 """
 
 import argparse
@@ -16,7 +13,39 @@ import platform
 import sys
 
 
+# tracemalloc -- BEGIN ---------------------------------------------------------
+# Source: https://docs.python.org/3/library/tracemalloc.html
+import linecache
+import os
+import tracemalloc
 
+def display_top(snapshot, key_type='lineno', limit=10):
+    snapshot = snapshot.filter_traces((
+        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+        tracemalloc.Filter(False, "<unknown>"),
+    ))
+    top_stats = snapshot.statistics(key_type)
+
+    print("Top %s lines" % limit)
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        print("#%s: %s:%s: %.1f KiB"
+              % (index, frame.filename, frame.lineno, stat.size / 1024),
+              "({:d})".format(stat.size))
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        if line:
+            print('    %s' % line)
+
+    other = top_stats[limit:]
+    if other:
+        size = sum(stat.size for stat in other)
+        print("%s other: %.1f KiB" % (len(other), size / 1024),
+              "({:d})".format(size))
+
+    total = sum(stat.size for stat in top_stats)
+    print("Total allocated size: %.1f KiB" % (total / 1024), "({:d})".format(total))
+
+# tracemalloc -- END -----------------------------------------------------------
 
 # Look for local build, if not installed
 try:
@@ -33,34 +62,81 @@ except ModuleNotFoundError:
 
 
 # -----------------------------
-filepath_fce_input = 'fce/Snowman_car.fce'
-filepath_fce_output = 'fce/ci-smoketest_1.fce'
+filepath_fce_input = pathlib.Path(pathlib.Path(__file__).parent / 'fce/Snowman_car.fce')
+filepath_fce3_output  = pathlib.Path(pathlib.Path(__file__).parent / 'fce/ci-smoketest.fce')
+filepath_fce4_output  = pathlib.Path(pathlib.Path(__file__).parent / 'fce/ci-smoketest.fce4')
+filepath_fce4m_output = pathlib.Path(pathlib.Path(__file__).parent / 'fce/ci-smoketest.fce4m')
 
-def load_mesh(mesh, path):
-    print("load_mesh(", mesh, ",", path, ")")
+def print_fce_info(path):
+    with open(path, "rb") as f:
+#        print("print_fce_info(", path, ")")
+        buf = f.read()
+        fcecodec.print_fce_info(buf)
+        assert(fcecodec.fce_valid( buf ) == 1)
+
+def LoadFce(mesh, path):
+#    print("LoadFce(", mesh, ",", path, ")")
     with open(path, "rb") as f:
         fce_buf = f.read()
     assert(fcecodec.fce_valid(fce_buf) == 1)
-    assert(mesh.decode_fce(fce_buf) == 1)
-    return mesh.valid()
+    mesh.decode(fce_buf)
+    assert(mesh.valid() == True)
+    return mesh
+
+def WriteFce(version, mesh, path):
+    with open(path, "wb") as f:
+        if version == 3:
+            buf = mesh.encode_fce3()
+        elif version == 4:
+            buf = mesh.encode_fce4()
+        else:
+            buf = mesh.encode_fce4m()
+        f.write(buf)
+
+
+# tracemalloc -- BEGIN ---------------------------------------------------------
+# tracemalloc.stop()
+first_size, first_peak = tracemalloc.get_traced_memory()
+
+if sys.version_info[0:2] >= (3, 9):
+    tracemalloc.reset_peak()
+
+tracemalloc.start()
+# tracemalloc -- END -----------------------------------------------------------
 
 # -----------------------------
-help(fcecodec)
+#help(fcecodec)
 
 # -----------------------------
-fcecodec.print_fce_info(filepath_fce_input)
-print()
+print_fce_info(filepath_fce_input)
+print(flush = True)
 
 mesh = fcecodec.Mesh()
-print(mesh, type(mesh))
-load_mesh(mesh, filepath_fce_input)
+print(mesh, type(mesh), flush = True)
+mesh = LoadFce(mesh, filepath_fce_input)
 mesh.info()
-print()
+print(flush = True)
 
-mesh.encode_fce3(filepath_fce_output)
+WriteFce(3, mesh, filepath_fce3_output)
+WriteFce(4, mesh, filepath_fce4_output)
+WriteFce("4m", mesh, filepath_fce4m_output)
 del mesh
-print()
+print(flush = True)
 
-fcecodec.print_fce_info(filepath_fce_output)
+print_fce_info(filepath_fce3_output)
 
-print("EOF ci-smoketest.py")
+print("EOF ci-smoketest.py", flush = True)
+
+
+# tracemalloc -- BEGIN ---------------------------------------------------------
+# tracemalloc.stop()
+second_size, second_peak = tracemalloc.get_traced_memory()
+# tracemalloc.start()
+
+snapshot = tracemalloc.take_snapshot()
+display_top(snapshot, limit=40)
+
+print("first_size={:d}".format(first_size), "first_peak={:d}".format(first_peak), flush = True)
+print("second_size={:d}".format(second_size), "second_peak={:d}".format(second_peak), flush = True)
+
+# tracemalloc -- END -----------------------------------------------------------
