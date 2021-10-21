@@ -3,15 +3,15 @@ This file describes installation, and usage of fcecodec as Python extension
 module.
 
 ## Installation
-Requires Python 3.7+
+Requires Python 3.7+ and the following dependencies
 
-       git clone https://github.com/bfut/fcecodec.git
-       cd fcecodec/python
-       python setup.py install
+        python -m pip install --upgrade wheel setuptools pybind11
 
-To uninstall, delete the module. Its path can be printed with
+Install `fcecodec`
 
-       python -c "import fcecodec; print(fcecodec)"
+        git clone https://github.com/bfut/fcecodec.git
+        cd fcecodec/python
+        python setup.py install
 
 ## Usage
 ```
@@ -23,7 +23,6 @@ NAME
 CLASSES
     pybind11_builtins.pybind11_object(builtins.object)
         Mesh
-        Part
     
     class Mesh(pybind11_builtins.pybind11_object)
      |  Method resolution order:
@@ -33,58 +32,75 @@ CLASSES
      |  
      |  Methods defined here:
      |  
-     |  __init__(...)
-     |      __init__(*args, **kwargs)
-     |      Overloaded function.
-     |      
-     |      1. __init__(self: fcecodec.Mesh) -> None
-     |      
-     |      2. __init__(self: fcecodec.Mesh, mesh_src: fcecodec.Mesh, part_idx: int) -> None
-     |      
-     |       Copy specified part from mesh_src to new mesh.
+     |  DelPartTriags(...)
+     |      DelPartTriags(self: fcecodec.Mesh, pid: int, idxs: List[int]) -> bool
      |  
-     |  center_part(...)
-     |      center_part(self: fcecodec.Mesh, idx: int) -> bool
-     |      
-     |      Center specified part pos to local centroid.
-     |  
-     |  copy_part(...)
-     |      copy_part(self: fcecodec.Mesh, mesh_src: fcecodec.Mesh, part_idx: int) -> int
-     |      
-     |      Copy specified part from mesh_src. Returns new part index.
-     |  
-     |  decode_fce(...)
-     |      decode_fce(self: fcecodec.Mesh, buf: str) -> bool
-     |  
-     |  del_part(...)
-     |      del_part(self: fcecodec.Mesh, idx: int) -> bool
-     |  
-     |  del_unrefd_verts(...)
-     |      del_unrefd_verts(self: fcecodec.Mesh) -> bool
+     |  DelUnrefdVerts(...)
+     |      DelUnrefdVerts(self: fcecodec.Mesh) -> bool
      |      
      |      Delete vertices that are not referenced by any triangle.
      |  
+     |  GetPartName(...)
+     |      GetPartName(self: fcecodec.Mesh, arg0: int) -> str
+     |  
+     |  GetPartPos(...)
+     |      GetPartPos(self: fcecodec.Mesh, arg0: int) -> List[float[3]]
+     |  
+     |  GetVertsMap_idx2order(...)
+     |      GetVertsMap_idx2order(self: fcecodec.Mesh) -> List[int]
+     |      
+     |      Maps from global vert indexes (contained in triangles) to global vertex order.
+     |  
+     |  GetVertsMap_idx2order_numpy(...)
+     |      GetVertsMap_idx2order_numpy(self: fcecodec.Mesh) -> buffer
+     |      
+     |      Maps from global vert indexes (contained in triangles) to global vertex order.
+     |  
+     |  InsertPart(...)
+     |      InsertPart(self: fcecodec.Mesh, mesh_src: fcecodec.Mesh, part_idx: int) -> int
+     |      
+     |      Insert (copy) specified part from mesh_src. Returns new part index.
+     |  
+     |  PNumTriags(...)
+     |      PNumTriags(self: fcecodec.Mesh, arg0: int) -> int
+     |  
+     |  PNumVerts(...)
+     |      PNumVerts(self: fcecodec.Mesh, arg0: int) -> int
+     |  
+     |  SetPartName(...)
+     |      SetPartName(self: fcecodec.Mesh, arg0: int, arg1: str) -> None
+     |  
+     |  SetPartPos(...)
+     |      SetPartPos(self: fcecodec.Mesh, arg0: int, arg1: List[float[3]]) -> None
+     |  
+     |  __init__(...)
+     |      __init__(self: fcecodec.Mesh) -> None
+     |  
+     |  center_part(...)
+     |      center_part(self: fcecodec.Mesh, pid: int) -> bool
+     |      
+     |      Center specified part pos to local centroid.
+     |  
+     |  decode(...)
+     |      decode(self: fcecodec.Mesh, arg0: str) -> None
+     |  
+     |  del_part(...)
+     |      del_part(self: fcecodec.Mesh, pid: int) -> bool
+     |  
      |  encode_fce3(...)
-     |      encode_fce3(self: fcecodec.Mesh, fcepath: str, center_parts: bool = True) -> bool
+     |      encode_fce3(self: fcecodec.Mesh, center_parts: bool = True) -> bytes
      |  
      |  encode_fce4(...)
-     |      encode_fce4(self: fcecodec.Mesh, fcepath: str, center_parts: bool = True) -> bool
+     |      encode_fce4(self: fcecodec.Mesh, center_parts: bool = True) -> bytes
+     |  
+     |  encode_fce4m(...)
+     |      encode_fce4m(self: fcecodec.Mesh, center_parts: bool = True) -> bytes
      |  
      |  export_obj(...)
-     |      export_obj(self: fcecodec.Mesh, objpath: str, mtlpath: str, texname: str, print_damage: int = 0, print_dummies: int = 0) -> bool
+     |      export_obj(self: fcecodec.Mesh, objpath: str, mtlpath: str, texname: str, print_damage: int = 0, print_dummies: int = 0) -> None
      |  
      |  get_colors(...)
      |      get_colors(self: fcecodec.Mesh) -> buffer
-     |  
-     |  get_dmgd_verts_norms(...)
-     |      get_dmgd_verts_norms(self: fcecodec.Mesh) -> buffer
-     |      
-     |      Damage model vertice normals. Returns (3*N, ) array for N vertices.
-     |  
-     |  get_dmgd_verts_pos(...)
-     |      get_dmgd_verts_pos(self: fcecodec.Mesh) -> buffer
-     |      
-     |      Damage model local vertice positions. Returns (3*N, ) array for N vertices.
      |  
      |  get_dummy_names(...)
      |      get_dummy_names(self: fcecodec.Mesh) -> List[str]
@@ -92,57 +108,18 @@ CLASSES
      |  get_dummy_pos(...)
      |      get_dummy_pos(self: fcecodec.Mesh) -> buffer
      |  
-     |  get_parts(...)
-     |      get_parts(self: fcecodec.Mesh) -> List[fcecodec.Part]
-     |  
-     |  get_verts_anim(...)
-     |      get_verts_anim(self: fcecodec.Mesh) -> buffer
-     |      
-     |      Vertice animation flag. Returns (N, ) array for N vertices.
-     |  
-     |  get_verts_map_idx2order(...)
-     |      get_verts_map_idx2order(self: fcecodec.Mesh) -> buffer
-     |      
-     |      Triangles contain global vert indexes. Via those, this vector maps to global vertex order.
-     |  
-     |  get_verts_norms(...)
-     |      get_verts_norms(self: fcecodec.Mesh) -> buffer
-     |      
-     |      Vertice normals. Returns (3*N, ) array for N vertices.
-     |  
-     |  get_verts_pos(...)
-     |      get_verts_pos(self: fcecodec.Mesh) -> buffer
-     |      
-     |      Local vertice positions. Returns (3*N, ) array for N vertices.
-     |  
      |  info(...)
      |      info(self: fcecodec.Mesh) -> None
-     |      
-     |      Print stats to console.
      |  
      |  merge_parts(...)
-     |      merge_parts(self: fcecodec.Mesh, idx1: int, idx2: int) -> int
+     |      merge_parts(self: fcecodec.Mesh, pid1: int, pid2: int) -> int
      |      
      |      Returns new part index.
      |  
      |  move_part(...)
-     |      move_part(self: fcecodec.Mesh, idx: int) -> int
+     |      move_part(self: fcecodec.Mesh, pid: int) -> int
      |      
      |      Move up specified part towards order 0. Returns new part index.
-     |  
-     |  num_parts(...)
-     |      num_parts(self: fcecodec.Mesh) -> int
-     |  
-     |  num_triags(...)
-     |      num_triags(self: fcecodec.Mesh) -> int
-     |  
-     |  num_verts(...)
-     |      num_verts(self: fcecodec.Mesh) -> int
-     |  
-     |  part_at(...)
-     |      part_at(self: fcecodec.Mesh, idx: int) -> fcecodec.Part
-     |      
-     |      DEPRECATED
      |  
      |  print_parts(...)
      |      print_parts(self: fcecodec.Mesh) -> None
@@ -166,69 +143,50 @@ CLASSES
      |      
      |      Expects shape (N*3, ) for N dummies
      |  
-     |  set_verts_anim(...)
-     |      set_verts_anim(self: fcecodec.Mesh, data: numpy.ndarray[numpy.int32]) -> None
-     |      
-     |      Expects (N, ) array where N = Part.num_verts()
-     |  
      |  valid(...)
      |      valid(self: fcecodec.Mesh) -> bool
      |  
      |  ----------------------------------------------------------------------
-     |  Static methods inherited from pybind11_builtins.pybind11_object:
+     |  Readonly properties defined here:
      |  
-     |  __new__(*args, **kwargs) from pybind11_builtins.pybind11_type
-     |      Create and return a new object.  See help(type) for accurate signature.
-    
-    class Part(pybind11_builtins.pybind11_object)
-     |  Method resolution order:
-     |      Part
-     |      pybind11_builtins.pybind11_object
-     |      builtins.object
+     |  num_parts
      |  
-     |  Methods defined here:
+     |  num_triags
      |  
-     |  __init__(...)
-     |      __init__(self: fcecodec.Part) -> None
+     |  num_verts
      |  
-     |  get_name(...)
-     |      get_name(self: fcecodec.Part) -> str
+     |  ----------------------------------------------------------------------
+     |  Data descriptors defined here:
      |  
-     |  get_pos(...)
-     |      get_pos(self: fcecodec.Part) -> buffer
+     |  DamgdVertsNorms
+     |      Returns (N*3, ) array for N vertices.
      |  
-     |  get_triags_flags(...)
-     |      get_triags_flags(self: fcecodec.Part) -> buffer
+     |  DamgdVertsNorms_numpy
+     |      Returns (N*3, ) numpy array for N vertices.
      |  
-     |  get_triags_texpages(...)
-     |      get_triags_texpages(self: fcecodec.Part) -> buffer
+     |  DamgdVertsPos
+     |      Local vertice positions. Returns (N*3, ) array for N vertices.
      |  
-     |  get_triags_vidx(...)
-     |      get_triags_vidx(self: fcecodec.Part) -> buffer
-     |      
-     |      Returns (N, 3) array of global vert indexes for N triangles.
+     |  DamgdVertsPos_numpy
+     |      Local vertice positions. Returns (N*3, ) numpy array for N vertices.
      |  
-     |  num_triags(...)
-     |      num_triags(self: fcecodec.Part) -> int
+     |  VertsAnimation
+     |      Returns (N, ) array for N vertices.
      |  
-     |  num_verts(...)
-     |      num_verts(self: fcecodec.Part) -> int
+     |  VertsAnimation_numpy
+     |      Returns (N, ) numpy array for N vertices.
      |  
-     |  set_name(...)
-     |      set_name(self: fcecodec.Part, name: str) -> None
+     |  VertsNorms
+     |      Returns (N*3, ) array for N vertices.
      |  
-     |  set_pos(...)
-     |      set_pos(self: fcecodec.Part, position: numpy.ndarray[numpy.float32]) -> None
+     |  VertsNorms_numpy
+     |      Returns (N*3, ) numpy array for N vertices.
      |  
-     |  set_triags_flags(...)
-     |      set_triags_flags(self: fcecodec.Part, flags: numpy.ndarray[numpy.int32]) -> None
-     |      
-     |      Expects (N, ) array where N = Part.num_triags()
+     |  VertsPos
+     |      Local vertice positions. Returns (N*3, ) array for N vertices.
      |  
-     |  set_triags_texpages(...)
-     |      set_triags_texpages(self: fcecodec.Part, texpages: numpy.ndarray[numpy.int32]) -> None
-     |      
-     |      Expects (N, ) array where N = Part.num_triags()
+     |  VertsPos_numpy
+     |      Local vertice positions. Returns (N*3, ) numpy array for N vertices.
      |  
      |  ----------------------------------------------------------------------
      |  Static methods inherited from pybind11_builtins.pybind11_object:
@@ -241,5 +199,5 @@ FUNCTIONS
         fce_valid(buf: str) -> int
     
     print_fce_info(...) method of builtins.PyCapsule instance
-        print_fce_info(fcepath: str) -> None
+        print_fce_info(buf: str) -> None
 ```
