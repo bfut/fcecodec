@@ -22,6 +22,8 @@
 #define FCELIB_MISC_H
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef __cplusplus
 namespace fcelib {
@@ -69,7 +71,13 @@ int FCELIB_MISC_CompareFloats(const void *a, const void *b)
 {
   const float arg1 = *(const float*)a;
   const float arg2 = *(const float*)b;
+  return (arg1 > arg2) - (arg1 < arg2);
+}
 
+int FCELIB_MISC_CompareInts(const void *a, const void *b)
+{
+  const int arg1 = *(const int*)a;
+  const int arg2 = *(const int*)b;
   return (arg1 > arg2) - (arg1 < arg2);
 }
 
@@ -79,6 +87,27 @@ int FCELIB_MISC_Min(const int a, const int b)
     return a;
   else
     return b;
+}
+
+/* Returns -10 on failure. */
+int FCELIB_MISC_ArrMax(const int *arr, const int arr_len)
+{
+  int retv = -10;
+  for (;;)
+  {
+    int *sortedarr = (int *)malloc((size_t)arr_len * sizeof(*sortedarr));
+    if (!sortedarr)
+    {
+      fprintf(stderr, "Warning: FCELIB_MISC_ArrMax: Cannot allocate memory, return default -10");
+      break;
+    }
+    memcpy(sortedarr, arr, (size_t)arr_len * sizeof(*sortedarr));
+    qsort(sortedarr, (size_t)arr_len, sizeof(*sortedarr), FCELIB_MISC_CompareInts);
+    retv = sortedarr[arr_len - 1];
+    free(sortedarr);
+    break;
+  }
+  return retv;
 }
 
 #ifdef __cplusplus

@@ -73,7 +73,8 @@ typedef struct {
   int    *PTriangles;      /* ordered list of global triag idxs, -1 for unused */
 } FcelibPart;
 
-typedef struct {
+//typedef struct {
+typedef struct FcelibHeader {
   int      NumTriangles;
   int      NumVertices;
 
@@ -92,8 +93,10 @@ typedef struct {
   tColor4  DriColors[16];  /* FCE4 only */
 } FcelibHeader;
 
-typedef struct {
-  int              freed = 1;      /* has instance been destroyed before? */
+// Wnon-c-typedef-for-linkage, http://wg21.link/p1766r1
+// potential issue with C++03 https://github.com/tinyobjloader/tinyobjloader/issues/259#issuecomment-590675708
+typedef struct FcelibMesh {
+  int              freed = 1;          /* has instance been destroyed before? */
   
   FcelibHeader     hdr;
 
@@ -115,7 +118,8 @@ void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
   
   if (mesh->freed != 1)
     fprintf(stderr, "Warning: InitMesh: mesh is not free'd (requires FCELIB_FreeMesh)\n");
-
+  mesh->freed = 1;
+  
   mesh->hdr.NumTriangles = 0;
   mesh->hdr.NumVertices = 0;
 
@@ -129,7 +133,7 @@ void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
     mesh->hdr.Dummies[i].y = 0.0f;
     mesh->hdr.Dummies[i].z = 0.0f;
   }
-  memset(mesh->hdr.DummyNames, '\0', (size_t)sizeof(mesh->hdr.DummyNames));
+  memset(mesh->hdr.DummyNames, '\0', sizeof(mesh->hdr.DummyNames));
 
   mesh->hdr.NumColors = 0;
   mesh->hdr.NumSecColors = 0;
@@ -164,66 +168,67 @@ void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
   mesh->vertices = NULL;
 }
 
-
 void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
 {
   int i;
-  
+  FcelibPart *part;
+
   if (mesh->freed == 1)
     return;
-  
-  if (mesh->vertices_len > 0)
-  {
-    for (i = mesh->vertices_len - 1; i >= 0; --i)
-    {
-      if (mesh->vertices[i])
-        free(mesh->vertices[i]);
-    }
-    if (mesh->vertices)
-    {
-      free(mesh->vertices);
-      mesh->vertices = NULL;
-    }
-  }
-  if (mesh->triangles_len > 0)
-  {
-    for (i = mesh->triangles_len - 1; i >= 0; --i)
-    {
-      if (mesh->triangles[i])
-        free(mesh->triangles[i]);
-    }
-    if (mesh->triangles)
-    {
-      free(mesh->triangles);
-      mesh->triangles = NULL;
-    }
-  }
-  if (mesh->parts_len > 0)
-  {
-    for (i = mesh->parts_len - 1; i >= 0; --i)
-    {
-      if (mesh->parts[i])
-      {
-        if (mesh->parts[i]->PTriangles)
-          free(mesh->parts[i]->PTriangles);
-        if (mesh->parts[i]->PVertices)
-          free(mesh->parts[i]->PVertices);
-        free(mesh->parts[i]);
-      }
-    }
-    if (mesh->parts)
-    {
-      free(mesh->parts);
-      mesh->parts = NULL;
-    }
-  }
 
-  mesh->hdr.NumTriangles = 0;
-  mesh->hdr.NumVertices = 0;
+  for (i = mesh->parts_len - 1; i >= 0 ; --i)
+  {
+    if (mesh->hdr.Parts[i] < 0)
+      continue;
+    part = mesh->parts[ mesh->hdr.Parts[i] ];
 
-  mesh->hdr.NumParts = 0;
+    for (int n = part->pvertices_len - 1, k = part->PNumVertices - 1; n >= 0 && k >= 0; --n)
+    {
+      if (part->PVertices[n] < 0)
+        continue;
+      free(mesh->vertices[ part->PVertices[n] ]);
+      --k;
+    }  /* for n, k */
+    free(part->PVertices);
+    
+    for (int n = part->ptriangles_len - 1, k = part->PNumTriangles - 1; n >= 0 && k >= 0; --n)
+    {
+      if (part->PTriangles[n] < 0)
+        continue;
+      free(mesh->triangles[ part->PTriangles[n] ]);
+      --k;
+    }  /* for n, k */
+    free(part->PTriangles);
+  }  /* for i */
+
+  for (i = mesh->parts_len - 1; i >= 0 ; --i)
+  {
+    if (mesh->hdr.Parts[i] < 0)
+      continue;
+    part = mesh->parts[ mesh->hdr.Parts[i] ];
+    free(part);
+  }  /* for i */
+
+  if (mesh->triangles)
+    free(mesh->triangles);
+  mesh->triangles = NULL;
+  if (mesh->vertices)
+    free(mesh->vertices);
+  mesh->vertices = NULL;
+  if (mesh->parts)
+    free(mesh->parts);
+  mesh->parts = NULL;
   if (mesh->hdr.Parts)
     free(mesh->hdr.Parts);
+  mesh->hdr.Parts = NULL;
+
+  mesh->parts_len = 0;
+  mesh->triangles_len = 0;
+  mesh->vertices_len = 0;
+
+  mesh->hdr.NumParts = 0;
+  mesh->hdr.NumTriangles = 0;
+  mesh->hdr.NumVertices = 0;
 
   mesh->hdr.NumDummies = 0;
   for (i = 0; i < 16; ++i)
@@ -259,13 +264,8 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
     mesh->hdr.DriColors[i].transparency = '\0';
   }
 
-  mesh->parts_len = 0;
-  mesh->triangles_len = 0;
-  mesh->vertices_len = 0;
-  
   mesh->freed = 1;
 }
-
 
 /* Returns: 1 = valid mesh, -1 = empty valid mesh, 0 = invalid mesh */
 int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
@@ -273,65 +273,151 @@ int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
   int i;
   int j;
   int count_parts;
-
-  if ((!mesh.parts) || (!mesh.triangles) || (!mesh.vertices))
+  int sum_triags = 0;
+  int sum_verts = 0;
+  FcelibPart *part = NULL;
+  
+  if (mesh.parts_len == 0     && !mesh.parts     && !mesh.hdr.Parts &&
+      mesh.triangles_len == 0 && !mesh.triangles &&
+      mesh.vertices_len == 0  && !mesh.vertices)
     return -1;
 
+  if (mesh.parts_len > 0 && !mesh.parts)
+  {
+    fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.parts)\n");
+    return 0;
+  }
+  if (mesh.parts_len > 0 && !mesh.hdr.Parts)
+  {
+    fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.hdr.Parts)\n");
+    return 0;
+  }
+  if (mesh.triangles_len > 0 && !mesh.triangles)
+  {
+    fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.triangles)\n");
+    return 0;
+  }
+  if (mesh.vertices_len > 0 && !mesh.vertices)
+  {
+    fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.vertices)\n");
+    return 0;
+  }
+  
   for (i = 0, count_parts = 0; i < mesh.parts_len; ++i)
   {
     if (mesh.hdr.Parts[i] >= mesh.parts_len)
     {
-      fprintf(stderr, "inconsistent list (mesh.hdr.Parts[i])\n");
+      fprintf(stderr, "ValidateMesh: inconsistent list (mesh.hdr.Parts[i])\n");
       return 0;
     }
-
+    
     if (mesh.hdr.Parts[i] < 0)
       continue;
-
     ++count_parts;
 
-    if (!mesh.parts[mesh.hdr.Parts[i]])
+    part = mesh.parts[mesh.hdr.Parts[i]];
+    if (!part)
     {
-      fprintf(stderr, "unexpected NULL pointer (mesh.parts[i]) %d %d\n", i, mesh.hdr.Parts[i]);
+      fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.parts[mesh.hdr.Parts[i]]) %d %d\n", i, mesh.hdr.Parts[i]);
       return 0;
     }
 
-    if (!mesh.parts[mesh.hdr.Parts[i]]->PTriangles)
-    {
-      fprintf(stderr, "unexpected NULL pointer (mesh.parts[i]->PTriangles)\n");
-      return 0;
-    }
-    for (j = 0; j < mesh.parts[mesh.hdr.Parts[i]]->ptriangles_len; ++j)
-    {
-      if ((mesh.parts[mesh.hdr.Parts[i]]->PTriangles[j] != -1) &&
-          (!mesh.triangles[mesh.parts[mesh.hdr.Parts[i]]->PTriangles[j]]))
-      {
-        fprintf(stderr, "unexpected NULL pointer (mesh.triangles[mesh.parts[mesh.hdr.Parts[i]]->PTriangles[j]])\n");
-        return 0;
-      }
-    }
-
-    if (!mesh.parts[mesh.hdr.Parts[i]]->PNumVertices)
-    {
-      fprintf(stderr, "unexpected NULL pointer (mesh.parts[i]->PNumVertices)\n");
-      return 0;
-    }
-    for (j = 0; j < mesh.parts[mesh.hdr.Parts[i]]->pvertices_len; ++j)
-    {
-      if ((mesh.parts[mesh.hdr.Parts[i]]->PVertices[j] == -1) &&
-          (!mesh.vertices[mesh.parts[mesh.hdr.Parts[i]]->PVertices[j]]))
-      {
-        fprintf(stderr, "unexpected NULL pointer (mesh.vertices[mesh.parts[mesh.hdr.Parts[i]]->PVertices[j]])\n");
-        return 0;
-      }
-    }
+    sum_triags += part->PNumTriangles;
+    sum_verts += part->PNumVertices;
   }  /* for i */
 
   if (count_parts != mesh.hdr.NumParts)
   {
-    fprintf(stderr, "inconsistent list (mesh.hdr.NumParts)\n");
+    fprintf(stderr, "ValidateMesh: inconsistent list (mesh.hdr.NumParts)\n");
     return 0;
   }
+  if (sum_triags != mesh.hdr.NumTriangles)
+  {
+    fprintf(stderr, "ValidateMesh: inconsistent list (%d != mesh.hdr.NumTriangles = %d)\n", sum_triags, mesh.hdr.NumTriangles);
+    return 0;
+  }
+  if (sum_verts != mesh.hdr.NumVertices)
+  {
+    fprintf(stderr, "ValidateMesh: inconsistent list (mesh.hdr.NumVertices)\n");
+    return 0;
+  }
+
+  for (i = 0; i < mesh.parts_len; ++i)
+  {
+    if (mesh.hdr.Parts[i] < 0)
+      continue;
+    part = mesh.parts[mesh.hdr.Parts[i]];
+    /* if (!part) - see above */
+
+    if (!part->PTriangles)
+    {
+      fprintf(stderr, "ValidateMesh: unexpected NULL pointer (part->PTriangles) %d\n", i);
+      return 0;
+    }
+    for (j = 0, sum_triags = 0; j < part->ptriangles_len; ++j)
+    {
+      if (sum_triags > part->PNumTriangles)
+      {
+        fprintf(stderr, "ValidateMesh: invalid count (part->PNumTriangles) i%d j%d %d \n", i, j, sum_triags);
+        return 0;
+      }
+      if (part->PTriangles[j] >= mesh.triangles_len)
+      {
+        fprintf(stderr, "ValidateMesh: inconsistent list (part->PTriangles[j]) %d %d\n", i, j);
+        return 0;
+      }
+      if (part->PTriangles[j] < 0)
+        continue;
+
+      if (!mesh.triangles[part->PTriangles[j]])
+      {
+        fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.triangles[part->PTriangles[j]]) %d %d\n", i, j);
+        return 0;
+      }
+      
+      ++sum_triags;
+    }  /* for j */
+    if (sum_triags != part->PNumTriangles)
+    {
+      fprintf(stderr, "ValidateMesh: invalid count (part->PNumTriangles) i%d %d %d\n", i, sum_triags, part->PNumTriangles);
+      return 0;
+    }
+
+    if (!part->PVertices)
+    {
+      fprintf(stderr, "ValidateMesh: unexpected NULL pointer (part->PVertices) %d\n", i);
+      return 0;
+    }
+    for (j = 0, sum_verts = 0; j < part->pvertices_len; ++j)
+    {
+      if (sum_verts > part->PNumVertices)
+      {
+        fprintf(stderr, "ValidateMesh: invalid count (part->PNumVertices) i%d j%d %d\n", i, j, sum_verts);
+        return 0;
+      }
+      if (part->PVertices[j] >= mesh.vertices_len)
+      {
+        fprintf(stderr, "ValidateMesh: inconsistent list (part->PVertices[j]) %d %d\n", i, j);
+        return 0;
+      }
+      if (part->PVertices[j] < 0)
+        continue;
+      
+      if (!mesh.vertices[part->PVertices[j]])
+      {
+        fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.vertices[part->PVertices[j]]) %d %d\n", i, j);
+        return 0;
+      }
+      
+      ++sum_verts;
+    }  /* for j */
+    if (sum_verts != part->PNumVertices)
+    {
+      fprintf(stderr, "ValidateMesh: invalid count (part->PNumTriangles) i%d %d %d\n", i, sum_verts, part->PNumVertices);
+      return 0;
+    }
+  
+  }  /* for i */
 
   return 1;
 }
@@ -378,17 +464,17 @@ int FCELIB_TYPES_GetInternalPartIdxByOrder(FcelibMesh *mesh, const int idx)
 int FCELIB_TYPES_GetOrderByInternalPartIdx(FcelibMesh *mesh, const int idx)
 {
   int order = -1;
-  int i = 0;
+  int i;
 
   for (;;)
   {
     if ((idx < 0) || (idx >= mesh->parts_len))
     {
-      fprintf(stderr, "GetOrderByInternalPartIdx: part %d not found (len=%d)\n", idx, mesh->parts_len);
+      fprintf(stderr, "GetOrderByInternalPartIdx: internal part %d not found (len=%d)\n", idx, mesh->parts_len);
       break;
     }
 
-    for (order = -1; i < mesh->parts_len; ++i)
+    for (i = 0, order = -1; i < mesh->parts_len; ++i)
     {
       if (mesh->hdr.Parts[i] > -1)
         ++order;
@@ -398,7 +484,7 @@ int FCELIB_TYPES_GetOrderByInternalPartIdx(FcelibMesh *mesh, const int idx)
 
     if (i == mesh->parts_len)
     {
-      fprintf(stderr, "GetOrderByInternalPartIdx: part %d not found\n", idx);
+      fprintf(stderr, "GetOrderByInternalPartIdx: internal part %d not found\n", idx);
       order = -1;
       break;
     }
@@ -417,7 +503,7 @@ int FCELIB_TYPES_AddParts(FcelibMesh *mesh, const int num_required)
   if (new_len < mesh->parts_len + num_required)
     new_len = 2 * (mesh->parts_len + num_required);
 
-  ptr = realloc(mesh->hdr.Parts, (size_t)new_len * sizeof(int));
+  ptr = realloc(mesh->hdr.Parts, (size_t)new_len * sizeof(*mesh->hdr.Parts));
   if (!ptr)
   {
     fprintf(stderr, "FCELIB_TYPES_AddParts: Cannot reallocate memory (hdr.Parts)\n");
@@ -425,16 +511,16 @@ int FCELIB_TYPES_AddParts(FcelibMesh *mesh, const int num_required)
   }
   mesh->hdr.Parts = (int *)ptr;
   ptr = NULL;
-  memset(mesh->hdr.Parts + mesh->parts_len, -1, (size_t)(new_len - mesh->parts_len) * sizeof(int));
+  memset(mesh->hdr.Parts + mesh->parts_len, -1, (size_t)(new_len - mesh->parts_len) * sizeof(*mesh->hdr.Parts));
 
-  ptr = realloc(mesh->parts, (size_t)new_len * sizeof(FcelibPart *));
+  ptr = realloc(mesh->parts, (size_t)new_len * sizeof(*mesh->parts));
   if (!ptr)
   {
     fprintf(stderr, "FCELIB_TYPES_AddParts: Cannot reallocate memory (parts)\n");
     return 0;
   }
   mesh->parts = (FcelibPart **)ptr;
-  memset(mesh->parts + mesh->parts_len, 0, (size_t)(new_len - mesh->parts_len) * sizeof(FcelibPart *));
+  memset(mesh->parts + mesh->parts_len, 0, (size_t)(new_len - mesh->parts_len) * sizeof(*mesh->parts));
 
   mesh->parts_len = new_len;
   return 1;
@@ -449,14 +535,14 @@ int FCELIB_TYPES_AddTriangles(FcelibMesh *mesh, const int num_required)
   if (new_len < mesh->triangles_len + num_required)
     new_len = 2 * (mesh->triangles_len + num_required);
 
-  ptr = realloc(mesh->triangles, (size_t)new_len * sizeof(FcelibTriangle *));
+  ptr = realloc(mesh->triangles, (size_t)new_len * sizeof(*mesh->triangles));
   if (!ptr)
   {
     fprintf(stderr, "Cannot reallocate memory\n");
     return 0;
   }
   mesh->triangles = (FcelibTriangle **)ptr;
-  memset(mesh->triangles + mesh->triangles_len, 0, (size_t)(new_len - mesh->triangles_len) * sizeof(FcelibTriangle *));
+  memset(mesh->triangles + mesh->triangles_len, 0, (size_t)(new_len - mesh->triangles_len) * sizeof(*mesh->triangles));
 
   mesh->triangles_len = new_len;
   return 1;
@@ -471,14 +557,14 @@ int FCELIB_TYPES_AddVertices(FcelibMesh *mesh, const int num_required)
   if (new_len < mesh->vertices_len + num_required)
     new_len = 2 * (mesh->vertices_len + num_required);
 
-  ptr = realloc(mesh->vertices, (size_t)new_len * sizeof(FcelibVertex *));
+  ptr = realloc(mesh->vertices, (size_t)new_len * sizeof(*mesh->vertices));
   if (!ptr)
   {
     fprintf(stderr, "Cannot reallocate memory\n");
     return 0;
   }
   mesh->vertices = (FcelibVertex **)ptr;
-  memset(mesh->vertices + mesh->vertices_len, 0, (size_t)(new_len - mesh->vertices_len) * sizeof(FcelibVertex *));
+  memset(mesh->vertices + mesh->vertices_len, 0, (size_t)(new_len - mesh->vertices_len) * sizeof(*mesh->vertices));
 
   mesh->vertices_len = new_len;
   return 1;
@@ -491,7 +577,7 @@ int FCELIB_TYPES_AddTriangles2(FcelibMesh *mesh, FcelibPart *part, const int num
   const int new_len_p = part->ptriangles_len + num_required;
   const int new_len = mesh->triangles_len + num_required;
 
-  ptr = realloc(part->PTriangles, (size_t)new_len_p * sizeof(int));
+  ptr = realloc(part->PTriangles, (size_t)new_len_p * sizeof(*part->PTriangles));
   if (!ptr)
   {
     fprintf(stderr, "AddTriangles2: Cannot reallocate memory (part->PTriangles)\n");
@@ -499,16 +585,16 @@ int FCELIB_TYPES_AddTriangles2(FcelibMesh *mesh, FcelibPart *part, const int num
   }
   part->PTriangles = (int *)ptr;
   ptr = NULL;
-  memset(part->PTriangles, -1, (size_t)new_len_p * sizeof(int));
+  memset(part->PTriangles, -1, (size_t)new_len_p * sizeof(*part->PTriangles));
   
-  ptr = realloc(mesh->triangles, (size_t)new_len * sizeof(FcelibTriangle *));
+  ptr = realloc(mesh->triangles, (size_t)new_len * sizeof(*mesh->triangles));
   if (!ptr)
   {
     fprintf(stderr, "AddTriangles2: Cannot reallocate memory (triangles)\n");
     return 0;
   }
   mesh->triangles = (FcelibTriangle **)ptr;
-  memset(mesh->triangles + mesh->triangles_len, 0, (size_t)(new_len - mesh->triangles_len) * sizeof(FcelibTriangle *));
+  memset(mesh->triangles + mesh->triangles_len, 0, (size_t)(new_len - mesh->triangles_len) * sizeof(*mesh->triangles));
 
   part->ptriangles_len = new_len_p;
   mesh->triangles_len = new_len;
@@ -522,7 +608,7 @@ int FCELIB_TYPES_AddVertices2(FcelibMesh *mesh, FcelibPart *part, const int num_
   const int new_len_p = part->pvertices_len + num_required;
   const int new_len = mesh->vertices_len + num_required;
     
-  ptr = realloc(part->PVertices, (size_t)new_len_p * sizeof(int));
+  ptr = realloc(part->PVertices, (size_t)new_len_p * sizeof(*part->PVertices));
   if (!ptr)
   {
     fprintf(stderr, "AddVertices2: Cannot reallocate memory (part->PVertices)\n");
@@ -530,16 +616,16 @@ int FCELIB_TYPES_AddVertices2(FcelibMesh *mesh, FcelibPart *part, const int num_
   }
   part->PVertices = (int *)ptr;
   ptr = NULL;
-  memset(part->PVertices, -1, (size_t)new_len_p * sizeof(int));
+  memset(part->PVertices, -1, (size_t)new_len_p * sizeof(*part->PVertices));
 
-  ptr = realloc(mesh->vertices, (size_t)new_len * sizeof(FcelibVertex *));
+  ptr = realloc(mesh->vertices, (size_t)new_len * sizeof(*mesh->vertices));
   if (!ptr)
   {
     fprintf(stderr, "AddVertices2: Cannot reallocate memory (vertices)\n");
     return 0;
   }
   mesh->vertices = (FcelibVertex **)ptr;
-  memset(mesh->vertices + mesh->vertices_len, 0, (size_t)(new_len - mesh->vertices_len) * sizeof(FcelibVertex *));
+  memset(mesh->vertices + mesh->vertices_len, 0, (size_t)(new_len - mesh->vertices_len) * sizeof(*mesh->vertices));
 
   part->pvertices_len = new_len_p;
   mesh->vertices_len = new_len;
@@ -550,26 +636,26 @@ int FCELIB_TYPES_AddVertices2(FcelibMesh *mesh, FcelibPart *part, const int num_
 void FCELIB_TYPES_CpyTriag(FcelibTriangle *dest, FcelibTriangle *src)
 {
   dest->tex_page = src->tex_page;
-  memcpy(dest->vidx, src->vidx, (size_t)3 * (size_t)sizeof(int));
+  memcpy(dest->vidx, src->vidx, (size_t)3 * sizeof(int));
   dest->flag = src->flag;
-  memcpy(dest->U, src->U, (size_t)3 * (size_t)sizeof(float));
-  memcpy(dest->V, src->V, (size_t)3 * (size_t)sizeof(float));
+  memcpy(dest->U, src->U, (size_t)3 * sizeof(float));
+  memcpy(dest->V, src->V, (size_t)3 * sizeof(float));
 }
 
 void FCELIB_TYPES_CpyVert(FcelibVertex *dest, FcelibVertex *src)
 {
-  memcpy(&dest->VertPos.x, &src->VertPos.x, (size_t)sizeof(float));
-  memcpy(&dest->VertPos.y, &src->VertPos.y, (size_t)sizeof(float));
-  memcpy(&dest->VertPos.z, &src->VertPos.z, (size_t)sizeof(float));
-  memcpy(&dest->NormPos.x, &src->NormPos.x, (size_t)sizeof(float));
-  memcpy(&dest->NormPos.y, &src->NormPos.y, (size_t)sizeof(float));
-  memcpy(&dest->NormPos.z, &src->NormPos.z, (size_t)sizeof(float));
-  memcpy(&dest->DamgdVertPos.x, &src->DamgdVertPos.x, (size_t)sizeof(float));
-  memcpy(&dest->DamgdVertPos.y, &src->DamgdVertPos.y, (size_t)sizeof(float));
-  memcpy(&dest->DamgdVertPos.z, &src->DamgdVertPos.z, (size_t)sizeof(float));
-  memcpy(&dest->DamgdNormPos.x, &src->DamgdNormPos.x, (size_t)sizeof(float));
-  memcpy(&dest->DamgdNormPos.y, &src->DamgdNormPos.y, (size_t)sizeof(float));
-  memcpy(&dest->DamgdNormPos.z, &src->DamgdNormPos.z, (size_t)sizeof(float));
+  memcpy(&dest->VertPos.x, &src->VertPos.x, sizeof(float));
+  memcpy(&dest->VertPos.y, &src->VertPos.y, sizeof(float));
+  memcpy(&dest->VertPos.z, &src->VertPos.z, sizeof(float));
+  memcpy(&dest->NormPos.x, &src->NormPos.x, sizeof(float));
+  memcpy(&dest->NormPos.y, &src->NormPos.y, sizeof(float));
+  memcpy(&dest->NormPos.z, &src->NormPos.z, sizeof(float));
+  memcpy(&dest->DamgdVertPos.x, &src->DamgdVertPos.x, sizeof(float));
+  memcpy(&dest->DamgdVertPos.y, &src->DamgdVertPos.y, sizeof(float));
+  memcpy(&dest->DamgdVertPos.z, &src->DamgdVertPos.z, sizeof(float));
+  memcpy(&dest->DamgdNormPos.x, &src->DamgdNormPos.x, sizeof(float));
+  memcpy(&dest->DamgdNormPos.y, &src->DamgdNormPos.y, sizeof(float));
+  memcpy(&dest->DamgdNormPos.z, &src->DamgdNormPos.z, sizeof(float));
   dest->Animation = src->Animation;
 }
 
@@ -614,9 +700,9 @@ int FCELIB_TYPES_GetPartLocalCentroid(FcelibMesh *mesh, FcelibPart *part, tVecto
         continue;
 
       vert = mesh->vertices[ part->PVertices[i] ];
-      x_arr[i] = vert->VertPos.x + part->PartPos.x;
-      y_arr[i] = vert->VertPos.y + part->PartPos.y;
-      z_arr[i] = vert->VertPos.z + part->PartPos.z;
+      x_arr[count_verts] = vert->VertPos.x + part->PartPos.x;
+      y_arr[count_verts] = vert->VertPos.y + part->PartPos.y;
+      z_arr[count_verts] = vert->VertPos.z + part->PartPos.z;
 
       ++count_verts;
     }
@@ -662,9 +748,9 @@ void FCELIB_TYPES_ResetPartPos(FcelibMesh *mesh, FcelibPart *part, tVector new_P
     vert->DamgdVertPos.z += part->PartPos.z - new_PartPos.z;
     ++count_verts;
   }
-  memcpy(&part->PartPos.x, &new_PartPos.x, (size_t)sizeof(float));
-  memcpy(&part->PartPos.y, &new_PartPos.y, (size_t)sizeof(float));
-  memcpy(&part->PartPos.z, &new_PartPos.z, (size_t)sizeof(float));
+  memcpy(&part->PartPos.x, &new_PartPos.x, sizeof(float));
+  memcpy(&part->PartPos.y, &new_PartPos.y, sizeof(float));
+  memcpy(&part->PartPos.z, &new_PartPos.z, sizeof(float));
 }
 
 #if 0
@@ -761,7 +847,10 @@ void FCELIB_TYPES_PrintMeshParts(FcelibMesh mesh)
   int j;
 
   if (!FCELIB_TYPES_ValidateMesh(mesh))
+  {
+    fprintf(stderr, "PrintMeshParts: Cannot print\n");
     return;
+  }
 
   printf("NumParts = %d, parts_len = %d, [\n",
          mesh.hdr.NumParts, mesh.parts_len);
@@ -779,7 +868,10 @@ void FCELIB_TYPES_PrintMeshTriangles(FcelibMesh mesh)
   int j;
 
   if (!FCELIB_TYPES_ValidateMesh(mesh))
+  {
+    fprintf(stderr, "PrintMeshTriangles: Cannot print\n");
     return;
+  }
 
   for (i = 0; i < mesh.parts_len; ++i)
   {
@@ -804,7 +896,10 @@ void FCELIB_TYPES_PrintMeshVertices(FcelibMesh mesh)
   int j;
 
   if (!FCELIB_TYPES_ValidateMesh(mesh))
+  {
+    fprintf(stderr, "PrintMeshVertices: Cannot print\n");
     return;
+  }
 
   for (i = 0; i < mesh.parts_len; ++i)
   {

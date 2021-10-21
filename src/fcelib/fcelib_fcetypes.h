@@ -1362,7 +1362,7 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const void *header, const int infilesize)
 
 /* print info --------------------------------------------------------------- */
 
-void FCELIB_FCETYPES_PrintHeaderFce4(const int fce_size, void *header)
+void FCELIB_FCETYPES_PrintHeaderFce4(const int fce_size, const void *header)
 {
   int i;
   FceHeader4 hdr = FCELIB_FCETYPES_GetFceHeader4((unsigned char *)header);
@@ -1476,7 +1476,7 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const int fce_size, void *header)
   }
 }
 
-void FCELIB_FCETYPES_PrintHeaderFce3(const int fce_size, void *header)
+void FCELIB_FCETYPES_PrintHeaderFce3(const int fce_size, const void *header)
 {
   int i;
   FceHeader3 hdr = FCELIB_FCETYPES_GetFceHeader3((unsigned char *)header);

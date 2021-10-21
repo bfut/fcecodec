@@ -41,6 +41,8 @@ namespace fcelib {
 extern "C" {
 #endif
 
+/* mesh --------------------------------------------------------------------- */
+
 #if 0
 // this is done in Python using mesh.get_dummies() / mesh.set_dummies()
 int FCELIB_OP_ConvertDummiesToFce3(FcelibMesh *mesh)
@@ -180,16 +182,17 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_rcv,
     retv = internal_idx_rcv;
     
     /* Add part */
-    mesh_rcv->hdr.Parts[internal_idx_rcv] = mesh_rcv->hdr.NumParts;
-    part_rcv = (FcelibPart *)malloc((size_t)sizeof(FcelibPart));
+//    mesh_rcv->hdr.Parts[internal_idx_rcv] = mesh_rcv->hdr.NumParts;
+    mesh_rcv->hdr.Parts[internal_idx_rcv] = FCELIB_MISC_ArrMax(mesh_rcv->hdr.Parts, mesh_rcv->parts_len) + 1;
+    part_rcv = (FcelibPart *)malloc(sizeof(*part_rcv));
     if (!part_rcv)
     {
       fprintf(stderr, "CopyPartToMesh: Cannot allocate memory (part_rcv)\n");
       retv = -1;
       break;
     }
-    memset(part_rcv, 0, (size_t)sizeof(FcelibPart));
-    mesh_rcv->parts[internal_idx_rcv] = part_rcv;
+    memset(part_rcv, 0, sizeof(*part_rcv));
+    mesh_rcv->parts[ mesh_rcv->hdr.Parts[internal_idx_rcv] ] = part_rcv;
     
     ++mesh_rcv->hdr.NumParts;
     
@@ -204,9 +207,9 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_rcv,
 
     /* Copy */
     sprintf(part_rcv->PartName, "%s", part_src->PartName);
-    memcpy(&part_rcv->PartPos.x, &part_src->PartPos.x, (size_t)sizeof(float));
-    memcpy(&part_rcv->PartPos.y, &part_src->PartPos.y, (size_t)sizeof(float));
-    memcpy(&part_rcv->PartPos.z, &part_src->PartPos.z, (size_t)sizeof(float));
+    memcpy(&part_rcv->PartPos.x, &part_src->PartPos.x, sizeof(float));
+    memcpy(&part_rcv->PartPos.y, &part_src->PartPos.y, sizeof(float));
+    memcpy(&part_rcv->PartPos.z, &part_src->PartPos.z, sizeof(float));
 
     part_rcv->PNumVertices = part_src->PNumVertices;
     part_rcv->PNumTriangles = part_src->PNumTriangles;
@@ -232,14 +235,14 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_rcv,
     ++tidx_1st;
 
     /* Copy vertices */
-    old_global_to_new_global_idxs = (int *)malloc((size_t)mesh_src->vertices_len * (size_t)sizeof(int));
+    old_global_to_new_global_idxs = (int *)malloc((size_t)mesh_src->vertices_len * sizeof(*old_global_to_new_global_idxs));
     if (!old_global_to_new_global_idxs)
     {
       fprintf(stderr, "CopyPartToMesh: Cannot allocate memory (map)\n");
       retv = -1;
       break;
     }
-    memset(old_global_to_new_global_idxs, -1, (size_t)mesh_src->vertices_len * (size_t)sizeof(int));
+    memset(old_global_to_new_global_idxs, -1, (size_t)mesh_src->vertices_len * sizeof(*old_global_to_new_global_idxs));
 
     // i - vert index in source, j - vert index in receiver
     for (i = 0, j = 0; (i < part_src->pvertices_len) && (j < part_src->PNumVertices); ++i)
@@ -247,7 +250,7 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_rcv,
       if (part_src->PVertices[i] < 0)
         continue;
       
-      mesh_rcv->vertices[vidx_1st + j] = (FcelibVertex *)malloc((size_t)sizeof(FcelibVertex));
+      mesh_rcv->vertices[vidx_1st + j] = (FcelibVertex *)malloc(sizeof(FcelibVertex));
       if (!mesh_rcv->vertices[vidx_1st + j])
       {
         fprintf(stderr, "CopyPartToMesh: Cannot allocate memory (vert)\n");
@@ -271,7 +274,7 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_rcv,
       if (part_src->PTriangles[i] < 0)
         continue;
       
-      mesh_rcv->triangles[tidx_1st + j] = (FcelibTriangle *)malloc((size_t)sizeof(FcelibTriangle));
+      mesh_rcv->triangles[tidx_1st + j] = (FcelibTriangle *)malloc(sizeof(FcelibTriangle));
       if (!mesh_rcv->triangles[tidx_1st + j])
       {
         fprintf(stderr, "CopyPartToMesh: Cannot allocate memory (triag)\n");
@@ -290,7 +293,7 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_rcv,
       break;
     mesh_rcv->hdr.NumTriangles += part_rcv->PNumTriangles;
     
-    retv = FCELIB_TYPES_GetOrderByInternalPartIdx(mesh_rcv, retv);
+    retv = FCELIB_TYPES_GetOrderByInternalPartIdx(mesh_rcv, mesh_rcv->hdr.Parts[internal_idx_rcv]);
     if (retv < 0)
     {
       fprintf(stderr, "CopyPartToMesh: Cannot get new part idx\n");
@@ -343,89 +346,132 @@ int FCELIB_OP_DeletePart(FcelibMesh *mesh, const int idx)
   return 1;
 }
 
-#if 0
-int FCELIB_OP_DeleteUnmappedTriags(FcelibMesh *mesh, int keep_tex)
+/* Delete part triangles by order. */
+int FCELIB_OP_DeletePartTriags(FcelibMesh *mesh, const int pidx, 
+                               const int *idxs, const int idxs_len)
 {
-  int retv = 1;
+  int retv = 0;
   int i;
-  int j;
+  int internal_idx;
   FcelibPart *part;
+  int *ptr;
+  int *sptr;
+  int search_len = idxs_len;
+  int *map = NULL;
 
-  if (!FCELIB_TYPES_ValidateMesh(*mesh))
-    return 0;
-
-  for (i = 0; i < mesh->parts_len; ++i)
+  for (;;)
   {
-    if (!mesh->parts[i])
-      continue;
-
-    part = mesh->parts[i];
-
-    for (j = 0; j < part->ptriangles_len; ++j)
+    if (idxs_len < 1) 
     {
-      if (part->PTriangles[j] < 0)
-        continue;
-      if (mesh->triangles[part->PTriangles[j]]->tex_page == keep_tex)
-        continue;
-
-      free(mesh->triangles[part->PTriangles[j]]);
-      mesh->triangles[part->PTriangles[j]] = NULL;
-      part->PTriangles[j] = -1;
-      --part->PNumTriangles;
-      --mesh->hdr.NumTriangles;
+      retv = 1;
+      break;
     }
-  }
+    if (!idxs)
+    {
+      fprintf(stderr, "DeletePartTriags: Unexpected NULL (idxs)\n");
+      break;
+    }
 
-  retv = FCELIB_TYPES_RemoveUnrefdVerts(mesh);
+    if (!FCELIB_TYPES_ValidateMesh(*mesh))
+    {
+      fprintf(stderr, "DeletePartTriags: invalid mesh\n");
+      break;
+    }
+    
+    internal_idx = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, pidx);
+    if (internal_idx < 0)
+    {
+      fprintf(stderr, "DeletePartTriags: Invalid index (internal_idx)\n");
+      break;
+    }
+    part = mesh->parts[ mesh->hdr.Parts[internal_idx] ];
+
+    map = (int *)malloc((size_t)idxs_len * sizeof(*map));
+    if (!map)
+    {
+      fprintf(stderr, "DeletePartTriags: Cannot allocate memory (map)\n");
+      break;
+    }
+    
+    memcpy(map, idxs, (size_t)idxs_len * sizeof(*map));
+    qsort(map, (size_t)idxs_len, sizeof(*map), FCELIB_MISC_CompareInts);
+    if (map[0] < 0 || map[idxs_len - 1] > part->PNumTriangles)
+    {
+      fprintf(stderr, "DeletePartTriags: Triangle index out of range (idxs)\n");
+      break;
+    }
+
+    ptr = NULL;
+    sptr = map;
+    for (i = 0; i < part->ptriangles_len && search_len > 0; ++i)
+    {
+      if (part->PTriangles[i] < 0)
+        continue;
+      ptr = (int *)bsearch(&i, sptr, (size_t)search_len, sizeof(*map), FCELIB_MISC_CompareInts);
+      if (!ptr)
+        continue;
+      free(mesh->triangles[ part->PTriangles[i] ]);
+      mesh->triangles[ part->PTriangles[i] ] = NULL;
+      part->PTriangles[i] = -1;
+
+      ++sptr;
+      --search_len;
+      ptr = NULL;
+    }
+    part->PNumTriangles -= idxs_len;
+    mesh->hdr.NumTriangles -= idxs_len;
+    free(map);
+
+    retv = 1;
+    break;
+  }  /* for (;;) */
 
   return retv;
 }
-#endif
 
-/* Removes vertices that are not referenced by any triangles. */
-int FCELIB_OP_RemoveUnrefdVerts(FcelibMesh *mesh)
+/* Deletes vertices that are not referenced by any triangles. */
+int FCELIB_OP_DeleteUnrefdVerts(FcelibMesh *mesh)
 {
   int i;
   int j;
+  int k;
   FcelibPart *part;
   int *map;
 
   if (!FCELIB_TYPES_ValidateMesh(*mesh))
     return 0;
 
-  map = (int *)malloc((size_t)mesh->vertices_len * (size_t)sizeof(int));
+  map = (int *)malloc((size_t)mesh->vertices_len * sizeof(*map));
   if(!map)
   {
-    fprintf(stderr, "Cannot reallocate memory\n");
+    fprintf(stderr, "DeleteUnrefdVerts: Cannot allocate memory (map)\n");
     return 0;
   }
-  memset(map, 0, (size_t)mesh->vertices_len * (size_t)sizeof(int));
+  memset(map, 0, (size_t)mesh->vertices_len * sizeof(*map));
 
-  /* Mark referenced verts */
-  for (i = 0; i < mesh->triangles_len; ++i)
-  {
-    if (!mesh->triangles[i])
-      continue;
-
-    for (j = 0; j < 3; ++j)
-      map[mesh->triangles[i]->vidx[j]] = 1;
-  }
-
-  /* Delete unreferenced verts */
   for (i = 0; i < mesh->parts_len; ++i)
   {
-    if (!mesh->parts[i])
+    if (mesh->hdr.Parts[i] < 0)
       continue;
-
-    part = mesh->parts[i];
-
-    for (j = 0; j < part->pvertices_len; ++j)
+    part = mesh->parts[ mesh->hdr.Parts[i] ];
+    
+    /* Mark referenced verts */
+    for (j = 0; j < part->ptriangles_len; ++j)
     {
-      if ((part->PVertices[j] < 0) || (map[part->PVertices[j]] == 1))
+      if (part->PTriangles[j] < 0)
         continue;
 
-      free(mesh->vertices[part->PVertices[j]]);
-      mesh->vertices[part->PVertices[j]] = NULL;
+      for (k = 0; k < 3; ++k)
+        map[ mesh->triangles[ part->PTriangles[j] ]->vidx[k] ] = 1;
+    }
+    
+    /* Delete existing, unreferenced verts */
+    for (j = 0; j < part->pvertices_len; ++j)
+    {
+      if (part->PVertices[j] < 0 || map[ part->PVertices[j] ] == 1)
+        continue;
+      free(mesh->vertices[ part->PVertices[j] ]);
+      mesh->vertices[ part->PVertices[j] ] = NULL;
       part->PVertices[j] = -1;
       --part->PNumVertices;
       --mesh->hdr.NumVertices;
@@ -436,41 +482,12 @@ int FCELIB_OP_RemoveUnrefdVerts(FcelibMesh *mesh)
   return 1;
 }
 
-#if 0  
-/* redundant to pybind11 method Mesh::set_name */
-int FCELIB_OP_RenamePart(FcelibMesh *mesh, const int idx, const char *name)
-{
-  int i;
-
-  if (!FCELIB_TYPES_ValidateMesh(*mesh))
-    return 0;
-
-  if ((idx < 0) || (idx >= mesh->parts_len))
-    return 0;
-
-  for (i = 0; i < mesh->parts_len; ++i)
-  {
-    if (mesh->hdr.Parts[i] == idx)
-      break;
-  }
-
-  if (i == mesh->parts_len)
-  {
-    fprintf(stderr, "Part at idx %d does not exist\n", idx);
-    return 0;
-  }
-
-  memset(mesh->parts[ mesh->hdr.Parts[i] ]->PartName, '\0', (size_t)64);
-  memcpy(mesh->parts[ mesh->hdr.Parts[i] ]->PartName, name, (size_t)strlen(name));
-
-  return 1;
-}
-#endif
-
 /* Returns new part index (order) on success, -1 on failure. */
-int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, int idx1, int idx2)
+int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
 {
   int retv = -1;
+  int idx1;
+  int idx2;
   int i;
   int j;
   int n;
@@ -479,7 +496,7 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, int idx1, int idx2)
   int *old_global_to_new_global_idxs = NULL;  /* maps vert ref's in copied triags */
   FcelibPart *part;
 
-  if (idx1 == idx2)
+  if (pid1 == pid2)
   {
     fprintf(stderr, "MergePartsToNew: Cannot merge part with itself\n");
     return -1;
@@ -488,10 +505,18 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, int idx1, int idx2)
   if (!FCELIB_TYPES_ValidateMesh(*mesh))
     return -1;
 
-  idx1 = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, idx1);
-  idx2 = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, idx2);
-  if (idx1 < 0 || idx2 < 0)
+  idx1 = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, pid1);
+  idx2 = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, pid2);
+  if (idx1 < 0)
+  {
+    fprintf(stderr, "MergePartsToNew: Invalid index (idx1)\n");
     return -1;
+  }
+  if (idx2 < 0)
+  {
+    fprintf(stderr, "MergePartsToNew: Invalid index (idx2)\n");
+    return -1;
+  }
 
   for (;;)
   {
@@ -514,7 +539,7 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, int idx1, int idx2)
     retv = i;
 
     /* Add part */
-    mesh->hdr.Parts[i] = mesh->hdr.NumParts;
+    mesh->hdr.Parts[i] = FCELIB_MISC_ArrMax(mesh->hdr.Parts, mesh->parts_len) + 1;
     part = (FcelibPart *)malloc((size_t)sizeof(FcelibPart));
     if (!part)
     {
@@ -524,7 +549,7 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, int idx1, int idx2)
     }
     memset(part, 0, (size_t)sizeof(FcelibPart));
 
-    mesh->parts[i] = part;
+    mesh->parts[ mesh->hdr.Parts[i] ] = part;
     /* i = 0; */
 
 

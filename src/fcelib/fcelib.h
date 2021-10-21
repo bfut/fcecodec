@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FCECVERS "0.11"
+#define FCECVERS "0.22"
 
 #include "fcelib_io.h"
 #include "fcelib_op.h"
@@ -79,7 +79,7 @@ int FCELIB_SanityTest(void)
 }
 
 
-/* mesh -------------------------------------------------------------------- */
+/* mesh --------------------------------------------------------------------- */
 
 void FCELIB_InitMesh(FcelibMesh *mesh)
 {
@@ -117,7 +117,7 @@ int FCELIB_ValidateMesh(FcelibMesh mesh)
 }
 
 
-/* mesh: operations -------------------------------------------------------- */
+/* mesh: operations --------------------------------------------------------- */
 
 int FCELIB_CenterPart(FcelibMesh *mesh, const int idx)
 {
@@ -135,21 +135,18 @@ int FCELIB_DeletePart(FcelibMesh *mesh, const int idx)
   return FCELIB_OP_DeletePart(mesh, idx);
 }
 
-int FCELIB_DeleteTriags(FcelibMesh *mesh, int *idxs, const int idxs_len);  // TODO: implement
-
-#if 0  // replaced by FCELIB_DeleteTriags()
-int FCELIB_DeleteUnmappedTriags(FcelibMesh *mesh, int keep_tex)
+int FCELIB_DeletePartTriags(FcelibMesh *mesh, const int pidx,
+                            const int *idxs, const int idxs_len)
 {
-  return FCELIB_OP_DeleteUnmappedTriags(mesh, keep_tex);
+  return FCELIB_OP_DeletePartTriags(mesh, pidx, idxs, idxs_len);
 }
-#endif
 
 int FCELIB_DeleteUnrefdVerts(FcelibMesh *mesh)
 {
-  return FCELIB_OP_RemoveUnrefdVerts(mesh);
+  return FCELIB_OP_DeleteUnrefdVerts(mesh);
 }
 
-int FCELIB_MergePartsToNew(FcelibMesh *mesh, int idx1, int idx2)
+int FCELIB_MergePartsToNew(FcelibMesh *mesh, const int idx1, const int idx2)
 {
   return FCELIB_OP_MergePartsToNew(mesh, idx1, idx2);
 }
@@ -159,23 +156,17 @@ int FCELIB_MeshMoveUpPart(FcelibMesh *mesh, const int idx)
   return FCELIB_OP_MoveUpPart(mesh, idx);
 }
 
-#if 0
-int FCELIB_MeshRenamePart(FcelibMesh *mesh, const int idx, const char *name)
-{
-  return FCELIB_OP_RenamePart(mesh, idx, name);
-}
-#endif
+/* tools -------------------------------------------------------------------- */
 
-
-/* tools ------------------------------------------------------------------- */
-
-void FCELIB_PrintFceInfo(const int fce_size, void *hdr)
+void FCELIB_PrintFceInfo(const int fce_size, const void *hdr)
 {
   int version;
+  if (fce_size < 0x1F04) return;
   memcpy(&version, hdr, (size_t)4);
   switch (version)
   {
     case 0x00101014: case 0x00101015:
+      if (fce_size < 0x2038) return;
       FCELIB_FCETYPES_PrintHeaderFce4(fce_size, hdr);
       break;
     default:
@@ -185,21 +176,12 @@ void FCELIB_PrintFceInfo(const int fce_size, void *hdr)
 }
 
 
-/* io ---------------------------------------------------------------------- */
-
-int FCELIB_GetFileBufRead(unsigned char **buf, int *length, const char *path)
-{
-  return FCELIB_IO_GetFileBufRead(buf, length, path);
-}
-
-int FCELIB_FreeFileBuf(void *buf, int length)
-{
-  return FCELIB_IO_FreeFileBuf(buf, length);
-}
+/* io ----------------------------------------------------------------------- */
 
 int FCELIB_ValidateFce(const void *buf, const int length)
 {
   int version;
+  if (length < 0x1F04) return 0;
   memcpy(&version, buf, (size_t)4);
   switch (version)
   {
@@ -207,7 +189,6 @@ int FCELIB_ValidateFce(const void *buf, const int length)
       if (length < 0x2038) return 0;
       return FCELIB_FCETYPES_Fce4ValidateHeader(buf, length);
     default:
-      if (length < 0x1F04) return 0;
       return FCELIB_FCETYPES_Fce3ValidateHeader(buf, length);
   }
 }
@@ -226,14 +207,28 @@ int FCELIB_ExportObj(FcelibMesh *mesh,
                              print_damage, print_dummies);
 }
 
-int FCELIB_EncodeFce3(FcelibMesh *mesh, const char *fcepath, const int center_parts)
+int FCELIB_EncodeFce3_Fopen(FcelibMesh *mesh, const char *fcepath,
+                            const int center_parts)
 {
-  return FCELIB_IO_EncodeFce3(mesh, fcepath, center_parts);
+  return FCELIB_IO_EncodeFce3_Fopen(mesh, fcepath, center_parts);
 }
 
-int FCELIB_EncodeFce4(FcelibMesh *mesh, const char *fcepath, const int center_parts)
+int FCELIB_EncodeFce3(unsigned char **buf, const int buf_size,
+                      FcelibMesh *mesh, const int center_parts)
 {
-  return FCELIB_IO_EncodeFce4(mesh, fcepath);  // TODO: implement
+  return FCELIB_IO_EncodeFce3(buf, buf_size, mesh, center_parts);
+}
+
+int FCELIB_EncodeFce4(unsigned char **buf, const int buf_size,
+                      FcelibMesh *mesh, const int center_parts)
+{
+  return FCELIB_IO_EncodeFce4(buf, buf_size, mesh, center_parts, 0x00101014);  // TODO: implement
+}
+
+int FCELIB_EncodeFce4M(unsigned char **buf, const int buf_size,
+                      FcelibMesh *mesh, const int center_parts)
+{
+  return FCELIB_IO_EncodeFce4(buf, buf_size, mesh, center_parts, 0x00101015);
 }
 
 int FCELIB_GeomDataToNewPart(FcelibMesh *mesh,
