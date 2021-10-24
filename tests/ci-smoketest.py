@@ -1,9 +1,16 @@
-# This file is distributed under: CC BY-SA 4.0 <https://creativecommons.org/licenses/by-sa/4.0/>
-
 """
   ci-smoketest.py - smoke-testing fcecodec module
 
   NOTE: module should be built with setup.py build|install
+
+  This file is distributed under: CC BY-SA 4.0
+      <https://creativecommons.org/licenses/by-sa/4.0/>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  This header may not be removed or altered from any source distribution.
 """
 
 import argparse
@@ -61,37 +68,25 @@ except ModuleNotFoundError:
     import fcecodec
 
 
-# -----------------------------
+# --------------------------------------
 filepath_fce_input = pathlib.Path(pathlib.Path(__file__).parent / 'fce/Snowman_car.fce')
-filepath_fce3_output  = pathlib.Path(pathlib.Path(__file__).parent / 'fce/ci-smoketest.fce')
-filepath_fce4_output  = pathlib.Path(pathlib.Path(__file__).parent / 'fce/ci-smoketest.fce4')
-filepath_fce4m_output = pathlib.Path(pathlib.Path(__file__).parent / 'fce/ci-smoketest.fce4m')
+filepath_fce3_output  = pathlib.Path(pathlib.Path(__file__).parent / '.out/ci-smoketest.fce')
+filepath_fce4_output  = pathlib.Path(pathlib.Path(__file__).parent / '.out/ci-smoketest.fce4')
+filepath_fce4m_output = pathlib.Path(pathlib.Path(__file__).parent / '.out/ci-smoketest.fce4m')
 
-def print_fce_info(path):
-    with open(path, "rb") as f:
-#        print("print_fce_info(", path, ")")
-        buf = f.read()
-        fcecodec.print_fce_info(buf)
-        assert(fcecodec.fce_valid( buf ) == 1)
+filepath_obj_output = pathlib.Path(pathlib.Path(__file__).parent / '.out/ci-smoketest.obj')
+filepath_mtl_output = pathlib.Path(pathlib.Path(__file__).parent / '.out/ci-smoketest.mtl')
+objtexname = 'car00_Snowman.png'
 
-def LoadFce(mesh, path):
-#    print("LoadFce(", mesh, ",", path, ")")
-    with open(path, "rb") as f:
-        fce_buf = f.read()
-    assert(fcecodec.fce_valid(fce_buf) == 1)
-    mesh.decode(fce_buf)
-    assert(mesh.valid() == True)
-    return mesh
+try:
+    os.mkdir(pathlib.Path(pathlib.Path(__file__).parent / '.out'))
+except FileExistsError:
+    None
 
-def WriteFce(version, mesh, path):
-    with open(path, "wb") as f:
-        if version == 3:
-            buf = mesh.encode_fce3()
-        elif version == 4:
-            buf = mesh.encode_fce4()
-        else:
-            buf = mesh.encode_fce4m()
-        f.write(buf)
+
+# --------------------------------------
+sys.path.append(str( pathlib.Path(pathlib.Path(__file__).parent / "../python/").resolve()))
+from fcecodec_mywrappers import *
 
 
 # tracemalloc -- BEGIN ---------------------------------------------------------
@@ -104,26 +99,27 @@ if sys.version_info[0:2] >= (3, 9):
 tracemalloc.start()
 # tracemalloc -- END -----------------------------------------------------------
 
-# -----------------------------
-#help(fcecodec)
 
-# -----------------------------
-print_fce_info(filepath_fce_input)
+# --------------------------------------
+PrintFceInfo(filepath_fce_input)
 print(flush = True)
 
 mesh = fcecodec.Mesh()
 print(mesh, type(mesh), flush = True)
 mesh = LoadFce(mesh, filepath_fce_input)
-mesh.info()
+mesh.Info()
 print(flush = True)
 
 WriteFce(3, mesh, filepath_fce3_output)
-WriteFce(4, mesh, filepath_fce4_output)
-WriteFce("4m", mesh, filepath_fce4m_output)
+# WriteFce(4, mesh, filepath_fce4_output)
+# WriteFce("4m", mesh, filepath_fce4m_output)
+ExportObj(mesh,
+          filepath_obj_output, filepath_mtl_output, objtexname,
+          print_damage=0, print_dummies=0)
 del mesh
 print(flush = True)
 
-print_fce_info(filepath_fce3_output)
+PrintFceInfo(filepath_fce3_output)
 
 print("EOF ci-smoketest.py", flush = True)
 
