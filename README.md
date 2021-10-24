@@ -1,17 +1,25 @@
 # fcecodec
 `fcecodec` decodes, encodes, and modifies FCE data. FCE is a geometry definition file format.
 
-As Python module, allows using modern data analysis methods: export / import raw geometry data; modify attributes.
+As Python module, allows using modern data analysis methods: export / import raw geometry data; modify attributes, etc.
 
-The library itself is written in C. Python bindings are written in C++ (pybind).
+The library itself is written in C. Python bindings are written in C++ (pybind11).
 
 ## Features
-* decodes / encodes the following FCE format versions: FCE3, FCE4, FCE4M
+* decodes / encodes / converts the following FCE format versions: FCE3, FCE4, FCE4M
 * exports to OBJ
-* Python: extracts / inserts raw geometry data (vertices, triangles)
-* Python: modifies attributes such as triangle flags, colors, and dummies (FCE light objects)
+* create new FCE from raw geometry data from the ground up
+* merges and deletes parts
+* changes part order
+* deletes triangles
+* Python: extracts raw geometry data (vertices, triangles)
+* Python: fully controls attributes such as triangle triangle flags, vertex animation flags, colors, and dummies (fx/light objects)
+* Python: numpy integration for most functions
 
-## Documentation
+## News
+* 24Oct2021: `fcecodec` library and Python API have become feature-stable
+
+## Documentation / Installation
 Python extension module: [_/python/README.md_](/python/README.md)<br/>
 FCE format specifications in comments: [_src/fcelib/fcelib_fcetypes.h_](/src/fcelib/fcelib_fcetypes.h)<br/>
 
@@ -27,29 +35,29 @@ with open(filepath_fce_input, "rb") as f:
     fce_buf = f.read()
 
 # Print FCE stats to console
-fcecodec.print_fce_info(fce_buf)
+fcecodec.PrintFceInfo(fce_buf)
 
 # Create mesh object
 mesh = fcecodec.Mesh()
 
 # Load FCE data to mesh object
-mesh.decode(fce_buf)
-assert(mesh.valid() == 1)
+mesh.Decode(fce_buf)
+assert(mesh.Valid() == 1)
 
 # Merge parts to new part
 idx1 = 0
 idx2 = 3
-new_idx = mesh.merge_parts(idx1, idx2)
+new_idx = mesh.MergeParts(idx1, idx2)
 assert(new_idx != -1)
 
 # Print stats
-mesh.info()
+mesh.Info()
 print(mesh.num_parts)
 print(mesh.num_triags)
 print(mesh.num_verts)
 
 # Encode to FCE3
-out_buf = mesh.encode_fce3()
+out_buf = mesh.Encode_Fce3()
 
 # Write to file
 with open(path, "wb") as f:
