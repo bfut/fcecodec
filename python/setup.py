@@ -1,5 +1,8 @@
 # adapted from https://github.com/pybind/python_example/blob/master/setup.py
 
+# fcecodec Copyright (C) 2021 Benjamin Futasz <https://github.com/bfut>
+# License: GPLv3+
+
 from setuptools import setup
 
 # Available at setup time due to pyproject.toml
@@ -18,7 +21,7 @@ import pathlib
 script_path = pathlib.Path(__file__).parent.resolve()
 os.chdir(script_path)
 
-__version__ = "0.23"
+__version__ = "0.31"
 long_description = (script_path / "../README.md").read_text(encoding="utf-8")
 
 # The main interface is through Pybind11Extension.
@@ -39,7 +42,7 @@ if platform.system() != "Windows":
                 ('VERSION_INFO', __version__),
                 ('FCEC_MODULE_DEBUG', 1),
 #                ('_GLIBCXX_USE_CXX11_ABI', 0),  # https://github.com/conda/conda/issues/10757
-                ],
+            ],
             extra_compile_args = [
                 ("-pedantic-errors"),
                 ("-g"),
@@ -48,9 +51,23 @@ if platform.system() != "Windows":
                 ("-Wno-newline-eof"),  # clang
                 ("-Wstack-protector"),
                 ("-fasynchronous-unwind-tables"),
-#                ("-fanalyzer"),  # GCC 10
-                ]
-            ),
+##                ("-fanalyzer"),  # GCC 10
+#                 # https://developers.redhat.com/blog/2018/03/21/compiler-and-linker-flags-gcc
+#                 ("-D_FORTIFY_SOURCE=2"),
+#                 ("-D_GLIBCXX_ASSERTIONS"),
+#                 ("-fexceptions"),
+#                 ("-fplugin=annobin"),
+#                 ("-fstack-clash-protection"),
+#                 ("-fstack-protector-strong"),
+# ##                ("-mcet"),  # removed from gcc
+#                 ("-fcf-protection"),
+#                 ("-Werror=format-security"),
+# ##                ("-Werror=implicit-function-declaration"),  # C only
+#                 ("-Wl,-z,defs"),
+#                 ("-Wl,-z,now"),
+#                 ("-Wl,-z,relro"),
+            ]
+        ),
     ]
 else:
     ext_modules = [
@@ -60,11 +77,11 @@ else:
             define_macros = [
                 ('VERSION_INFO', __version__),
                 ('FCEC_MODULE_DEBUG', 1),
-                ],
+            ],
             extra_compile_args = [
 #                ("-Wall"),
-                ]
-            ),
+            ]
+        ),
     ]
 
 setup(
