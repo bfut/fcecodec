@@ -73,8 +73,7 @@ typedef struct {
   int    *PTriangles;      /* ordered list of global triag idxs, -1 for unused */
 } FcelibPart;
 
-//typedef struct {
-typedef struct FcelibHeader {
+typedef struct {
   int      NumTriangles;
   int      NumVertices;
 
@@ -97,7 +96,7 @@ typedef struct FcelibHeader {
 // potential issue with C++03 https://github.com/tinyobjloader/tinyobjloader/issues/259#issuecomment-590675708
 typedef struct FcelibMesh {
   int              freed = 1;          /* has instance been destroyed before? */
-  
+
   FcelibHeader     hdr;
 
   int              parts_len;      /* array length */
@@ -110,16 +109,69 @@ typedef struct FcelibMesh {
   FcelibVertex   **vertices;       /* may contain NULL elements */
 } FcelibMesh;
 
+
+/* Assumes mesh->hdr.NumParts > 0 */
+int FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(const FcelibMesh *mesh)
+{
+  int tidx;// = mesh->triangles_len;
+  int i;
+  FcelibPart *part;
+
+  /* Get last part w.r.t internal indexes */
+  i = mesh->parts_len - 1;
+  while (mesh->hdr.Parts[i] < 0 && i >= 0)
+    --i;
+
+  /* Get first unused global triangle w.r.t internal indexes */
+  part = mesh->parts[mesh->hdr.Parts[i]];
+  i = part->ptriangles_len - 1;
+  while (part->PTriangles[i] < 0 && i >= 0)
+    --i;
+
+  if (i < 0)
+    tidx = 0;
+  else
+    tidx = part->PTriangles[i] + 1;
+
+  return tidx;
+}
+
+/* Assumes mesh->hdr.NumParts > 0 */
+int FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(const FcelibMesh *mesh)
+{
+  int vidx;
+  int i;
+  FcelibPart *part;
+
+  /* Get last part w.r.t internal indexes */
+  i = mesh->parts_len - 1;
+  while (mesh->hdr.Parts[i] < 0 && i >= 0)
+    --i;
+
+  /* Get first unused global vertice w.r.t internal indexes */
+  part = mesh->parts[mesh->hdr.Parts[i]];
+  i = part->pvertices_len - 1;
+  while (part->PVertices[i] < 0 && i >= 0)
+    --i;
+
+  if (i < 0)
+    vidx = 0;
+  else
+    vidx = part->PVertices[i] + 1;
+
+  return vidx;
+}
+
 /* init, destroy, validate */
 
 void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
 {
   int i;
-  
+
   if (mesh->freed != 1)
     fprintf(stderr, "Warning: InitMesh: mesh is not free'd (requires FCELIB_FreeMesh)\n");
   mesh->freed = 1;
-  
+
   mesh->hdr.NumTriangles = 0;
   mesh->hdr.NumVertices = 0;
 
@@ -190,7 +242,7 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
       --k;
     }  /* for n, k */
     free(part->PVertices);
-    
+
     for (int n = part->ptriangles_len - 1, k = part->PNumTriangles - 1; n >= 0 && k >= 0; --n)
     {
       if (part->PTriangles[n] < 0)
@@ -276,7 +328,7 @@ int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
   int sum_triags = 0;
   int sum_verts = 0;
   FcelibPart *part = NULL;
-  
+
   if (mesh.parts_len == 0     && !mesh.parts     && !mesh.hdr.Parts &&
       mesh.triangles_len == 0 && !mesh.triangles &&
       mesh.vertices_len == 0  && !mesh.vertices)
@@ -302,7 +354,7 @@ int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
     fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.vertices)\n");
     return 0;
   }
-  
+
   for (i = 0, count_parts = 0; i < mesh.parts_len; ++i)
   {
     if (mesh.hdr.Parts[i] >= mesh.parts_len)
@@ -310,7 +362,7 @@ int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
       fprintf(stderr, "ValidateMesh: inconsistent list (mesh.hdr.Parts[i])\n");
       return 0;
     }
-    
+
     if (mesh.hdr.Parts[i] < 0)
       continue;
     ++count_parts;
@@ -358,7 +410,7 @@ int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
     {
       if (sum_triags > part->PNumTriangles)
       {
-        fprintf(stderr, "ValidateMesh: invalid count (part->PNumTriangles) i%d j%d %d \n", i, j, sum_triags);
+        fprintf(stderr, "ValidateMesh: invalid count (part->PNumTriangles) i%d j%d %d>%d\n", i, j, sum_triags, part->PNumTriangles);
         return 0;
       }
       if (part->PTriangles[j] >= mesh.triangles_len)
@@ -374,12 +426,12 @@ int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
         fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.triangles[part->PTriangles[j]]) %d %d\n", i, j);
         return 0;
       }
-      
+
       ++sum_triags;
     }  /* for j */
     if (sum_triags != part->PNumTriangles)
     {
-      fprintf(stderr, "ValidateMesh: invalid count (part->PNumTriangles) i%d %d %d\n", i, sum_triags, part->PNumTriangles);
+      fprintf(stderr, "ValidateMesh: invalid count (part->PNumTriangles) i%d %d!=%d\n", i, sum_triags, part->PNumTriangles);
       return 0;
     }
 
@@ -392,7 +444,7 @@ int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
     {
       if (sum_verts > part->PNumVertices)
       {
-        fprintf(stderr, "ValidateMesh: invalid count (part->PNumVertices) i%d j%d %d\n", i, j, sum_verts);
+        fprintf(stderr, "ValidateMesh: invalid count (part->PNumVertices) i%d j%d %d>%d\n", i, j, sum_verts, part->PNumVertices);
         return 0;
       }
       if (part->PVertices[j] >= mesh.vertices_len)
@@ -400,23 +452,24 @@ int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
         fprintf(stderr, "ValidateMesh: inconsistent list (part->PVertices[j]) %d %d\n", i, j);
         return 0;
       }
+
       if (part->PVertices[j] < 0)
         continue;
-      
+
       if (!mesh.vertices[part->PVertices[j]])
       {
         fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.vertices[part->PVertices[j]]) %d %d\n", i, j);
         return 0;
       }
-      
+
       ++sum_verts;
     }  /* for j */
     if (sum_verts != part->PNumVertices)
     {
-      fprintf(stderr, "ValidateMesh: invalid count (part->PNumTriangles) i%d %d %d\n", i, sum_verts, part->PNumVertices);
+      fprintf(stderr, "ValidateMesh: invalid count (part->PNumVertices) i%d %d!=%d\n", i, sum_verts, part->PNumVertices);
       return 0;
     }
-  
+
   }  /* for i */
 
   return 1;
@@ -424,6 +477,7 @@ int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
 
 
 /* service ------------------------------------------------------------------ */
+
 
 /* Returns -1 on failure. */
 int FCELIB_TYPES_GetInternalPartIdxByOrder(FcelibMesh *mesh, const int idx)
@@ -560,7 +614,7 @@ int FCELIB_TYPES_AddVertices(FcelibMesh *mesh, const int num_required)
   ptr = realloc(mesh->vertices, (size_t)new_len * sizeof(*mesh->vertices));
   if (!ptr)
   {
-    fprintf(stderr, "Cannot reallocate memory\n");
+    fprintf(stderr, "FCELIB_TYPES_AddVertices: Cannot reallocate memory\n");
     return 0;
   }
   mesh->vertices = (FcelibVertex **)ptr;
@@ -586,7 +640,7 @@ int FCELIB_TYPES_AddTriangles2(FcelibMesh *mesh, FcelibPart *part, const int num
   part->PTriangles = (int *)ptr;
   ptr = NULL;
   memset(part->PTriangles, -1, (size_t)new_len_p * sizeof(*part->PTriangles));
-  
+
   ptr = realloc(mesh->triangles, (size_t)new_len * sizeof(*mesh->triangles));
   if (!ptr)
   {
@@ -607,7 +661,7 @@ int FCELIB_TYPES_AddVertices2(FcelibMesh *mesh, FcelibPart *part, const int num_
   void *ptr = NULL;
   const int new_len_p = part->pvertices_len + num_required;
   const int new_len = mesh->vertices_len + num_required;
-    
+
   ptr = realloc(part->PVertices, (size_t)new_len_p * sizeof(*part->PVertices));
   if (!ptr)
   {
@@ -669,7 +723,7 @@ int FCELIB_TYPES_GetPartLocalCentroid(FcelibMesh *mesh, FcelibPart *part, tVecto
   const int PNumVertices = part->PNumVertices;
   FcelibVertex *vert;
   int count_verts = 0;
-  
+
   for (;;)
   {
     if (PNumVertices == 0)
@@ -753,21 +807,6 @@ void FCELIB_TYPES_ResetPartPos(FcelibMesh *mesh, FcelibPart *part, tVector new_P
   memcpy(&part->PartPos.z, &new_PartPos.z, sizeof(float));
 }
 
-#if 0
-void FCELIB_MISC_LocalizeVerts(tVector *vert, int NumVertices, tVector PartPos)
-{
-  int i;
-
-  for (i = 0; i < NumVertices; ++i)
-  {
-    vert[i].x -= PartPos.x;
-    vert[i].y -= PartPos.y;
-    vert[i].z -= PartPos.z;
-  }
-}
-#endif
-
-
 void FCELIB_TYPES_PrintMeshInfo(FcelibMesh mesh)
 {
   int i;
@@ -776,7 +815,10 @@ void FCELIB_TYPES_PrintMeshInfo(FcelibMesh mesh)
   int triags = 0;
 
   if (!FCELIB_TYPES_ValidateMesh(mesh))
+  {
+    fprintf(stderr, "PrintMeshInfo: invalid mesh\n");
     return;
+  }
 
   printf("NumTriangles (true) = %d\n", mesh.hdr.NumTriangles);
   printf("triangles_len (alloc'd) = %d\n", mesh.triangles_len);

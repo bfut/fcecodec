@@ -57,10 +57,10 @@ const float kVertDiamond[6 * 3] = {
 
 static
 const int kTrianglesDiamond[8 * 3] = {
-  3, 1, 6,
-  3, 6, 2,
-  3, 2, 5,
-  3, 5, 1,
+  3, 6, 1,
+  3, 2, 6,
+  3, 5, 2,
+  3, 1, 5,
   4, 1, 6,
   4, 6, 2,
   4, 2, 5,

@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FCECVERS "0.22"
+#define FCECVERS "0.31"
 
 #include "fcelib_io.h"
 #include "fcelib_op.h"
@@ -124,7 +124,7 @@ int FCELIB_CenterPart(FcelibMesh *mesh, const int idx)
   return FCELIB_OP_CenterPart(mesh, idx);
 }
 
-int FCELIB_CopyPartToMesh(FcelibMesh *mesh_rcv, 
+int FCELIB_CopyPartToMesh(FcelibMesh *mesh_rcv,
                           FcelibMesh *mesh_src, const int idx)
 {
   return FCELIB_OP_CopyPartToMesh(mesh_rcv, mesh_src, idx);
@@ -176,7 +176,7 @@ void FCELIB_PrintFceInfo(const int fce_size, const void *hdr)
 }
 
 
-/* io ----------------------------------------------------------------------- */
+/* i/o ---------------------------------------------------------------------- */
 
 int FCELIB_ValidateFce(const void *buf, const int length)
 {
@@ -228,15 +228,30 @@ int FCELIB_EncodeFce4(unsigned char **buf, const int buf_size,
 int FCELIB_EncodeFce4M(unsigned char **buf, const int buf_size,
                       FcelibMesh *mesh, const int center_parts)
 {
-  return FCELIB_IO_EncodeFce4(buf, buf_size, mesh, center_parts, 0x00101015);
+  return FCELIB_IO_EncodeFce4(buf, buf_size, mesh, center_parts, 0x00101015);  // TODO: implement
 }
 
 int FCELIB_GeomDataToNewPart(FcelibMesh *mesh,
-                             float **triangles, const int triangles_len,
-                             float **triangle_flags, const int triangles_flags_len,
-                             float **vertices, const int vertices_len,
-                             float **normals, const int normals_len,
-                             float **texcoords, const int texcoords_len);  // TODO:implement
+                             int *vert_idxs, const int vert_idxs_len,
+                            //  int *triangles_flags, const int triangles_flags_len,
+                             float *vert_texcoords, const int vert_texcoords_len,
+                             float *vert_pos, const int vert_pos_len,
+                             float *normals, const int normals_len)
+{
+  return FCELIB_IO_GeomDataToNewPart(mesh,
+                                     vert_idxs, vert_idxs_len,
+                                    //  triangles_flags, triangles_flags_len,
+                                     vert_texcoords, vert_texcoords_len,
+                                     vert_pos, vert_pos_len,
+                                     normals, normals_len);  // TODO: test
+}
+
+/* service (assumes valid FcelibMesh) --------------------------------------- */
+
+int FCELIB_GetInternalPartIdxByOrder(FcelibMesh *mesh, const int idx)
+{
+  return FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, idx);
+}
 
 #ifdef __cplusplus
 } /* extern "C" */
