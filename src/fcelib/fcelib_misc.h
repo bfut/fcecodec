@@ -41,6 +41,7 @@ enum { kFceLibImplementedFce3Parts = 13 };
 static const int kFceLibBufferSize = 1024;
 static const int kFceLibFilenameMaxLen = 200;
 static const int kFceLibImplementedFce3Parts = 13;
+static const int kFceLibNumFce4HiBodyParts = 18;
 #endif
 
 
@@ -106,6 +107,20 @@ int FCELIB_MISC_ArrMax(const int *arr, const int arr_len)
     retv = sortedarr[arr_len - 1];
     free(sortedarr);
     break;
+  }
+  return retv;
+}
+
+int FCELIB_MISC_StrIsInArray(char *str, const char **arr)
+{
+  int retv = 0;
+  for (int i = 0; i < kFceLibNumFce4HiBodyParts; ++i)
+  {
+    if (strncmp(str, arr[i], 64) == 0)
+    {
+      retv = 1;
+      break;
+    }
   }
   return retv;
 }

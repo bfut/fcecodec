@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FCECVERS "0.31"
+#define FCECVERS "0.50"
 
 #include "fcelib_io.h"
 #include "fcelib_op.h"
@@ -222,13 +222,13 @@ int FCELIB_EncodeFce3(unsigned char **buf, const int buf_size,
 int FCELIB_EncodeFce4(unsigned char **buf, const int buf_size,
                       FcelibMesh *mesh, const int center_parts)
 {
-  return FCELIB_IO_EncodeFce4(buf, buf_size, mesh, center_parts, 0x00101014);  // TODO: implement
+  return FCELIB_IO_EncodeFce4(buf, buf_size, mesh, center_parts, 0x00101014);
 }
 
 int FCELIB_EncodeFce4M(unsigned char **buf, const int buf_size,
                       FcelibMesh *mesh, const int center_parts)
 {
-  return FCELIB_IO_EncodeFce4(buf, buf_size, mesh, center_parts, 0x00101015);  // TODO: implement
+  return FCELIB_IO_EncodeFce4(buf, buf_size, mesh, center_parts, 0x00101015);
 }
 
 int FCELIB_GeomDataToNewPart(FcelibMesh *mesh,

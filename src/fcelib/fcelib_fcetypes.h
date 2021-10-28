@@ -326,6 +326,28 @@ typedef struct {
 /* 0x1e28 */  char     Unknown4[528]       ;  /* nullable */
 } FceHeader4;
 
+static
+const char *kFce4HiBodyParts[kFceLibNumFce4HiBodyParts] = {
+  ":HB",            /* car.fce */
+  ":OT",
+  ":OL",
+  ":OS",
+  ":OLB",
+  ":ORB",
+  ":OLM",
+  ":ORM",
+  ":OC",
+  ":ODL",
+  ":OH",
+  ":OD",
+  ":HLFW",
+  ":HRFW",
+  ":HLMW",
+  ":HRMW",
+  ":HLRW",
+  ":HRRW",
+};
+
 /*
 car.fce (FCE4)
 Name    Description              Damage  FallOf  UsesFlag  Light  Animated   Pursuit
@@ -717,25 +739,25 @@ FceHeader4 FCELIB_FCETYPES_GetFceHeader4(const unsigned char *header)
   memcpy(&hdr.NumColors, header + 0x0820, (size_t)4);
   for (i = 0; i < FCELIB_MISC_Min(hdr.NumColors, 16); ++i)
   {
-    memcpy(&hdr.PriColors[i].hue,          header + 0x0824 + i * 4 + 0x00, (size_t)1);
-    memcpy(&hdr.PriColors[i].saturation,   header + 0x0824 + i * 4 + 0x04, (size_t)1);
-    memcpy(&hdr.PriColors[i].brightness,   header + 0x0824 + i * 4 + 0x08, (size_t)1);
-    memcpy(&hdr.PriColors[i].transparency, header + 0x0824 + i * 4 + 0x0C, (size_t)1);
+    memcpy(&hdr.PriColors[i].hue,          header + 0x0824 + i * 4 + 0, (size_t)1);
+    memcpy(&hdr.PriColors[i].saturation,   header + 0x0824 + i * 4 + 1, (size_t)1);
+    memcpy(&hdr.PriColors[i].brightness,   header + 0x0824 + i * 4 + 2, (size_t)1);
+    memcpy(&hdr.PriColors[i].transparency, header + 0x0824 + i * 4 + 3, (size_t)1);
 
-    memcpy(&hdr.IntColors[i].hue,          header + 0x0864 + i * 4 + 0x00, (size_t)1);
-    memcpy(&hdr.IntColors[i].saturation,   header + 0x0864 + i * 4 + 0x04, (size_t)1);
-    memcpy(&hdr.IntColors[i].brightness,   header + 0x0864 + i * 4 + 0x08, (size_t)1);
-    memcpy(&hdr.IntColors[i].transparency, header + 0x0864 + i * 4 + 0x0C, (size_t)1);
+    memcpy(&hdr.IntColors[i].hue,          header + 0x0864 + i * 4 + 0, (size_t)1);
+    memcpy(&hdr.IntColors[i].saturation,   header + 0x0864 + i * 4 + 1, (size_t)1);
+    memcpy(&hdr.IntColors[i].brightness,   header + 0x0864 + i * 4 + 2, (size_t)1);
+    memcpy(&hdr.IntColors[i].transparency, header + 0x0864 + i * 4 + 3, (size_t)1);
 
-    memcpy(&hdr.SecColors[i].hue,          header + 0x08a4 + i * 4 + 0x00, (size_t)1);
-    memcpy(&hdr.SecColors[i].saturation,   header + 0x08a4 + i * 4 + 0x04, (size_t)1);
-    memcpy(&hdr.SecColors[i].brightness,   header + 0x08a4 + i * 4 + 0x08, (size_t)1);
-    memcpy(&hdr.SecColors[i].transparency, header + 0x08a4 + i * 4 + 0x0C, (size_t)1);
+    memcpy(&hdr.SecColors[i].hue,          header + 0x08a4 + i * 4 + 0, (size_t)1);
+    memcpy(&hdr.SecColors[i].saturation,   header + 0x08a4 + i * 4 + 1, (size_t)1);
+    memcpy(&hdr.SecColors[i].brightness,   header + 0x08a4 + i * 4 + 2, (size_t)1);
+    memcpy(&hdr.SecColors[i].transparency, header + 0x08a4 + i * 4 + 3, (size_t)1);
 
-    memcpy(&hdr.DriColors[i].hue,          header + 0x08e4 + i * 4 + 0x00, (size_t)1);
-    memcpy(&hdr.DriColors[i].saturation,   header + 0x08e4 + i * 4 + 0x04, (size_t)1);
-    memcpy(&hdr.DriColors[i].brightness,   header + 0x08e4 + i * 4 + 0x08, (size_t)1);
-    memcpy(&hdr.DriColors[i].transparency, header + 0x08e4 + i * 4 + 0x0C, (size_t)1);
+    memcpy(&hdr.DriColors[i].hue,          header + 0x08e4 + i * 4 + 0, (size_t)1);
+    memcpy(&hdr.DriColors[i].saturation,   header + 0x08e4 + i * 4 + 1, (size_t)1);
+    memcpy(&hdr.DriColors[i].brightness,   header + 0x08e4 + i * 4 + 2, (size_t)1);
+    memcpy(&hdr.DriColors[i].transparency, header + 0x08e4 + i * 4 + 3, (size_t)1);
   }
 
   memcpy(&hdr.Unknown3, header + 0x0924, (size_t)4);
@@ -750,7 +772,7 @@ FceHeader4 FCELIB_FCETYPES_GetFceHeader4(const unsigned char *header)
 }
 
 
-/* Fce4 validation ---------------------------------------------------------- */
+/* Fce3 validation ---------------------------------------------------------- */
 
 int FCELIB_FCETYPES_Fce3ComputeSize(const int NumVertices, const int NumTriangles)
 {

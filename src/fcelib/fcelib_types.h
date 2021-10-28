@@ -478,7 +478,6 @@ int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
 
 /* service ------------------------------------------------------------------ */
 
-
 /* Returns -1 on failure. */
 int FCELIB_TYPES_GetInternalPartIdxByOrder(FcelibMesh *mesh, const int idx)
 {
@@ -713,6 +712,22 @@ void FCELIB_TYPES_CpyVert(FcelibVertex *dest, FcelibVertex *src)
   dest->Animation = src->Animation;
 }
 
+void FCELIB_TYPES_VertAddPosition(FcelibVertex *vert, const tVector *pos)
+{
+  vert->VertPos.x += pos->x;
+  vert->VertPos.y += pos->y;
+  vert->VertPos.z += pos->z;
+  vert->NormPos.x += pos->x;
+  vert->NormPos.y += pos->y;
+  vert->NormPos.z += pos->z;
+  vert->DamgdVertPos.x += pos->x;
+  vert->DamgdVertPos.y += pos->y;
+  vert->DamgdVertPos.z += pos->z;
+  vert->DamgdNormPos.x += pos->x;
+  vert->DamgdNormPos.y += pos->y;
+  vert->DamgdNormPos.z += pos->z;
+}
+
 int FCELIB_TYPES_GetPartLocalCentroid(FcelibMesh *mesh, FcelibPart *part, tVector *centroid)
 {
   int retv = 0;
@@ -797,15 +812,24 @@ void FCELIB_TYPES_ResetPartPos(FcelibMesh *mesh, FcelibPart *part, tVector new_P
     vert->VertPos.x += part->PartPos.x - new_PartPos.x;
     vert->VertPos.y += part->PartPos.y - new_PartPos.y;
     vert->VertPos.z += part->PartPos.z - new_PartPos.z;
+    vert->NormPos.x += part->PartPos.x - new_PartPos.x;
+    vert->NormPos.y += part->PartPos.y - new_PartPos.y;
+    vert->NormPos.z += part->PartPos.z - new_PartPos.z;
     vert->DamgdVertPos.x += part->PartPos.x - new_PartPos.x;
     vert->DamgdVertPos.y += part->PartPos.y - new_PartPos.y;
     vert->DamgdVertPos.z += part->PartPos.z - new_PartPos.z;
+    vert->DamgdNormPos.x += part->PartPos.x - new_PartPos.x;
+    vert->DamgdNormPos.y += part->PartPos.y - new_PartPos.y;
+    vert->DamgdNormPos.z += part->PartPos.z - new_PartPos.z;
     ++count_verts;
   }
   memcpy(&part->PartPos.x, &new_PartPos.x, sizeof(float));
   memcpy(&part->PartPos.y, &new_PartPos.y, sizeof(float));
   memcpy(&part->PartPos.z, &new_PartPos.z, sizeof(float));
 }
+
+
+/* stats -------------------------------------------------------------------- */
 
 void FCELIB_TYPES_PrintMeshInfo(FcelibMesh mesh)
 {

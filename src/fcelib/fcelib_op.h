@@ -197,7 +197,7 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_rcv,
     ++mesh_rcv->hdr.NumParts;
 
     /* Get source part */
-    part_src = mesh_src->parts[internal_idx_src];
+    part_src = mesh_src->parts[ mesh_src->hdr.Parts[internal_idx_src] ];
     if (!part_src)
     {
       fprintf(stderr, "CopyPartToMesh: Unexpected NULL (part_src)\n");
@@ -627,9 +627,7 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
       }
       part->PVertices[j] = vidx_1st + j;
       FCELIB_TYPES_CpyVert(mesh->vertices[vidx_1st + j], mesh->vertices[ mesh->parts[idx1]->PVertices[i] ]);
-      mesh->vertices[vidx_1st + j]->VertPos.x += mesh->parts[idx1]->PartPos.x;
-      mesh->vertices[vidx_1st + j]->VertPos.y += mesh->parts[idx1]->PartPos.y;
-      mesh->vertices[vidx_1st + j]->VertPos.z += mesh->parts[idx1]->PartPos.z;
+      FCELIB_TYPES_VertAddPosition(mesh->vertices[vidx_1st + j], &mesh->parts[idx1]->PartPos);
       old_global_to_new_global_idxs[mesh->parts[idx1]->PVertices[i]] = vidx_1st + j;
 
       ++j;
@@ -650,9 +648,19 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
       }
       part->PVertices[j] = vidx_1st + j;
       FCELIB_TYPES_CpyVert(mesh->vertices[vidx_1st + j], mesh->vertices[ mesh->parts[idx2]->PVertices[i] ]);
-      mesh->vertices[vidx_1st + j]->VertPos.x += mesh->parts[idx2]->PartPos.x;
-      mesh->vertices[vidx_1st + j]->VertPos.y += mesh->parts[idx2]->PartPos.y;
-      mesh->vertices[vidx_1st + j]->VertPos.z += mesh->parts[idx2]->PartPos.z;
+      FCELIB_TYPES_VertAddPosition(mesh->vertices[vidx_1st + j], &mesh->parts[idx2]->PartPos);
+      // mesh->vertices[vidx_1st + j]->VertPos.x += mesh->parts[idx2]->PartPos.x;
+      // mesh->vertices[vidx_1st + j]->VertPos.y += mesh->parts[idx2]->PartPos.y;
+      // mesh->vertices[vidx_1st + j]->VertPos.z += mesh->parts[idx2]->PartPos.z;
+      // mesh->vertices[vidx_1st + j]->NormPos.x += mesh->parts[idx2]->PartPos.x;
+      // mesh->vertices[vidx_1st + j]->NormPos.y += mesh->parts[idx2]->PartPos.y;
+      // mesh->vertices[vidx_1st + j]->NormPos.z += mesh->parts[idx2]->PartPos.z;
+      // mesh->vertices[vidx_1st + j]->DamgdVertPos.x += mesh->parts[idx2]->PartPos.x;
+      // mesh->vertices[vidx_1st + j]->DamgdVertPos.y += mesh->parts[idx2]->PartPos.y;
+      // mesh->vertices[vidx_1st + j]->DamgdVertPos.z += mesh->parts[idx2]->PartPos.z;
+      // mesh->vertices[vidx_1st + j]->DamgdNormPos.x += mesh->parts[idx2]->PartPos.x;
+      // mesh->vertices[vidx_1st + j]->DamgdNormPos.y += mesh->parts[idx2]->PartPos.y;
+      // mesh->vertices[vidx_1st + j]->DamgdNormPos.z += mesh->parts[idx2]->PartPos.z;
       old_global_to_new_global_idxs[mesh->parts[idx2]->PVertices[i]] = vidx_1st + j;
 
       ++j;
