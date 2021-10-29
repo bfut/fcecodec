@@ -1,7 +1,5 @@
 """
-  ci-smoketest.py - smoke-testing fcecodec module
-
-  NOTE: module should be built with setup.py build|install
+  ci-smoketest.py - smoke-testing extension module
 
   This file is distributed under: CC BY-SA 4.0
       <https://creativecommons.org/licenses/by-sa/4.0/>
@@ -18,6 +16,7 @@ import os
 import pathlib
 import platform
 import sys
+import time
 
 
 # tracemalloc -- BEGIN ---------------------------------------------------------
@@ -69,22 +68,25 @@ except ModuleNotFoundError:
 
 
 # --------------------------------------
-filepath_fce_input = pathlib.Path(pathlib.Path(__file__).parent / 'fce/Snowman_car.fce')
-filepath_fce3_output  = pathlib.Path(pathlib.Path(__file__).parent / '.out/ci-smoketest.fce')
-filepath_fce4_output  = pathlib.Path(pathlib.Path(__file__).parent / '.out/ci-smoketest.fce4')
-filepath_fce4m_output = pathlib.Path(pathlib.Path(__file__).parent / '.out/ci-smoketest.fce4m')
+script_path = pathlib.Path(__file__).parent
+filepath_fce_input = pathlib.Path(script_path / 'fce/Snowman_car.fce')
+filepath_fce3_output  = pathlib.Path(script_path / '.out/ci-smoketest3.fce')
+filepath_fce4_output  = pathlib.Path(script_path / '.out/ci-smoketest4.fce')
+filepath_fce4m_output = pathlib.Path(script_path / '.out/ci-smoketest4m.fce')
 
-filepath_obj_output = pathlib.Path(pathlib.Path(__file__).parent / '.out/ci-smoketest.obj')
-filepath_mtl_output = pathlib.Path(pathlib.Path(__file__).parent / '.out/ci-smoketest.mtl')
+filepath_obj_output = pathlib.Path(script_path / '.out/ci-smoketest.obj')
+filepath_mtl_output = pathlib.Path(script_path / '.out/ci-smoketest.mtl')
 objtexname = 'car00_Snowman.png'
 
 try:
-    os.mkdir(pathlib.Path(pathlib.Path(__file__).parent / '.out'))
+    os.mkdir(pathlib.Path(script_path / '.out'))
 except FileExistsError:
     None
 
+del script_path
 
-# --------------------------------------
+
+# -------------------------------------- import python wrappers
 sys.path.append(str( pathlib.Path(pathlib.Path(__file__).parent / "../python/").resolve()))
 from fcecodec_mywrappers import *
 
@@ -100,19 +102,23 @@ tracemalloc.start()
 # tracemalloc -- END -----------------------------------------------------------
 
 
-# --------------------------------------
+# -------------------------------------- smoketest
 PrintFceInfo(filepath_fce_input)
 print(flush = True)
-
 mesh = fcecodec.Mesh()
 print(mesh, type(mesh), flush = True)
+
+start = time.time()
 mesh = LoadFce(mesh, filepath_fce_input)
-mesh.Info()
+print(time.time() - start, flush=True)
+mesh.PrintInfo()
 print(flush = True)
 
+start = time.time()
 WriteFce(3, mesh, filepath_fce3_output)
-# WriteFce(4, mesh, filepath_fce4_output)
-# WriteFce("4m", mesh, filepath_fce4m_output)
+print(time.time() - start, flush=True)
+WriteFce(4, mesh, filepath_fce4_output)
+WriteFce("4m", mesh, filepath_fce4m_output)
 ExportObj(mesh,
           filepath_obj_output, filepath_mtl_output, objtexname,
           print_damage=0, print_dummies=0)
@@ -120,6 +126,8 @@ del mesh
 print(flush = True)
 
 PrintFceInfo(filepath_fce3_output)
+PrintFceInfo(filepath_fce4_output)
+PrintFceInfo(filepath_fce4m_output)
 
 print("EOF ci-smoketest.py", flush = True)
 
