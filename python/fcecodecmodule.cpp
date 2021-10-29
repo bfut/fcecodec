@@ -21,16 +21,14 @@
   - to cwd
       python setup.py build
   - install
-      python setup.py install
+      python -m pip install -e .
  **/
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
 
-//#include <algorithm>
 #include <array>
-#include <climits>  // INT_MAX
 #include <cstdio>
 #include <cstring>
 #include <utility>  // std::move
@@ -54,8 +52,8 @@ namespace py = pybind11;
 
 class Mesh : public fcelib::FcelibMesh {
   public:
-    Mesh() : mesh_(*this) { fcelib::FCELIB_InitMesh(&mesh_); printf("Mesh()\n"); }
-    ~Mesh() { fcelib::FCELIB_FreeMesh(&mesh_); printf("~Mesh()\n");}
+    Mesh() : mesh_(*this) { fcelib::FCELIB_InitMesh(&mesh_); }
+    ~Mesh() { fcelib::FCELIB_FreeMesh(&mesh_); }
 
     // Internal
     fcelib::FcelibMesh *Get_mesh_() { return &mesh_; }
@@ -110,6 +108,8 @@ class Mesh : public fcelib::FcelibMesh {
     py::buffer GetTriagsFlags_numpy(const int pid) const;
     void SetTriagsFlags(const int pid, std::vector<int> &arr);
     void SetTriagsFlags_numpy(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr);
+    py::buffer PGetTriagsTexcoords_numpy(const int pid) const;
+    void PSetTriagsTexcoords_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr);
     std::vector<int> GetTriagsTexpages(const int pid) const;
     py::buffer GetTriagsTexpages_numpy(const int pid) const;
     void SetTriagsTexpages(const int pid, std::vector<int> &arr);
@@ -159,8 +159,6 @@ class Mesh : public fcelib::FcelibMesh {
 
 void Mesh::Decode(const std::string &buf)
 {
-  if (buf.size() > static_cast<std::size_t>(INT_MAX))
-    throw std::runtime_error("Decode: Invalid buffer size (expects <= INT_MAX)");
   fcelib::FCELIB_FreeMesh(&mesh_);
   fcelib::FCELIB_InitMesh(&mesh_);
   if (!fcelib::FCELIB_DecodeFce(buf.c_str(), buf.size(), &mesh_))
@@ -182,8 +180,6 @@ py::bytes Mesh::Encode_Fce3(const bool center_parts) const
 
 py::bytes Mesh::Encode_Fce4(const bool center_parts) const
 {
-  py::print("Warning: fcelib::FCELIB_EncodeFce4() not yet implemented");
-
   const int bufsize_ = fcelib::FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, mesh_.hdr.NumVertices, mesh_.hdr.NumTriangles);
   unsigned char *buf_ = (unsigned char *)malloc(static_cast<std::size_t>(bufsize_) * sizeof(*buf_));
   if (!buf_)
@@ -197,8 +193,6 @@ py::bytes Mesh::Encode_Fce4(const bool center_parts) const
 
 py::bytes Mesh::Encode_Fce4M(const bool center_parts) const
 {
-  py::print("Warning: Encode_Fce4M: experimental, untested, unsupported");
-
   const int bufsize_ = fcelib::FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, mesh_.hdr.NumVertices, mesh_.hdr.NumTriangles);
   unsigned char *buf_ = (unsigned char *)malloc(static_cast<std::size_t>(bufsize_) * sizeof(*buf_));
   if (!buf_)
@@ -651,6 +645,72 @@ void Mesh::SetTriagsFlags_numpy(const int pid, py::array_t<int, py::array::c_sty
 }
 
 
+py::buffer Mesh::PGetTriagsTexcoords_numpy(const int pid) const
+{
+  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+    std::runtime_error("PGetTriagsTexcoords_numpy: failure");
+  if (pid < 0 || pid >= mesh_.hdr.NumParts)
+    throw std::range_error("PGetTriagsTexcoords_numpy: pid");
+
+  fcelib::FcelibPart *part = mesh_.parts[ mesh_.hdr.Parts[fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid)] ];
+
+  const py::ssize_t nrows = static_cast<py::ssize_t>(part->PNumTriangles);
+  py::array_t<float> result = py::array_t<float>({ nrows * 6 }, {  });
+  auto buf = result.mutable_unchecked<>();
+  fcelib::FcelibTriangle *triag;
+
+  // i - global triag index, j - global triag order
+  py::ssize_t j = 0;
+  for (int i = 0; i < part->ptriangles_len && j < nrows; ++i)
+  {
+    if (part->PTriangles[i] < 0)
+      continue;
+    triag = mesh_.triangles[ part->PTriangles[i] ];
+    memcpy(&buf(j * 6 + 0), &triag->U, sizeof(triag->U));
+    memcpy(&buf(j * 6 + 3), &triag->V, sizeof(triag->U));
+    // memcpy(&buf(j * 6 + 0), &triag->U[0], sizeof(triag->U[0]));
+    // memcpy(&buf(j * 6 + 1), &triag->U[1], sizeof(triag->U[1]));
+    // memcpy(&buf(j * 6 + 2), &triag->U[2], sizeof(triag->U[2]));
+    // memcpy(&buf(j * 6 + 3), &triag->V[0], sizeof(triag->V[0]));
+    // memcpy(&buf(j * 6 + 4), &triag->V[1], sizeof(triag->V[1]));
+    // memcpy(&buf(j * 6 + 5), &triag->V[2], sizeof(triag->V[2]));
+    ++j;
+  }
+
+  return std::move(result);
+}
+void Mesh::PSetTriagsTexcoords_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr)
+{
+  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+    std::runtime_error("PSetTriagsTexcoords_numpy: failure");
+  if (pid < 0 || pid >= mesh_.hdr.NumParts)
+    throw std::range_error("PSetTriagsTexcoords_numpy: pid");
+  fcelib::FcelibPart *part = mesh_.parts[ mesh_.hdr.Parts[fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid)] ];
+
+  const py::ssize_t nrows = static_cast<py::ssize_t>(part->PNumTriangles);
+  py::buffer_info buf = arr.request();
+  if (buf.ndim != 1)
+    throw std::runtime_error("Number of dimensions must be 1");
+  if (buf.shape[0] != nrows * 6)
+    throw std::runtime_error("Shape must be (N*6, ) for N triangles");
+  fcelib::FcelibTriangle *triag;
+
+  float *ptr = static_cast<float *>(buf.ptr);
+  // i - global triag index, j - global triag order
+  py::ssize_t j = 0;
+  for (int i = 0; i < part->ptriangles_len && j < nrows; ++i)
+  {
+    if (part->PTriangles[i] < 0)
+      continue;
+    triag = mesh_.triangles[ part->PTriangles[i] ];
+    memcpy(triag->U, ptr + j * 6 + 0, sizeof(triag->U));
+    memcpy(triag->V, ptr + j * 6 + 3, sizeof(triag->V));
+    // mesh_.triangles[ part->PTriangles[i] ]->flag = ptr[j];
+    ++j;
+  }
+}
+
+
 std::vector<int> Mesh::GetTriagsTexpages(const int pid) const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
@@ -756,8 +816,8 @@ std::vector<int> Mesh::GetVertsMap_idx2order() const
   std::vector<int> result = std::vector<int>(static_cast<std::size_t>(mesh_.vertices_len), -1);
   int *ptr = result.data();
   fcelib::FcelibPart *part;
-  // i - global vert index, j - global vert order
-  int i = 0;
+  /* part->PVertices[m] - global vert index, j - global vert order */
+  memset(ptr, -1, static_cast<std::size_t>(mesh_.vertices_len) * sizeof(int));
   int j = 0;
   for (int k = 0; k < mesh_.parts_len; ++k)
   {
@@ -765,13 +825,13 @@ std::vector<int> Mesh::GetVertsMap_idx2order() const
       continue;
     part = mesh_.parts[ mesh_.hdr.Parts[k] ];
 
-    for (int m = 0; m < part->pvertices_len; ++m, ++i)
+    for (int m = 0; m < part->pvertices_len; ++m)
     {
       if(part->PVertices[m] < 0)
         continue;
-      ptr[i] = j;
+      ptr[ part->PVertices[m] ] = j;
       ++j;
-    }  // for i
+    }  // for m
   }  // for k
 
   return result;
@@ -782,10 +842,11 @@ py::buffer Mesh::GetVertsMap_idx2order_numpy() const
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
     std::runtime_error("GetVertsMap_idx2order_numpy: failure");
   py::array_t<int> result = py::array_t<int>({ static_cast<py::ssize_t>(mesh_.vertices_len) }, {  });
-  auto buf = result.mutable_unchecked<>();
+  auto buf = result.request();
+  int *ptr = static_cast<int *>(buf.ptr);
   fcelib::FcelibPart *part;
-  // i - global vert index, j - global vert order
-  int i = 0;
+  /* part->PVertices[m] - global vert index, j - global vert order */
+  memset(ptr, -1, static_cast<std::size_t>(mesh_.vertices_len) * sizeof(int));
   int j = 0;
   for (int k = 0; k < mesh_.parts_len; ++k)
   {
@@ -793,13 +854,13 @@ py::buffer Mesh::GetVertsMap_idx2order_numpy() const
       continue;
     part = mesh_.parts[ mesh_.hdr.Parts[k] ];
 
-    for (int m = 0; m < part->pvertices_len; ++m, ++i)
+    for (int m = 0; m < part->pvertices_len; ++m)
     {
       if(part->PVertices[m] < 0)
         continue;
-      buf(i) = j;
+      ptr[ part->PVertices[m] ] = j;
       ++j;
-    }  // for i
+    }  // for m
   }  // for k
 
   return std::move(result);
@@ -1483,8 +1544,6 @@ int Mesh::MovePart(const int pid)
 void FCECODECMODULE_PrintFceInfo(const std::string &buf)
 {
   const std::size_t size = buf.size();
-  if (size > static_cast<std::size_t>(INT_MAX))
-    throw std::runtime_error("PrintFceInfo: Invalid buffer size (expects <= INT_MAX)");
   if (size < 0x1F04)
     throw std::runtime_error("PrintFceInfo: Invalid buffer size (expects >= 0x1F04)");
   fcelib::FCELIB_PrintFceInfo(size, std::move(buf.c_str()));
@@ -1493,8 +1552,6 @@ void FCECODECMODULE_PrintFceInfo(const std::string &buf)
 /* fcecodec. */
 int FCECODECMODULE_ValidateFce(const std::string &buf)
 {
-  if (buf.size() > static_cast<std::size_t>(INT_MAX))
-    throw std::runtime_error("ValidateFce: Invalid buffer size (expects <= INT_MAX)");
   return fcelib::FCELIB_ValidateFce(buf.c_str(), buf.size());
 }
 
@@ -1511,71 +1568,73 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
   py::class_<Mesh>(fcecodec_module, "Mesh", py::buffer_protocol())
     .def(py::init<>())
 
-    .def("Valid", &Mesh::Valid)
+    .def("MValid", &Mesh::Valid)
 
-    .def("Info", &Mesh::Info)
+    .def("PrintInfo", &Mesh::Info)
     .def("PrintParts", &Mesh::PrintParts)
     .def("PrintTriags", &Mesh::PrintTriags)
     .def("PrintVerts", &Mesh::PrintVerts)
-    .def_property_readonly("num_parts", &Mesh::num_parts)
-    .def_property_readonly("num_triags", &Mesh::num_triags)
-    .def_property_readonly("num_verts", &Mesh::num_verts)
+    .def_property_readonly("MNumParts", &Mesh::num_parts)
+    .def_property_readonly("MNumTriags", &Mesh::num_triags)
+    .def_property_readonly("MNumVerts", &Mesh::num_verts)
 
-    .def("Decode", &Mesh::Decode)
-    .def("Encode_Fce3", &Mesh::Encode_Fce3, py::arg("center_parts") = true)
-    .def("Encode_Fce4", &Mesh::Encode_Fce4, py::arg("center_parts") = true)  // TODO: implement
-    .def("Encode_Fce4M", &Mesh::Encode_Fce4M, py::arg("center_parts") = true)
-    .def("ExportObj", &Mesh::ExportObj, py::arg("objpath"), py::arg("mtlpath"), py::arg("texname"), py::arg("print_damage") = 0, py::arg("print_dummies") = 0)  // TODO: test
-    .def("GeomDataToNewPart", &Mesh::GeomDataToNewPart,  // TODO: test, doc
-      py::arg("vert_idxs"), /*py::arg("triangles_flags"),*/ py::arg("vert_texcoords"),
-      py::arg("vert_pos"), py::arg("normals"))
+    .def("IoDecode", &Mesh::Decode)
+    .def("IoEncode_Fce3", &Mesh::Encode_Fce3, py::arg("center_parts") = true)
+    .def("IoEncode_Fce4", &Mesh::Encode_Fce4, py::arg("center_parts") = true)
+    .def("IoEncode_Fce4M", &Mesh::Encode_Fce4M, py::arg("center_parts") = true)
+    .def("IoExportObj", &Mesh::ExportObj, py::arg("objpath"), py::arg("mtlpath"), py::arg("texname"), py::arg("print_damage") = 0, py::arg("print_dummies") = 0)  // TODO: test
+    .def("IoGeomDataToNewPart", &Mesh::GeomDataToNewPart,
+      py::arg("vert_idxs"), /*py::arg("triangles_flags"),*/ py::arg("vert_texcoords"), py::arg("vert_pos"), py::arg("normals"),
+      R"pbdoc( vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz... )pbdoc")
 
-    .def("GetColors", &Mesh::GetColors)
-    .def("SetColors", &Mesh::SetColors, py::arg("colors"), R"pbdoc( Expects shape=(N, 4, 4) )pbdoc")
-    .def("GetDummyNames", &Mesh::GetDummyNames)
-    .def("SetDummyNames", &Mesh::SetDummyNames, py::arg("names"))
-    .def("GetDummyPos", &Mesh::GetDummyPos)
-    .def("SetDummyPos", &Mesh::SetDummyPos, py::arg("positions"), R"pbdoc( Expects shape (N*3, ) for N dummies )pbdoc")
+    .def("MGetColors", &Mesh::GetColors)
+    .def("MSetColors", &Mesh::SetColors, py::arg("colors"), R"pbdoc( Expects shape=(N, 4, 4) )pbdoc")
+    .def("MGetDummyNames", &Mesh::GetDummyNames)
+    .def("MSetDummyNames", &Mesh::SetDummyNames, py::arg("names"))
+    .def("MGetDummyPos", &Mesh::GetDummyPos)
+    .def("MSetDummyPos", &Mesh::SetDummyPos, py::arg("positions"), R"pbdoc( Expects shape (N*3, ) for N dummies )pbdoc")
 
     .def("PNumTriags", &Mesh::PNumTriags, py::arg("pid"))
     .def("PNumVerts", &Mesh::PNumVerts, py::arg("pid"))
 
-    .def("GetPartName", &Mesh::GetPartName, py::arg("pid"))
-    .def("SetPartName", &Mesh::SetPartName, py::arg("pid"), py::arg("name"))
-    .def("GetPartPos", &Mesh::GetPartPos, py::arg("pid"))
-    .def("SetPartPos", &Mesh::SetPartPos, py::arg("pid"), py::arg("pos"))
+    .def("PGetName", &Mesh::GetPartName, py::arg("pid"))
+    .def("PSetName", &Mesh::SetPartName, py::arg("pid"), py::arg("name"))
+    .def("PGetPos", &Mesh::GetPartPos, py::arg("pid"))
+    .def("PSetPos", &Mesh::SetPartPos, py::arg("pid"), py::arg("pos"))
 
-    .def("GetTriagsVidx", &Mesh::GetTriagsVidx, R"pbdoc( Returns (N*3, ) array of global vert indexes for N triangles. )pbdoc")
-    .def("GetTriagsVidx_numpy", &Mesh::GetTriagsVidx_numpy, R"pbdoc( Returns (N*3, ) numpy array of global vert indexes for N triangles. )pbdoc")
-    /* SetTriagsVidx() is not in scope */
-    .def("GetTriagsFlags", &Mesh::GetTriagsFlags)
-    .def("GetTriagsFlags_numpy", &Mesh::GetTriagsFlags_numpy)
-    .def("SetTriagsFlags", &Mesh::SetTriagsFlags, R"pbdoc( Expects (N, ) array for N triangles )pbdoc")
-    .def("SetTriagsFlags_numpy", &Mesh::SetTriagsFlags_numpy, R"pbdoc( Expects (N, ) numpy array for N triangles )pbdoc")
-    .def("GetTriagsTexpages", &Mesh::GetTriagsTexpages)
-    .def("GetTriagsTexpages_numpy", &Mesh::GetTriagsTexpages_numpy)
-    .def("SetTriagsTexpages", &Mesh::SetTriagsTexpages, R"pbdoc( Expects (N, ) array for N triangles )pbdoc")
-    .def("SetTriagsTexpages_numpy", &Mesh::SetTriagsTexpages_numpy, R"pbdoc( Expects (N, ) numpy array for N triangles )pbdoc")
+    .def("PGetTriagsVidx", &Mesh::GetTriagsVidx, py::arg("pid"), R"pbdoc( Returns (N*3, ) array of global vert indexes for N triangles. )pbdoc")
+    .def("PGetTriagsVidx_numpy", &Mesh::GetTriagsVidx_numpy, py::arg("pid"), R"pbdoc( Returns (N*3, ) numpy array of global vert indexes for N triangles. )pbdoc")
+    /* PSetTriagsVidx() is not in scope */
+    .def("PGetTriagsFlags", &Mesh::GetTriagsFlags, py::arg("pid"))
+    .def("PGetTriagsFlags_numpy", &Mesh::GetTriagsFlags_numpy, py::arg("pid"))
+    .def("PSetTriagsFlags", &Mesh::SetTriagsFlags, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) array for N triangles )pbdoc")
+    .def("PSetTriagsFlags_numpy", &Mesh::SetTriagsFlags_numpy, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) numpy array for N triangles )pbdoc")
+    .def("PGetTriagsTexcoords_numpy", &Mesh::PGetTriagsTexcoords_numpy, py::arg("pid"))
+    .def("PSetTriagsTexcoords_numpy", &Mesh::PSetTriagsTexcoords_numpy, py::arg("pid"), py::arg("arr"), R"pbdoc( arr: uuuvvv..., Expects (N*6, ) numpy array for N triangles. )pbdoc")
+    .def("PGetTriagsTexpages", &Mesh::GetTriagsTexpages, py::arg("pid"))
+    .def("PGetTriagsTexpages_numpy", &Mesh::GetTriagsTexpages_numpy, py::arg("pid"))
+    .def("PSetTriagsTexpages", &Mesh::SetTriagsTexpages, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) array for N triangles )pbdoc")
+    .def("PSetTriagsTexpages_numpy", &Mesh::SetTriagsTexpages_numpy, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) numpy array for N triangles )pbdoc")
 
-    .def("GetVertsMap_idx2order", &Mesh::GetVertsMap_idx2order, R"pbdoc( Maps from global vert indexes (contained in triangles) to global vertex order. )pbdoc")
-    .def("GetVertsMap_idx2order_numpy", &Mesh::GetVertsMap_idx2order_numpy, R"pbdoc( Maps from global vert indexes (contained in triangles) to global vertex order. )pbdoc")
-    .def_property("VertsPos", &Mesh::GetVertsPos, &Mesh::SetVertsPos, R"pbdoc( Local vertice positions. Returns (N*3, ) array for N vertices. )pbdoc")
-    .def_property("VertsPos_numpy", &Mesh::GetVertsPos_numpy, &Mesh::SetVertsPos_numpy, R"pbdoc( Local vertice positions. Returns (N*3, ) numpy array for N vertices. )pbdoc")
-    .def_property("VertsNorms", &Mesh::GetVertsNorms, &Mesh::SetVertsNorms, R"pbdoc( Returns (N*3, ) array for N vertices. )pbdoc")
-    .def_property("VertsNorms_numpy", &Mesh::GetVertsNorms_numpy, &Mesh::SetVertsNorms_numpy, R"pbdoc( Returns (N*3, ) numpy array for N vertices. )pbdoc")
-    .def_property("DamgdVertsPos", &Mesh::GetDamgdVertsPos, &Mesh::SetDamgdVertsPos, R"pbdoc( Local vertice positions. Returns (N*3, ) array for N vertices. )pbdoc")
-    .def_property("DamgdVertsPos_numpy", &Mesh::GetDamgdVertsPos_numpy, &Mesh::SetDamgdVertsPos_numpy, R"pbdoc( Local vertice positions. Returns (N*3, ) numpy array for N vertices. )pbdoc")
-    .def_property("DamgdVertsNorms", &Mesh::GetDamgdVertsNorms, &Mesh::SetDamgdVertsNorms, R"pbdoc( Returns (N*3, ) array for N vertices. )pbdoc")
-    .def_property("DamgdVertsNorms_numpy", &Mesh::GetDamgdVertsNorms_numpy, &Mesh::SetDamgdVertsNorms_numpy, R"pbdoc( Returns (N*3, ) numpy array for N vertices. )pbdoc")
-    .def_property("VertsAnimation", &Mesh::GetVertsAnimation, &Mesh::SetVertsAnimation, R"pbdoc( Returns (N, ) array for N vertices. )pbdoc")
-    .def_property("VertsAnimation_numpy", &Mesh::GetVertsAnimation_numpy, &Mesh::SetVertsAnimation_numpy, R"pbdoc( Returns (N, ) numpy array for N vertices. )pbdoc")
+    .def_property_readonly("MVertsGetMap_idx2order", &Mesh::GetVertsMap_idx2order, R"pbdoc( Maps from global vert indexes (contained in triangles) to global vertex order. )pbdoc")
+    .def_property_readonly("MVertsGetMap_idx2order_numpy", &Mesh::GetVertsMap_idx2order_numpy, R"pbdoc( Maps from global vert indexes (contained in triangles) to global vertex order. )pbdoc")
+    .def_property("MVertsPos", &Mesh::GetVertsPos, &Mesh::SetVertsPos, R"pbdoc( Local vertice positions. Returns (N*3, ) array for N vertices. )pbdoc")
+    .def_property("MVertsPos_numpy", &Mesh::GetVertsPos_numpy, &Mesh::SetVertsPos_numpy, R"pbdoc( Local vertice positions. Returns (N*3, ) numpy array for N vertices. )pbdoc")
+    .def_property("MVertsNorms", &Mesh::GetVertsNorms, &Mesh::SetVertsNorms, R"pbdoc( Returns (N*3, ) array for N vertices. )pbdoc")
+    .def_property("MVertsNorms_numpy", &Mesh::GetVertsNorms_numpy, &Mesh::SetVertsNorms_numpy, R"pbdoc( Returns (N*3, ) numpy array for N vertices. )pbdoc")
+    .def_property("MVertsDamgdPos", &Mesh::GetDamgdVertsPos, &Mesh::SetDamgdVertsPos, R"pbdoc( Local vertice positions. Returns (N*3, ) array for N vertices. )pbdoc")
+    .def_property("MVertsDamgdPos_numpy", &Mesh::GetDamgdVertsPos_numpy, &Mesh::SetDamgdVertsPos_numpy, R"pbdoc( Local vertice positions. Returns (N*3, ) numpy array for N vertices. )pbdoc")
+    .def_property("MVertsDamgdNorms", &Mesh::GetDamgdVertsNorms, &Mesh::SetDamgdVertsNorms, R"pbdoc( Returns (N*3, ) array for N vertices. )pbdoc")
+    .def_property("MVertsDamgdNorms_numpy", &Mesh::GetDamgdVertsNorms_numpy, &Mesh::SetDamgdVertsNorms_numpy, R"pbdoc( Returns (N*3, ) numpy array for N vertices. )pbdoc")
+    .def_property("MVertsAnimation", &Mesh::GetVertsAnimation, &Mesh::SetVertsAnimation, R"pbdoc( Returns (N, ) array for N vertices. )pbdoc")
+    .def_property("MVertsAnimation_numpy", &Mesh::GetVertsAnimation_numpy, &Mesh::SetVertsAnimation_numpy, R"pbdoc( Returns (N, ) numpy array for N vertices. )pbdoc")
 
-    .def("CenterPart", &Mesh::CenterPart, py::arg("pid"), R"pbdoc( Center specified part pos to local centroid. )pbdoc")
-    .def("InsertPart", &Mesh::InsertPart, py::arg("mesh_src"), py::arg("pid_src"), R"pbdoc( Insert (copy) specified part from mesh_src. Returns new part index. )pbdoc")
-    .def("DeletePart", &Mesh::DeletePart, py::arg("pid"))
-    .def("DelPartTriags", &Mesh::DelPartTriags, py::arg("pid"), py::arg("idxs"))
-    .def("DelUnrefdVerts", &Mesh::DelUnrefdVerts, R"pbdoc( Delete vertices that are not referenced by any triangle. )pbdoc")
-    .def("MergeParts", &Mesh::MergeParts, py::arg("pid1"), py::arg("pid2"), R"pbdoc( Returns new part index. )pbdoc")
-    .def("MovePart", &Mesh::MovePart, py::arg("pid"), R"pbdoc( Move up specified part towards order 0. Returns new part index. )pbdoc")
+    .def("OpCenterPart", &Mesh::CenterPart, py::arg("pid"), R"pbdoc( Center specified part vertices positions to local centroid. )pbdoc")
+    .def("OpInsertPart", &Mesh::InsertPart, py::arg("mesh_src"), py::arg("pid_src"), R"pbdoc( Insert (copy) specified part from mesh_src. Returns new part index. )pbdoc")
+    .def("OpDeletePart", &Mesh::DeletePart, py::arg("pid"))
+    .def("OpDelPartTriags", &Mesh::DelPartTriags, py::arg("pid"), py::arg("idxs"))
+    .def("OpDelUnrefdVerts", &Mesh::DelUnrefdVerts, R"pbdoc( Delete all vertices that are not referenced by any triangle. )pbdoc")
+    .def("OpMergeParts", &Mesh::MergeParts, py::arg("pid1"), py::arg("pid2"), R"pbdoc( Returns new part index. )pbdoc")
+    .def("OpMovePart", &Mesh::MovePart, py::arg("pid"), R"pbdoc( Move up specified part towards order 0. Returns new part index. )pbdoc")
     ;
 }

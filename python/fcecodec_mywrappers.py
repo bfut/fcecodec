@@ -1,7 +1,5 @@
 """
-  fcecodec_mywrappers.py - python wrappers for fcecodec i/o functions
-
-  NOTE: module should be built with setup.py build|install
+  fcecodec_mywrappers.py - wrapping i/o functions etc.
 
   This file is distributed under: CC BY-SA 4.0
       <https://creativecommons.org/licenses/by-sa/4.0/>
@@ -14,6 +12,7 @@
 """
 
 import fcecodec
+import numpy as np
 
 def PrintFceInfo(path):
     with open(path, "rb") as f:
@@ -27,21 +26,39 @@ def LoadFce(mesh, path):
     with open(path, "rb") as f:
         fce_buf = f.read()
     assert(fcecodec.ValidateFce(fce_buf) == 1)
-    mesh.Decode(fce_buf)
-    assert(mesh.Valid() == True)
+    mesh.IoDecode(fce_buf)
+    assert(mesh.MValid() == True)
     return mesh
 
-def WriteFce(version, mesh, path):
+def WriteFce(version, mesh, path, center_parts = 1):
     with open(path, "wb") as f:
         if version == 3:
-            buf = mesh.Encode_Fce3()
+            buf = mesh.IoEncode_Fce3(center_parts)
         elif version == 4:
-            buf = mesh.Encode_Fce4()
+            buf = mesh.IoEncode_Fce4()
         else:
-            buf = mesh.Encode_Fce4M()
-        assert(fcecodec.ValidateFce( buf ) == 1)
+            buf = mesh.IoEncode_Fce4M()
+        assert(fcecodec.ValidateFce(buf) == 1)
         f.write(buf)
 
 def ExportObj(mesh, objpath, mtlpath, texname, print_damage, print_dummies):
-#    print("ExportObj(", mesh, objpath, mtlpath, texname, print_damage, print_dummies, ")")
-    mesh.ExportObj(str(objpath), str(mtlpath), texname, print_damage, print_dummies)
+#    print("IoExportObj(", mesh, objpath, mtlpath, texname, print_damage, print_dummies, ")")
+    mesh.IoExportObj(str(objpath), str(mtlpath), texname, print_damage, print_dummies)
+
+def GetPartNames(mesh):
+    part_names = np.empty(shape=(mesh.MNumParts, ), dtype='U64')
+    for i in range(mesh.MNumParts):
+        part_names[i] = mesh.PGetName(i)
+        i += 1
+    return part_names
+
+def GetPartIdxFromName(mesh, p_name):
+    retv = -1
+    pid = -1
+    for name in GetPartNames(mesh):
+        pid += 1
+        if p_name == name:
+            retv = pid
+            break
+    if retv < 0: print("GetPartIdxFromName: Warning: cannot find p_name")
+    return retv
