@@ -35,9 +35,9 @@ def WriteFce(version, mesh, path, center_parts = 1):
         if version == 3:
             buf = mesh.IoEncode_Fce3(center_parts)
         elif version == 4:
-            buf = mesh.IoEncode_Fce4()
+            buf = mesh.IoEncode_Fce4(center_parts)
         else:
-            buf = mesh.IoEncode_Fce4M()
+            buf = mesh.IoEncode_Fce4M(center_parts)
         assert(fcecodec.ValidateFce(buf) == 1)
         f.write(buf)
 
@@ -46,6 +46,9 @@ def ExportObj(mesh, objpath, mtlpath, texname, print_damage, print_dummies):
     mesh.IoExportObj(str(objpath), str(mtlpath), texname, print_damage, print_dummies)
 
 def GetPartNames(mesh):
+    # part_names = []
+    # for i in range(mesh.MNumParts):
+    #     part_names += mesh.PGetName(i)
     part_names = np.empty(shape=(mesh.MNumParts, ), dtype='U64')
     for i in range(mesh.MNumParts):
         part_names[i] = mesh.PGetName(i)
@@ -62,3 +65,11 @@ def GetPartIdxFromName(mesh, p_name):
             break
     if retv < 0: print("GetPartIdxFromName: Warning: cannot find p_name")
     return retv
+
+def GetPartGlobalOrderVidxs(mesh, pid):
+    map = mesh.MVertsGetMap_idx2order_numpy
+    part_vidxs = mesh.PGetTriagsVidx_numpy(pid)
+    for i in range(part_vidxs.shape[0]):
+        # print(part_vidxs[i], map[part_vidxs[i]])
+        part_vidxs[i] = map[part_vidxs[i]]
+    return np.unique(part_vidxs)

@@ -17,7 +17,7 @@ Install `fcecodec`
         git clone https://github.com/bfut/fcecodec.git
         python -m pip install -e fcecodec/python
 
-### Windows
+#### Windows
 `Microsoft Visual Studio` has to be installed. For a detailed description,
 see the _Prerequisites_ section on
 [microsoft.com: C++ extensions for Python](https://docs.microsoft.com/en-us/visualstudio/python/working-with-c-cpp-python-in-visual-studio?view=vs-2019#prerequisites)
@@ -66,8 +66,16 @@ CLASSES
      |      
      |      vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz...
      |  
+     |  IoGeomDataToNewPart_numpy(...)
+     |      IoGeomDataToNewPart_numpy(self: fcecodec.Mesh, vert_idxs: numpy.ndarray[numpy.int32], vert_texcoords: numpy.ndarray[numpy.float32], vert_pos: numpy.ndarray[numpy.float32], normals: numpy.ndarray[numpy.float32]) -> int
+     |      
+     |      vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz...
+     |  
      |  MGetColors(...)
      |      MGetColors(self: fcecodec.Mesh) -> buffer
+     |  
+     |  MGetColors_numpy(...)
+     |      MGetColors_numpy(self: fcecodec.Mesh) -> buffer
      |  
      |  MGetDummyNames(...)
      |      MGetDummyNames(self: fcecodec.Mesh) -> List[str]
@@ -75,8 +83,16 @@ CLASSES
      |  MGetDummyPos(...)
      |      MGetDummyPos(self: fcecodec.Mesh) -> buffer
      |  
+     |  MGetDummyPos_numpy(...)
+     |      MGetDummyPos_numpy(self: fcecodec.Mesh) -> buffer
+     |  
      |  MSetColors(...)
      |      MSetColors(self: fcecodec.Mesh, colors: numpy.ndarray[numpy.uint8]) -> None
+     |      
+     |      Expects shape=(N, 4, 4)
+     |  
+     |  MSetColors_numpy(...)
+     |      MSetColors_numpy(self: fcecodec.Mesh, colors: numpy.ndarray[numpy.uint8]) -> None
      |      
      |      Expects shape=(N, 4, 4)
      |  
@@ -85,6 +101,11 @@ CLASSES
      |  
      |  MSetDummyPos(...)
      |      MSetDummyPos(self: fcecodec.Mesh, positions: numpy.ndarray[numpy.float32]) -> None
+     |      
+     |      Expects shape (N*3, ) for N dummies
+     |  
+     |  MSetDummyPos_numpy(...)
+     |      MSetDummyPos_numpy(self: fcecodec.Mesh, positions: numpy.ndarray[numpy.float32]) -> None
      |      
      |      Expects shape (N*3, ) for N dummies
      |  
@@ -128,6 +149,9 @@ CLASSES
      |  PGetPos(...)
      |      PGetPos(self: fcecodec.Mesh, pid: int) -> List[float[3]]
      |  
+     |  PGetPos_numpy(...)
+     |      PGetPos_numpy(self: fcecodec.Mesh, pid: int) -> buffer
+     |  
      |  PGetTriagsFlags(...)
      |      PGetTriagsFlags(self: fcecodec.Mesh, pid: int) -> List[int]
      |  
@@ -136,6 +160,8 @@ CLASSES
      |  
      |  PGetTriagsTexcoords_numpy(...)
      |      PGetTriagsTexcoords_numpy(self: fcecodec.Mesh, pid: int) -> buffer
+     |      
+     |      uuuvvv..., Returns (N*6, ) numpy array for N triangles.
      |  
      |  PGetTriagsTexpages(...)
      |      PGetTriagsTexpages(self: fcecodec.Mesh, pid: int) -> List[int]
@@ -164,6 +190,9 @@ CLASSES
      |  
      |  PSetPos(...)
      |      PSetPos(self: fcecodec.Mesh, pid: int, pos: List[float[3]]) -> None
+     |  
+     |  PSetPos_numpy(...)
+     |      PSetPos_numpy(self: fcecodec.Mesh, pid: int, pos: numpy.ndarray[numpy.float32]) -> None
      |  
      |  PSetTriagsFlags(...)
      |      PSetTriagsFlags(self: fcecodec.Mesh, pid: int, arr: List[int]) -> None

@@ -78,19 +78,19 @@ class Mesh : public fcelib::FcelibMesh {
     void ExportObj(std::string &objpath, std::string &mtlpath,
                     std::string &texture_name,
                     const int print_damage, const int print_dummies) const;
-    int GeomDataToNewPart(py::array_t<int, py::array::c_style | py::array::forcecast> vert_idxs,
-//                          py::array_t<int, py::array::c_style | py::array::forcecast> triangles_flags,
-                          py::array_t<float, py::array::c_style | py::array::forcecast> vert_texcoords,
-                          py::array_t<float, py::array::c_style | py::array::forcecast> vert_pos,
-                          py::array_t<float, py::array::c_style | py::array::forcecast> normals);
+    int IoGeomDataToNewPart_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> vert_idxs,
+                                  // py::array_t<int, py::array::c_style | py::array::forcecast> triangles_flags,
+                                  py::array_t<float, py::array::c_style | py::array::forcecast> vert_texcoords,
+                                  py::array_t<float, py::array::c_style | py::array::forcecast> vert_pos,
+                                  py::array_t<float, py::array::c_style | py::array::forcecast> normals);
 
     /* Mesh / Header */
-    py::buffer GetColors(void) const;
-    void SetColors(py::array_t<unsigned char, py::array::c_style | py::array::forcecast> arr);
+    py::buffer MGetColors_numpy(void) const;
+    void MSetColors_numpy(py::array_t<unsigned char, py::array::c_style | py::array::forcecast> arr);
     std::vector<std::string> GetDummyNames() const;
     void SetDummyNames(std::vector<std::string> &arr);
-    py::buffer GetDummyPos(void) const;
-    void SetDummyPos(py::array_t<float, py::array::c_style | py::array::forcecast> arr);
+    py::buffer MGetDummyPos_numpy(void) const;
+    void MSetDummyPos_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr);
 
     /* Parts */
     int PNumTriags(const int pid) const;
@@ -99,7 +99,9 @@ class Mesh : public fcelib::FcelibMesh {
     const std::string GetPartName(const int pid) const;
     void SetPartName(const int pid, const std::string &s);
     const std::array<float, 3> GetPartPos(const int pid) const;
+    py::buffer GetPartPos_numpy(const int pid) const;
     void SetPartPos(const int pid, std::array<float, 3> &arr);
+    void SetPartPos_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr);
 
     /* Triags */
     std::vector<int> GetTriagsVidx(const int pid) const;
@@ -185,7 +187,7 @@ py::bytes Mesh::Encode_Fce4(const bool center_parts) const
   if (!buf_)
     throw std::runtime_error("Encode_Fce4: Cannot allocate memory");
   if (!fcelib::FCELIB_EncodeFce4(&buf_, bufsize_, &mesh_, static_cast<int>(center_parts)))
-    throw std::runtime_error("Cannot encode FCE4");
+    throw std::runtime_error("Encode_Fce4: Cannot encode FCE4");
   py::bytes result = py::bytes((char *)buf_, static_cast<std::size_t>(bufsize_));
   free(buf_);
   return result;
@@ -198,27 +200,27 @@ py::bytes Mesh::Encode_Fce4M(const bool center_parts) const
   if (!buf_)
     throw std::runtime_error("Encode_Fce4M: Cannot allocate memory");
   if (!fcelib::FCELIB_EncodeFce4M(&buf_, bufsize_, &mesh_, static_cast<int>(center_parts)))
-    throw std::runtime_error("Cannot encode FCE4M");
+    throw std::runtime_error("Encode_Fce4M: Cannot encode FCE4M");
   py::bytes result = py::bytes((char *)buf_, static_cast<std::size_t>(bufsize_));
   free(buf_);
   return result;
 }
 
 void Mesh::ExportObj(std::string &objpath, std::string &mtlpath,
-                      std::string &texture_name,
-                      const int print_damage, const int print_dummies) const
+                     std::string &texture_name,
+                     const int print_damage, const int print_dummies) const
 {
   if (fcelib::FCELIB_ExportObj(&mesh_, objpath.c_str(), mtlpath.c_str(),
                                    texture_name.c_str(),
                                    print_damage, print_dummies) == 0)
-    throw std::runtime_error("Cannot export OBJ");
+    throw std::runtime_error("ExportObj: Cannot export OBJ");
 }
 
-int Mesh::GeomDataToNewPart(py::array_t<int, py::array::c_style | py::array::forcecast> vert_idxs,
-//                            py::array_t<int, py::array::c_style | py::array::forcecast> triangles_flags,
-                            py::array_t<float, py::array::c_style | py::array::forcecast> vert_texcoords,
-                            py::array_t<float, py::array::c_style | py::array::forcecast> vert_pos,
-                            py::array_t<float, py::array::c_style | py::array::forcecast> normals)
+int Mesh::IoGeomDataToNewPart_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> vert_idxs,
+                                    // py::array_t<int, py::array::c_style | py::array::forcecast> triangles_flags,
+                                    py::array_t<float, py::array::c_style | py::array::forcecast> vert_texcoords,
+                                    py::array_t<float, py::array::c_style | py::array::forcecast> vert_pos,
+                                    py::array_t<float, py::array::c_style | py::array::forcecast> normals)
 {
   py::buffer_info tbuf = vert_idxs.request();
 //  py::buffer_info tfbuf = triangles_flags.request();
@@ -227,22 +229,22 @@ int Mesh::GeomDataToNewPart(py::array_t<int, py::array::c_style | py::array::for
   py::buffer_info vnbuf = normals.request();
 
   if (tbuf.ndim != 1)
-    throw std::runtime_error("GeomDataToNewPart: Number of dimensions must be 1 (vert_idxs)");
+    throw std::runtime_error("IoGeomDataToNewPart_numpy: Number of dimensions must be 1 (vert_idxs)");
   // if (tfbuf.ndim != 1)
-  //   throw std::runtime_error("GeomDataToNewPart: Number of dimensions must be 1 (triangles_flags)");
+  //   throw std::runtime_error("IoGeomDataToNewPart_numpy: Number of dimensions must be 1 (triangles_flags)");
   if (tcbuf.ndim != 1)
-    throw std::runtime_error("GeomDataToNewPart: Number of dimensions must be 1 (vert_texcoords)");
+    throw std::runtime_error("IoGeomDataToNewPart_numpy: Number of dimensions must be 1 (vert_texcoords)");
   if (vbuf.ndim != 1)
-    throw std::runtime_error("GeomDataToNewPart: Number of dimensions must be 1 (vert_pos)");
+    throw std::runtime_error("IoGeomDataToNewPart_numpy: Number of dimensions must be 1 (vert_pos)");
   if (vnbuf.ndim != 1)
-    throw std::runtime_error("GeomDataToNewPart: Number of dimensions must be 1 (normals)");
+    throw std::runtime_error("IoGeomDataToNewPart_numpy: Number of dimensions must be 1 (normals)");
 
   // if (tbuf.shape[0] != tfbuf.shape[0] * 3)
-  //   throw std::runtime_error("GeomDataToNewPart: Must be vert_idxs shape=(N*3, ) and triangles_flags shape=(N, ) for N triangles");
+  //   throw std::runtime_error("IoGeomDataToNewPart_numpy: Must be vert_idxs shape=(N*3, ) and triangles_flags shape=(N, ) for N triangles");
   if (tbuf.shape[0] * 2 != tcbuf.shape[0])
-    throw std::runtime_error("GeomDataToNewPart: Must be vert_idxs shape=(N*3, ) and texcoords shape=(N*6, ) for N triangles");
+    throw std::runtime_error("IoGeomDataToNewPart_numpy: Must be vert_idxs shape=(N*3, ) and texcoords shape=(N*6, ) for N triangles");
   if (vbuf.shape[0] != vnbuf.shape[0])
-    throw std::runtime_error("GeomDataToNewPart: Must be vert_pos shape=(N*3, ) and normals shape=(N*3, ) for N vertices");
+    throw std::runtime_error("IoGeomDataToNewPart_numpy: Must be vert_pos shape=(N*3, ) and normals shape=(N*3, ) for N vertices");
 
   const int new_pid = fcelib::FCELIB_GeomDataToNewPart(&mesh_,
                                                        static_cast<int *>(tbuf.ptr), static_cast<int>(tbuf.shape[0]),
@@ -251,14 +253,14 @@ int Mesh::GeomDataToNewPart(py::array_t<int, py::array::c_style | py::array::for
                                                        static_cast<float *>(vbuf.ptr), static_cast<int>(vbuf.shape[0]),
                                                        static_cast<float *>(vnbuf.ptr), static_cast<int>(vnbuf.shape[0]));
   if (new_pid < 0)
-    throw std::runtime_error("GeomDataToNewPart: failure");
+    throw std::runtime_error("IoGeomDataToNewPart_numpy: failure");
   return new_pid;
 }
 
 
 /* mesh / header -------------------- */
 
-py::buffer Mesh::GetColors() const
+py::buffer Mesh::MGetColors_numpy() const
 {
   const py::ssize_t nrows = static_cast<py::ssize_t>(mesh_.hdr.NumColors);
   py::array_t<unsigned char> result = py::array_t<unsigned char>({ nrows, static_cast<py::ssize_t>(4), static_cast<py::ssize_t>(4) }, {  });
@@ -289,15 +291,15 @@ py::buffer Mesh::GetColors() const
 
   return std::move(result);
 }
-void Mesh::SetColors(py::array_t<unsigned char, py::array::c_style | py::array::forcecast> arr)
+void Mesh::MSetColors_numpy(py::array_t<unsigned char, py::array::c_style | py::array::forcecast> arr)
 {
   py::buffer_info buf = arr.request();
   unsigned char *ptr;
 
   if (buf.ndim != 3)
-    throw std::runtime_error("Number of dimensions must be 3");
+    throw std::runtime_error("MSetColors_numpy: Number of dimensions must be 3");
   if (buf.shape[1] != 4 || buf.shape[2] != 4)
-    throw std::runtime_error("Shape must be (N, 4, 4)");
+    throw std::runtime_error("MSetColors_numpy: Shape must be (N, 4, 4)");
 
   const py::ssize_t nrows = buf.shape[0];
   ptr = static_cast<unsigned char *>(buf.ptr);
@@ -381,7 +383,7 @@ void Mesh::SetDummyNames(std::vector<std::string> &arr)
   mesh_.hdr.NumDummies = static_cast<int>(nrows);
 }
 
-py::buffer Mesh::GetDummyPos() const
+py::buffer Mesh::MGetDummyPos_numpy() const
 {
   const py::ssize_t len = static_cast<py::ssize_t>(mesh_.hdr.NumDummies);
   py::array_t<float> result = py::array_t<float>({ len * 3 }, {  });
@@ -395,13 +397,15 @@ py::buffer Mesh::GetDummyPos() const
   return std::move(result);
 }
 
-void Mesh::SetDummyPos(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
+void Mesh::MSetDummyPos_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
   py::buffer_info buf = arr.request();
   float *ptr;
 
   if (buf.ndim != 1)
-    throw std::runtime_error("SetDummyPos(): Number of dimensions must be 1");
+    throw std::runtime_error("MSetDummyPos_numpy: Number of dimensions must be 1");
+  if (buf.shape[0] % 3 != 0)
+    throw std::runtime_error("MSetDummyPos_numpy: Shape must be (N*3, ) for N dummy positions");
 
   const py::ssize_t nrows = py::ssize_t(buf.shape[0] / 3);
   ptr = static_cast<float *>(buf.ptr);
@@ -430,7 +434,7 @@ int Mesh::PNumTriags(const int pid) const
     std::runtime_error("PNumTriags: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
-    throw std::out_of_range("Mesh.PNumTriags(): part index (pid) out of range");
+    throw std::out_of_range("PNumTriags: part index (pid) out of range");
   return mesh_.parts[ mesh_.hdr.Parts[idx] ]->PNumTriangles;
 }
 int Mesh::PNumVerts(const int pid) const
@@ -439,7 +443,7 @@ int Mesh::PNumVerts(const int pid) const
     std::runtime_error("PNumVerts: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
-    throw std::out_of_range("Mesh.PNumVerts(): part index (pid) out of range");
+    throw std::out_of_range("PNumVerts: part index (pid) out of range");
   return mesh_.parts[ mesh_.hdr.Parts[idx] ]->PNumVertices;
 }
 
@@ -449,7 +453,7 @@ const std::string Mesh::GetPartName(const int pid) const
     std::runtime_error("GetPartName: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
-    throw std::out_of_range("Mesh.get_partname(): part index (pid) out of range");
+    throw std::out_of_range("GetPartName: part index (pid) out of range");
   return std::string(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName);
 }
 void Mesh::SetPartName(const int pid, const std::string &s)
@@ -458,7 +462,7 @@ void Mesh::SetPartName(const int pid, const std::string &s)
     std::runtime_error("SetPartName: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
-    throw std::out_of_range("Mesh.get_partname(): part index (pid) out of range");
+    throw std::out_of_range("SetPartName: part index (pid) out of range");
   std::strncpy(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName, s.c_str(),
                sizeof(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName) - 1);  // max 63 chars
 }
@@ -469,12 +473,27 @@ const std::array<float, 3> Mesh::GetPartPos(const int pid) const
     std::runtime_error("GetPartPos: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
-    throw std::out_of_range("Mesh.GetPartPos(): part index (pid) out of range");
+    throw std::out_of_range("GetPartPos: part index (pid) out of range");
   std::array<float, 3> result;
   result[0] = mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.x;
   result[1] = mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.y;
   result[2] = mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.z;
   return result;
+}
+py::buffer Mesh::GetPartPos_numpy(const int pid) const
+{
+  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+    std::runtime_error("GetPartPos_numpy: failure");
+  const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
+  if (idx < 0)
+    throw std::out_of_range("GetPartPos_numpy: part index (pid) out of range");
+
+  py::array_t<float> result = py::array_t<float>({ 3 }, {  });
+  auto buf = result.mutable_unchecked<1>();
+  memcpy(&buf(0), &mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.x, sizeof(float));
+  memcpy(&buf(1), &mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.y, sizeof(float));
+  memcpy(&buf(2), &mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.z, sizeof(float));
+  return std::move(result);
 }
 void Mesh::SetPartPos(const int pid, std::array<float, 3> &arr)
 {
@@ -482,10 +501,31 @@ void Mesh::SetPartPos(const int pid, std::array<float, 3> &arr)
     std::runtime_error("SetPartPos: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
-    throw std::out_of_range("Mesh.SetPartPos(): part index (pid) out of range");
+    throw std::out_of_range("SetPartPos: part index (pid) out of range");
+
   mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.x = arr[0];
   mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.y = arr[1];
   mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.z = arr[2];
+}
+void Mesh::SetPartPos_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr)
+{
+  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+    std::runtime_error("SetPartPos_numpy: failure");
+  const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
+  if (idx < 0)
+    throw std::out_of_range("SetPartPos_numpy: part index (pid) out of range");
+
+  py::buffer_info buf = arr.request();
+  float *ptr;
+
+  if (buf.ndim != 1)
+    throw std::runtime_error("SetPartPos_numpy: Number of dimensions must be 1");
+  if (buf.shape[0] != 3)
+    throw std::runtime_error("SetPartPos_numpy: Shape must be (3, )");
+  ptr = static_cast<float *>(buf.ptr);
+  memcpy(&mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.x, ptr + 0, sizeof(float));
+  memcpy(&mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.y, ptr + 1, sizeof(float));
+  memcpy(&mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.z, ptr + 2, sizeof(float));
 }
 
 
@@ -1583,16 +1623,23 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def("IoEncode_Fce4", &Mesh::Encode_Fce4, py::arg("center_parts") = true)
     .def("IoEncode_Fce4M", &Mesh::Encode_Fce4M, py::arg("center_parts") = true)
     .def("IoExportObj", &Mesh::ExportObj, py::arg("objpath"), py::arg("mtlpath"), py::arg("texname"), py::arg("print_damage") = 0, py::arg("print_dummies") = 0)  // TODO: test
-    .def("IoGeomDataToNewPart", &Mesh::GeomDataToNewPart,
+    .def("IoGeomDataToNewPart", &Mesh::IoGeomDataToNewPart_numpy,
+      py::arg("vert_idxs"), /*py::arg("triangles_flags"),*/ py::arg("vert_texcoords"), py::arg("vert_pos"), py::arg("normals"),
+      R"pbdoc( vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz... )pbdoc")
+    .def("IoGeomDataToNewPart_numpy", &Mesh::IoGeomDataToNewPart_numpy,
       py::arg("vert_idxs"), /*py::arg("triangles_flags"),*/ py::arg("vert_texcoords"), py::arg("vert_pos"), py::arg("normals"),
       R"pbdoc( vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz... )pbdoc")
 
-    .def("MGetColors", &Mesh::GetColors)
-    .def("MSetColors", &Mesh::SetColors, py::arg("colors"), R"pbdoc( Expects shape=(N, 4, 4) )pbdoc")
+    .def("MGetColors", &Mesh::MGetColors_numpy)
+    .def("MGetColors_numpy", &Mesh::MGetColors_numpy)
+    .def("MSetColors", &Mesh::MSetColors_numpy, py::arg("colors"), R"pbdoc( Expects shape=(N, 4, 4) )pbdoc")
+    .def("MSetColors_numpy", &Mesh::MSetColors_numpy, py::arg("colors"), R"pbdoc( Expects shape=(N, 4, 4) )pbdoc")
     .def("MGetDummyNames", &Mesh::GetDummyNames)
     .def("MSetDummyNames", &Mesh::SetDummyNames, py::arg("names"))
-    .def("MGetDummyPos", &Mesh::GetDummyPos)
-    .def("MSetDummyPos", &Mesh::SetDummyPos, py::arg("positions"), R"pbdoc( Expects shape (N*3, ) for N dummies )pbdoc")
+    .def("MGetDummyPos", &Mesh::MGetDummyPos_numpy)
+    .def("MGetDummyPos_numpy", &Mesh::MGetDummyPos_numpy)
+    .def("MSetDummyPos", &Mesh::MSetDummyPos_numpy, py::arg("positions"), R"pbdoc( Expects shape (N*3, ) for N dummies )pbdoc")
+    .def("MSetDummyPos_numpy", &Mesh::MSetDummyPos_numpy, py::arg("positions"), R"pbdoc( Expects shape (N*3, ) for N dummies )pbdoc")
 
     .def("PNumTriags", &Mesh::PNumTriags, py::arg("pid"))
     .def("PNumVerts", &Mesh::PNumVerts, py::arg("pid"))
@@ -1600,7 +1647,9 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def("PGetName", &Mesh::GetPartName, py::arg("pid"))
     .def("PSetName", &Mesh::SetPartName, py::arg("pid"), py::arg("name"))
     .def("PGetPos", &Mesh::GetPartPos, py::arg("pid"))
+    .def("PGetPos_numpy", &Mesh::GetPartPos_numpy, py::arg("pid"))
     .def("PSetPos", &Mesh::SetPartPos, py::arg("pid"), py::arg("pos"))
+    .def("PSetPos_numpy", &Mesh::SetPartPos_numpy, py::arg("pid"), py::arg("pos"))
 
     .def("PGetTriagsVidx", &Mesh::GetTriagsVidx, py::arg("pid"), R"pbdoc( Returns (N*3, ) array of global vert indexes for N triangles. )pbdoc")
     .def("PGetTriagsVidx_numpy", &Mesh::GetTriagsVidx_numpy, py::arg("pid"), R"pbdoc( Returns (N*3, ) numpy array of global vert indexes for N triangles. )pbdoc")
@@ -1609,7 +1658,7 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def("PGetTriagsFlags_numpy", &Mesh::GetTriagsFlags_numpy, py::arg("pid"))
     .def("PSetTriagsFlags", &Mesh::SetTriagsFlags, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) array for N triangles )pbdoc")
     .def("PSetTriagsFlags_numpy", &Mesh::SetTriagsFlags_numpy, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) numpy array for N triangles )pbdoc")
-    .def("PGetTriagsTexcoords_numpy", &Mesh::PGetTriagsTexcoords_numpy, py::arg("pid"))
+    .def("PGetTriagsTexcoords_numpy", &Mesh::PGetTriagsTexcoords_numpy, py::arg("pid"), R"pbdoc( uuuvvv..., Returns (N*6, ) numpy array for N triangles. )pbdoc")
     .def("PSetTriagsTexcoords_numpy", &Mesh::PSetTriagsTexcoords_numpy, py::arg("pid"), py::arg("arr"), R"pbdoc( arr: uuuvvv..., Expects (N*6, ) numpy array for N triangles. )pbdoc")
     .def("PGetTriagsTexpages", &Mesh::GetTriagsTexpages, py::arg("pid"))
     .def("PGetTriagsTexpages_numpy", &Mesh::GetTriagsTexpages_numpy, py::arg("pid"))

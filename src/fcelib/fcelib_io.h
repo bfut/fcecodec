@@ -254,7 +254,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
             memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->U,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x20, (size_t)12);
             memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->V,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x2C, (size_t)12);
 
-            if (fce_version == 0x00101014)
+            // if (fce_version == 0x00101014)
             {
               for (n = 0; n < 3; ++n)
                 mesh->triangles[mesh->hdr.NumTriangles]->V[n] = 1 - mesh->triangles[mesh->hdr.NumTriangles]->V[n];
@@ -1082,7 +1082,7 @@ int FCELIB_IO_EncodeFce3_Fopen(FcelibMesh *mesh, const void *fcepath, const int 
   global_mesh_to_local_fce_idxs = (int *)malloc(mesh->vertices_len * sizeof(int));
   if (!global_mesh_to_local_fce_idxs)
   {
-    fprintf(stderr, "EncodeFce3: Cannot allocate memory\n");
+    fprintf(stderr, "FCELIB_IO_EncodeFce3_Fopen: Cannot allocate memory\n");
     return 0;
   }
 
@@ -1091,7 +1091,7 @@ int FCELIB_IO_EncodeFce3_Fopen(FcelibMesh *mesh, const void *fcepath, const int 
     outf = fopen((char *)fcepath, "wb");
     if (!outf)
     {
-      fprintf(stderr, "EncodeFce3: cannot create file '%s'\n", (char *)fcepath);
+      fprintf(stderr, "FCELIB_IO_EncodeFce3_Fopen: cannot create file '%s'\n", (char *)fcepath);
       retv = 0;
       break;
     }
@@ -1149,7 +1149,7 @@ int FCELIB_IO_EncodeFce3_Fopen(FcelibMesh *mesh, const void *fcepath, const int 
       x_array = (float *)malloc((size_t)(3 * (mesh->vertices_len + 1)) * sizeof(*x_array));
       if (!x_array)
       {
-        fprintf(stderr, "EncodeFce3: Cannot allocate memory\n");
+        fprintf(stderr, "FCELIB_IO_EncodeFce3_Fopen: Cannot allocate memory\n");
         retv = 0;
         break;
       }
@@ -1498,7 +1498,7 @@ int FCELIB_IO_EncodeFce3_Fopen(FcelibMesh *mesh, const void *fcepath, const int 
 
     if (fclose(outf) != 0)
     {
-      fprintf(stderr, "EncodeFce3: cannot close file '%s'\n", (char *)fcepath);
+      fprintf(stderr, "FCELIB_IO_EncodeFce3_Fopen: cannot close file '%s'\n", (char *)fcepath);
       retv = 0;
       break;
     }
@@ -2179,6 +2179,8 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     memcpy(&tmp, *outbuf + 0x001c, 4);  // TriaTblOffset
     {
       const int padding = 0xff00;
+      float V_tmp[3];
+
       for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(64, mesh->hdr.NumParts); ++i)
       {
         if (mesh->hdr.Parts[i] < 0)
@@ -2193,7 +2195,6 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
             continue;
           global_mesh_to_local_fce_idxs[
             part->PVertices[n]
-  //        ] = n;
           ] = k;
           ++k;
         }
@@ -2203,6 +2204,14 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
           if (part->PTriangles[n] < 0)
             continue;
           triag = mesh->triangles[ part->PTriangles[n] ];
+
+          memcpy(&V_tmp, &triag->V, (size_t)12);
+          // if (fce_version == 0x00101014)
+          {
+            for (int h = 0; h < 3; ++h)
+              V_tmp[h] = 1 - V_tmp[h];
+          }
+
           memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x00, &triag->tex_page, (size_t)4);
           memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x04, &global_mesh_to_local_fce_idxs[ triag->vidx[0] ], (size_t)4);
           memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x08, &global_mesh_to_local_fce_idxs[ triag->vidx[1] ], (size_t)4);
@@ -2212,7 +2221,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
           memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x10 + 0x08, &padding, (size_t)4);
           memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x1C, &triag->flag, (size_t)4);
           memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x20, &triag->U, (size_t)12);
-          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x2C, &triag->V, (size_t)12);
+          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x2C, &V_tmp, (size_t)12);
           ++k;
         }
         sum_triags += part->PNumTriangles;

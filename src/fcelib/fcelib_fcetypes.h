@@ -123,7 +123,7 @@ Name    Application example                     Application example
 
 /* FCE4M   tTriangle->flag   32 bit
 
-todo
+
 */
 
 
