@@ -7,8 +7,6 @@
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
   arising from the use of this software.
-
-  This header may not be removed or altered from any source distribution.
 """
 
 import argparse
@@ -16,7 +14,6 @@ import os
 import pathlib
 import platform
 import sys
-import time
 
 
 # tracemalloc -- BEGIN ---------------------------------------------------------
@@ -108,15 +105,11 @@ print(flush = True)
 mesh = fcecodec.Mesh()
 print(mesh, type(mesh), flush = True)
 
-start = time.time()
 mesh = LoadFce(mesh, filepath_fce_input)
-print(time.time() - start, flush=True)
 mesh.PrintInfo()
 print(flush = True)
 
-start = time.time()
 WriteFce(3, mesh, filepath_fce3_output)
-print(time.time() - start, flush=True)
 WriteFce(4, mesh, filepath_fce4_output)
 WriteFce("4m", mesh, filepath_fce4m_output)
 ExportObj(mesh,

@@ -30,7 +30,7 @@ jobs:
 
     - name: Add requirements
       run: |
-        python -m pip install --upgrade pip wheel setuptools pybind11 numpy
+        python -m pip install --upgrade pip wheel setuptools pybind11
 
     - name: Python version
       run: python -c "import sys; print(sys.version)"
@@ -49,10 +49,19 @@ jobs:
       run: |
         python -c "import fcecodec; help(fcecodec)"
 
-    - name: "install: ci-smoketest.py"
+    - name: "Add numpy; install: ci-smoketest.py"
+      shell: bash
+      run: |
+        python -m pip install --upgrade numpy
+
+        cd tests
+        python -c "import subprocess; import sys; retcode = subprocess.call([sys.executable, 'ci-smoketest.py']); print('Exit code', retcode); sys.exit(retcode)"
+        rm -rf fce/ci-smoketest.fce fce/ci-smoketest.fce4 fce/ci-smoketest.fce4m
+
+    - name: "install: ci-diff.py (reproducible fce output)"
       shell: bash
       run: |
         cd tests
-
-        python -c "import subprocess; import sys; retcode = subprocess.call([sys.executable, 'ci-smoketest.py']); print('Exit code', retcode); sys.exit(retcode)"
-        rm -rf fce/ci-smoketest.fce fce/ci-smoketest.fce4 fce/ci-smoketest.fce4m
+        chmod +x ci-diff.py.sh
+        ./ci-diff.py.sh
+        
