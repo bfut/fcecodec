@@ -103,6 +103,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
         /* Header ----------------------------------------------------------- */
           /* NumTriangles - counted below */
           /* NumVertices - counted below */
+        mesh->hdr.NumArts = header.NumArts;
         mesh->hdr.NumParts = header.NumParts;
         mesh->parts_len = 2 * mesh->hdr.NumParts;
 
@@ -342,6 +343,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
         /* Header ----------------------------------------------------------- */
           /* NumTriangles - counted below */
           /* NumVertices - counted below */
+        mesh->hdr.NumArts = header.NumArts;
         mesh->hdr.NumParts = header.NumParts;
         mesh->parts_len = 2 * mesh->hdr.NumParts;
 
@@ -1560,8 +1562,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     memcpy(*buf + 0x0000, &tmp, (size_t)4); */
     memcpy(*outbuf + 0x0004, &mesh->hdr.NumTriangles, (size_t)4);
     memcpy(*outbuf + 0x0008, &mesh->hdr.NumVertices, (size_t)4);
-    buf = 1;
-    memcpy(*outbuf + 0x000C, &buf, (size_t)4);
+    memcpy(*outbuf + 0x000C, &mesh->hdr.NumArts, (size_t)4);
 
 //    buf = 0;
 //    memcpy(*outbuf + 0x0010, &buf, (size_t)4);
@@ -1872,8 +1873,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     /* memcpy(*outbuf + 0x0003, &tmp, (size_t)4);  // Unknown1 */
     memcpy(*outbuf + 0x0008, &mesh->hdr.NumTriangles, (size_t)4);
     memcpy(*outbuf + 0x000C, &mesh->hdr.NumVertices, (size_t)4);
-    tmp = 1;
-    memcpy(*outbuf + 0x0010, &tmp, (size_t)4);  // NumArts
+    memcpy(*outbuf + 0x0010, &mesh->hdr.NumArts, (size_t)4);
 
     // tmp = 0;
     // memcpy(*outbuf + 0x0014, &tmp, (size_t)4);

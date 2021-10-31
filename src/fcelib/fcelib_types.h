@@ -73,9 +73,10 @@ typedef struct {
   int    *PTriangles;      /* ordered list of global triag idxs, -1 for unused */
 } FcelibPart;
 
-typedef struct {
+typedef struct FcelibHeader {
   int      NumTriangles;
   int      NumVertices;
+  int      NumArts = 1;
 
   int      NumParts;       /* true count */
   int      *Parts;         /* ordered list of part indexes, -1 for unused */
@@ -853,6 +854,7 @@ void FCELIB_TYPES_PrintMeshInfo(FcelibMesh mesh)
   printf("NumParts (true) = %d\n", mesh.hdr.NumParts);
   printf("parts_len (alloc'd) = %d\n", mesh.parts_len);
 
+  printf("NumArts = %d\n", mesh.hdr.NumArts);
   printf("NumDummies = %d\n", mesh.hdr.NumDummies);
   printf("NumColors = %d\n", mesh.hdr.NumColors);
   printf("NumSecColors = %d\n", mesh.hdr.NumSecColors);

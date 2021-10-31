@@ -21,6 +21,7 @@
   - to cwd
       python setup.py build
   - install
+      python -m pip install --upgrade pip wheel setuptools pybind11
       python -m pip install -e .
  **/
 
@@ -66,6 +67,7 @@ class Mesh : public fcelib::FcelibMesh {
     void PrintParts(void) const { fcelib::FCELIB_PrintMeshParts(mesh_); }
     void PrintTriags(void) const { fcelib::FCELIB_PrintMeshTriangles(mesh_); }
     void PrintVerts(void) const { fcelib::FCELIB_PrintMeshVertices(mesh_); }
+    int MNumArts() const { return mesh_.hdr.NumArts; };
     int num_parts() const { return mesh_.hdr.NumParts; };
     int num_triags() const { return mesh_.hdr.NumTriangles; };
     int num_verts() const { return mesh_.hdr.NumVertices; };
@@ -1614,6 +1616,7 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def("PrintParts", &Mesh::PrintParts)
     .def("PrintTriags", &Mesh::PrintTriags)
     .def("PrintVerts", &Mesh::PrintVerts)
+    .def_property_readonly("MNumArts", &Mesh::MNumArts)
     .def_property_readonly("MNumParts", &Mesh::num_parts)
     .def_property_readonly("MNumTriags", &Mesh::num_triags)
     .def_property_readonly("MNumVerts", &Mesh::num_verts)

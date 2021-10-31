@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FCECVERS "0.52"
+#define FCECVERS "0.53"
 
 #include "fcelib_io.h"
 #include "fcelib_op.h"
