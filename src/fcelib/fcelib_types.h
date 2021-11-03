@@ -96,7 +96,7 @@ typedef struct FcelibHeader {
 // Wnon-c-typedef-for-linkage, http://wg21.link/p1766r1
 // potential issue with C++03 https://github.com/tinyobjloader/tinyobjloader/issues/259#issuecomment-590675708
 typedef struct FcelibMesh {
-  int              freed = 1;          /* has instance been destroyed before? */
+  int              freed = 1;      /* has instance been destroyed before? */
 
   FcelibHeader     hdr;
 
@@ -111,59 +111,7 @@ typedef struct FcelibMesh {
 } FcelibMesh;
 
 
-/* Assumes mesh->hdr.NumParts > 0 */
-int FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(const FcelibMesh *mesh)
-{
-  int tidx;// = mesh->triangles_len;
-  int i;
-  FcelibPart *part;
-
-  /* Get last part w.r.t internal indexes */
-  i = mesh->parts_len - 1;
-  while (mesh->hdr.Parts[i] < 0 && i >= 0)
-    --i;
-
-  /* Get first unused global triangle w.r.t internal indexes */
-  part = mesh->parts[mesh->hdr.Parts[i]];
-  i = part->ptriangles_len - 1;
-  while (part->PTriangles[i] < 0 && i >= 0)
-    --i;
-
-  if (i < 0)
-    tidx = 0;
-  else
-    tidx = part->PTriangles[i] + 1;
-
-  return tidx;
-}
-
-/* Assumes mesh->hdr.NumParts > 0 */
-int FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(const FcelibMesh *mesh)
-{
-  int vidx;
-  int i;
-  FcelibPart *part;
-
-  /* Get last part w.r.t internal indexes */
-  i = mesh->parts_len - 1;
-  while (mesh->hdr.Parts[i] < 0 && i >= 0)
-    --i;
-
-  /* Get first unused global vertice w.r.t internal indexes */
-  part = mesh->parts[mesh->hdr.Parts[i]];
-  i = part->pvertices_len - 1;
-  while (part->PVertices[i] < 0 && i >= 0)
-    --i;
-
-  if (i < 0)
-    vidx = 0;
-  else
-    vidx = part->PVertices[i] + 1;
-
-  return vidx;
-}
-
-/* init, destroy, validate */
+/* init, destroy, validate -------------------------------------------------- */
 
 void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
 {
@@ -321,7 +269,7 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
 }
 
 /* Returns: 1 = valid mesh, -1 = empty valid mesh, 0 = invalid mesh */
-int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
+int FCELIB_TYPES_ValidateMesh(const FcelibMesh mesh)
 {
   int i;
   int j;
@@ -416,7 +364,7 @@ int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
       }
       if (part->PTriangles[j] >= mesh.triangles_len)
       {
-        fprintf(stderr, "ValidateMesh: inconsistent list (part->PTriangles[j]) %d %d\n", i, j);
+        fprintf(stderr, "ValidateMesh: inconsistent list (part->PTriangles[j] = %d>=%d) %d %d\n", part->PTriangles[j], mesh.triangles_len, i, j);
         return 0;
       }
       if (part->PTriangles[j] < 0)
@@ -479,43 +427,105 @@ int FCELIB_TYPES_ValidateMesh(FcelibMesh mesh)
 
 /* service ------------------------------------------------------------------ */
 
-/* Returns -1 on failure. */
-int FCELIB_TYPES_GetInternalPartIdxByOrder(FcelibMesh *mesh, const int idx)
+/* Assumes mesh->hdr.NumParts > 0 */
+int FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(const FcelibMesh *mesh)
 {
-  int i = 0;
+  int tidx = -1;
+  int i;
+  FcelibPart *part;
+
+  /* Get internally last part (has internally last verts) */
+  i = FCELIB_MISC_ArrMax(mesh->hdr.Parts, mesh->parts_len);
+#if FCECVERBOSE == 1
+    fprintf(stdout, "first unused triag index in part... %d", i);
+#endif
+
+  /* Get internally last triag */
+  if (i >= 0)
+  {
+    part = mesh->parts[i];
+#if FCECVERBOSE == 1
+    fprintf(stdout, " %s (%d)", part->PartName, part->ptriangles_len);
+#endif
+
+    if (part->ptriangles_len > 0)
+      tidx = FCELIB_MISC_ArrMax(part->PTriangles, part->ptriangles_len);
+  }
+#if FCECVERBOSE == 1
+    fprintf(stdout, "\n");
+#endif
+
+  return tidx + 1;
+}
+
+/* Assumes mesh->hdr.NumParts > 0 */
+int FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(const FcelibMesh *mesh)
+{
+  int vidx = -1;
+  int i;
+  FcelibPart *part;
+
+  /* Get internally last part (has internally last verts) */
+  i = FCELIB_MISC_ArrMax(mesh->hdr.Parts, mesh->parts_len);
+#if FCECVERBOSE == 1
+    fprintf(stdout, "first unused vert index in part... %d", i);
+#endif
+
+  /* Get internally last vert */
+  if (i >= 0)
+  {
+    part = mesh->parts[i];
+#if FCECVERBOSE == 1
+    fprintf(stdout, " %s (%d)", part->PartName, part->pvertices_len);
+#endif
+
+    if (part->pvertices_len > 0)
+      vidx = FCELIB_MISC_ArrMax(part->PVertices, part->pvertices_len);
+  }
+#if FCECVERBOSE == 1
+    fprintf(stdout, "\n");
+#endif
+
+  return vidx + 1;
+}
+
+/* Returns -1 on failure. */
+int FCELIB_TYPES_GetInternalPartIdxByOrder(const FcelibMesh *mesh, const int order)
+{
+  int pid = -1;
+  int count;
 
   for (;;)
   {
-    if ((idx < 0) || (idx >= mesh->parts_len))
+    if ((order < 0) || (order >= mesh->parts_len))
     {
-      fprintf(stderr, "GetInternalPartIdxByOrder: part %d not found (len=%d)\n", idx, mesh->parts_len);
-      i = -1;
+      fprintf(stderr, "GetInternalPartIdxByOrder: part %d not found (len=%d)\n", order, mesh->parts_len);
       break;
     }
 
-    for (int count = -1; i < mesh->parts_len; ++i)
+    for (pid = 0, count = -1; pid < mesh->parts_len; ++pid)
     {
-      if (mesh->hdr.Parts[i] > -1)
+      if (mesh->hdr.Parts[pid] > -1)
         ++count;
-      if (count == idx)
+      if (count == order)
         break;
     }
 
-    if (i == mesh->parts_len)
+    if (pid == mesh->parts_len)
     {
-      fprintf(stderr, "GetInternalPartIdxByOrder: part %d not found\n", idx);
-      i = -1;
+      fprintf(stderr, "GetInternalPartIdxByOrder: part %d not found\n", order);
+      pid = -1;
       break;
     }
 
     break;
   }
 
-  return i;
+  return pid;
 }
 
 /* Returns -1 on failure. */
-int FCELIB_TYPES_GetOrderByInternalPartIdx(FcelibMesh *mesh, const int idx)
+int FCELIB_TYPES_GetOrderByInternalPartIdx(const FcelibMesh *mesh, const int idx)
 {
   int order = -1;
   int i;
@@ -552,10 +562,7 @@ int FCELIB_TYPES_GetOrderByInternalPartIdx(FcelibMesh *mesh, const int idx)
 int FCELIB_TYPES_AddParts(FcelibMesh *mesh, const int num_required)
 {
   void *ptr = NULL;
-  int new_len = 2 * mesh->parts_len;
-
-  if (new_len < mesh->parts_len + num_required)
-    new_len = 2 * (mesh->parts_len + num_required);
+  int new_len = mesh->parts_len + num_required;
 
   ptr = realloc(mesh->hdr.Parts, (size_t)new_len * sizeof(*mesh->hdr.Parts));
   if (!ptr)
@@ -584,21 +591,17 @@ int FCELIB_TYPES_AddParts(FcelibMesh *mesh, const int num_required)
 int FCELIB_TYPES_AddTriangles(FcelibMesh *mesh, const int num_required)
 {
   void *ptr = NULL;
-  int new_len = 2 * mesh->triangles_len;
 
-  if (new_len < mesh->triangles_len + num_required)
-    new_len = 2 * (mesh->triangles_len + num_required);
-
-  ptr = realloc(mesh->triangles, (size_t)new_len * sizeof(*mesh->triangles));
+  ptr = realloc(mesh->triangles, (size_t)(mesh->triangles_len + num_required) * sizeof(*mesh->triangles));
   if (!ptr)
   {
-    fprintf(stderr, "Cannot reallocate memory\n");
+    fprintf(stderr, "FCELIB_TYPES_AddTriangles: Cannot reallocate memory\n");
     return 0;
   }
   mesh->triangles = (FcelibTriangle **)ptr;
-  memset(mesh->triangles + mesh->triangles_len, 0, (size_t)(new_len - mesh->triangles_len) * sizeof(*mesh->triangles));
+  memset(mesh->triangles + mesh->triangles_len, 0, (size_t)num_required * sizeof(*mesh->triangles));
 
-  mesh->triangles_len = new_len;
+  mesh->triangles_len += num_required;
   return 1;
 }
 
@@ -606,10 +609,7 @@ int FCELIB_TYPES_AddTriangles(FcelibMesh *mesh, const int num_required)
 int FCELIB_TYPES_AddVertices(FcelibMesh *mesh, const int num_required)
 {
   void *ptr = NULL;
-  int new_len = 2 * mesh->vertices_len;
-
-  if (new_len < mesh->vertices_len + num_required)
-    new_len = 2 * (mesh->vertices_len + num_required);
+  int new_len = mesh->vertices_len + num_required;
 
   ptr = realloc(mesh->vertices, (size_t)new_len * sizeof(*mesh->vertices));
   if (!ptr)
@@ -623,7 +623,6 @@ int FCELIB_TYPES_AddVertices(FcelibMesh *mesh, const int num_required)
   mesh->vertices_len = new_len;
   return 1;
 }
-
 
 int FCELIB_TYPES_AddTriangles2(FcelibMesh *mesh, FcelibPart *part, const int num_required)
 {
@@ -655,7 +654,6 @@ int FCELIB_TYPES_AddTriangles2(FcelibMesh *mesh, FcelibPart *part, const int num
   return 1;
 }
 
-
 int FCELIB_TYPES_AddVertices2(FcelibMesh *mesh, FcelibPart *part, const int num_required)
 {
   void *ptr = NULL;
@@ -686,17 +684,19 @@ int FCELIB_TYPES_AddVertices2(FcelibMesh *mesh, FcelibPart *part, const int num_
   return 1;
 }
 
-
-void FCELIB_TYPES_CpyTriag(FcelibTriangle *dest, FcelibTriangle *src)
+void FCELIB_TYPES_CpyTriag(FcelibTriangle *dest, const FcelibTriangle *src)
 {
   dest->tex_page = src->tex_page;
+  // fprintf(stderr, "__%d,%d  ", dest->vidx[0], src->vidx[0], 0);
+  // fprintf(stderr, "%d,%d  ", dest->vidx[1], src->vidx[1], 0);
+  // fprintf(stderr, "%d,%d\n", dest->vidx[2], src->vidx[2], 0);
   memcpy(dest->vidx, src->vidx, (size_t)3 * sizeof(int));
   dest->flag = src->flag;
   memcpy(dest->U, src->U, (size_t)3 * sizeof(float));
   memcpy(dest->V, src->V, (size_t)3 * sizeof(float));
 }
 
-void FCELIB_TYPES_CpyVert(FcelibVertex *dest, FcelibVertex *src)
+void FCELIB_TYPES_CpyVert(FcelibVertex *dest, const FcelibVertex *src)
 {
   memcpy(&dest->VertPos.x, &src->VertPos.x, sizeof(float));
   memcpy(&dest->VertPos.y, &src->VertPos.y, sizeof(float));
@@ -801,7 +801,7 @@ int FCELIB_TYPES_GetPartLocalCentroid(FcelibMesh *mesh, FcelibPart *part, tVecto
 }
 
 /* Does not move part w.r.t. to global coordinates */
-void FCELIB_TYPES_ResetPartPos(FcelibMesh *mesh, FcelibPart *part, tVector new_PartPos)
+void FCELIB_TYPES_ResetPartPos(FcelibMesh *mesh, FcelibPart *part, const tVector new_PartPos)
 {
   FcelibVertex *vert;
   int count_verts = 0;
@@ -832,7 +832,7 @@ void FCELIB_TYPES_ResetPartPos(FcelibMesh *mesh, FcelibPart *part, tVector new_P
 
 /* stats -------------------------------------------------------------------- */
 
-void FCELIB_TYPES_PrintMeshInfo(FcelibMesh mesh)
+void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh mesh)
 {
   int i;
   int j;
@@ -910,7 +910,7 @@ void FCELIB_TYPES_PrintMeshInfo(FcelibMesh mesh)
 }
 
 /* Prints ref'ed global part indexes. */
-void FCELIB_TYPES_PrintMeshParts(FcelibMesh mesh)
+void FCELIB_TYPES_PrintMeshParts(const FcelibMesh mesh)
 {
   int j;
 
@@ -930,7 +930,7 @@ void FCELIB_TYPES_PrintMeshParts(FcelibMesh mesh)
 }
 
 /* Prints ref'ed global triag indexes for each part. */
-void FCELIB_TYPES_PrintMeshTriangles(FcelibMesh mesh)
+void FCELIB_TYPES_PrintMeshTriangles(const FcelibMesh mesh)
 {
   int i;
   int j;
@@ -958,7 +958,7 @@ void FCELIB_TYPES_PrintMeshTriangles(FcelibMesh mesh)
 }
 
 /* Prints ref'ed global vert indexes for each part. */
-void FCELIB_TYPES_PrintMeshVertices(FcelibMesh mesh)
+void FCELIB_TYPES_PrintMeshVertices(const FcelibMesh mesh)
 {
   int i;
   int j;

@@ -1059,7 +1059,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
 }
 
 
-/* Returns boolean. Limited to 64 parts. center_parts == 1 centers all parts. */
+/* DEPRECATED Returns boolean. Limited to 64 parts. center_parts == 1 centers all parts. */
 int FCELIB_IO_EncodeFce3_Fopen(FcelibMesh *mesh, const void *fcepath, const int center_parts)
 {
   int retv = 1;
@@ -1781,7 +1781,6 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
           continue;
         global_mesh_to_local_fce_idxs[
           part->PVertices[n]
-//        ] = n;
         ] = k;
         ++k;
       }
@@ -2238,7 +2237,6 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
 
 int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
                                 int *vert_idxs, const int vert_idxs_len,  // N*3, N triags
-                                // int *triangles_flags, const int triangles_flags_len,  // N
                                 float *vert_texcoords, const int vert_texcoords_len,  // N*6
                                 float *vert_pos, const int vert_pos_len,  // M*3, M verts
                                 float *normals, const int normals_len)  // M*3
@@ -2250,6 +2248,10 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
   int i;
   int vidx_1st;
   int tidx_1st;
+
+#if FCECVERBOSE == 1
+  fprintf(stdout, "GeomDataToNewPart:\n");
+#endif
 
   for (;;)
   {
@@ -2276,11 +2278,6 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       break;
     }
 
-    // if (vert_idxs_len != triangles_flags_len * 3)
-    // {
-    //   fprintf(stderr, "GeomDataToNewPart: Expects N*3 == vert_idxs_len == triangles_flags_len * 3, for N triangles.\n");
-    //   break;
-    // }
     if (vert_idxs_len * 2 != vert_texcoords_len)
     {
       fprintf(stderr, "GeomDataToNewPart: Expects N*3 == vert_idxs_len == vert_texcoords_len * 2 == N*6, for N triangles.\n");
@@ -2292,14 +2289,17 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       break;
     }
 
-    if (FCELIB_MISC_ArrMax(vert_idxs, vert_idxs_len) >= int(vert_pos_len / 3))
+    if (FCELIB_MISC_ArrMax(vert_idxs, vert_idxs_len) >= int(vert_pos_len / 3))  // allow adding vertices not referenced by triangles
     {
       fprintf(stderr, "GeomDataToNewPart: Triangle vertice index(es) out of range (assumes zero-indexed)\n");
       break;
     }
+#if FCECVERBOSE == 1
+    fprintf(stdout, "validation done...\n");
+#endif
 
     // Lengthen part index map only if necessary
-    if (mesh->parts_len < 1)
+    if (mesh->parts_len < 1 || mesh->hdr.Parts[mesh->parts_len - 1] >= 0)
     {
       if (!FCELIB_TYPES_AddParts(mesh, 1))
       {
@@ -2307,14 +2307,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
         break;
       }
     }
-    else if (mesh->hdr.Parts[mesh->parts_len - 1] >= 0)
-    {
-      if (!FCELIB_TYPES_AddParts(mesh, 1))
-      {
-        fprintf(stderr, "GeomDataToNewPart: Cannot add part\n");
-        break;
-      }
-    }
+
     /* Get first unused index */
     i = mesh->parts_len - 1;
     while (mesh->hdr.Parts[i] < 0 && i >= 0)
@@ -2332,9 +2325,12 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       tidx_1st = 0;
       vidx_1st = 0;
     }
+#if FCECVERBOSE == 1
+    fprintf(stdout, "first unused indexes... (t %d, v %d)\n", tidx_1st, vidx_1st);
+#endif
 
     /* Add part */
-    mesh->hdr.Parts[new_pid] = FCELIB_MISC_ArrMax(mesh->hdr.Parts, mesh->parts_len) + 1;
+    mesh->hdr.Parts[new_pid] = 1 + FCELIB_MISC_ArrMax(mesh->hdr.Parts, mesh->parts_len);
 
     part = (FcelibPart *)malloc(sizeof(FcelibPart));
     if (!part)
@@ -2344,46 +2340,31 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       break;
     }
     memset(part, 0, sizeof(FcelibPart));
+    part->pvertices_len = 0;
+    part->ptriangles_len = 0;
 
     mesh->parts[ mesh->hdr.Parts[new_pid] ] = part;
+#if FCECVERBOSE == 1
+    fprintf(stdout, "created new part... (order %d, internal %d)\n", new_pid, mesh->hdr.Parts[new_pid]);
+#endif
 
-
-    sprintf(part->PartName, "FromGeomData_%d", new_pid);  // unlikely to exceed 63 characters
+    sprintf(part->PartName, "IoGeomDataToNewPart_%d", new_pid);  // unlikely to exceed 63 characters
     part->PartPos.x = 0.0f;
     part->PartPos.y = 0.0f;
     part->PartPos.z = 0.0f;
 
     part->PNumVertices = int(vert_pos_len / 3);
-    part->pvertices_len = part->PNumVertices;
-
     part->PNumTriangles = int(vert_idxs_len / 3);
-    part->ptriangles_len = part->PNumTriangles;
-
-
-    part->PVertices = (int *)malloc((size_t)(part->pvertices_len * sizeof(int)));
-    if (!part->PVertices)
-    {
-      fprintf(stderr, "GeomDataToNewPart: Cannot allocate memory (vert list)\n");
-      new_pid = -1;
-      break;
-    }
-    memset(part->PVertices, -1, (size_t)(part->pvertices_len * sizeof(int)));
-
-    part->PTriangles = (int *)malloc((size_t)(part->ptriangles_len * sizeof(int)));
-    if (!part->PTriangles)
-    {
-      fprintf(stderr, "GeomDataToNewPart: Cannot allocate memory (triag list\n");
-      new_pid = -1;
-      break;
-    }
-    memset(part->PTriangles, -1, (size_t)(part->ptriangles_len * sizeof(int)));
 
     ++mesh->hdr.NumParts;
 
     /* Add triangles */
-    if (mesh->triangles_len < mesh->hdr.NumTriangles + part->ptriangles_len)
+#if FCECVERBOSE == 1
+    fprintf(stdout, "add triangles? (excess: %d)\n", mesh->triangles_len - (tidx_1st + part->PNumTriangles));
+#endif
+    if (mesh->triangles_len < tidx_1st + part->PNumTriangles)
     {
-      if (!FCELIB_TYPES_AddTriangles2(mesh, part, part->ptriangles_len))
+      if (!FCELIB_TYPES_AddTriangles2(mesh, part, part->PNumTriangles))
       {
         fprintf(stderr, "GeomDataToNewPart: Cannot add triangles\n");
         new_pid = -1;
@@ -2407,7 +2388,6 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       triag->vidx[0] = vidx_1st + vert_idxs[j * 3 + 0];
       triag->vidx[1] = vidx_1st + vert_idxs[j * 3 + 1];
       triag->vidx[2] = vidx_1st + vert_idxs[j * 3 + 2];
-      // triag->flag = triangles_flags[j];
       triag->flag = 0x000;  // default
       memcpy(triag->U, vert_texcoords + j * 6 + 0, (size_t)3 * sizeof(float));
       memcpy(triag->V, vert_texcoords + j * 6 + 3, (size_t)3 * sizeof(float));
@@ -2417,9 +2397,12 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     mesh->hdr.NumTriangles += part->PNumTriangles;
 
     /* Add vertices */
-    if (mesh->vertices_len < mesh->hdr.NumVertices + part->pvertices_len)
+#if FCECVERBOSE == 1
+    fprintf(stdout, "add vertices? (excess: %d)\n", mesh->vertices_len - (vidx_1st + part->PNumVertices));
+#endif
+    if (mesh->vertices_len < vidx_1st + part->PNumVertices)
     {
-      if (!FCELIB_TYPES_AddVertices2(mesh, part, part->pvertices_len))
+      if (!FCELIB_TYPES_AddVertices2(mesh, part, part->PNumVertices))
       {
         fprintf(stderr, "GeomDataToNewPart: Cannot add vertices\n");
         new_pid = -1;
@@ -2467,6 +2450,9 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     break;
   }
 
+#if FCECVERBOSE == 1
+    fprintf(stdout, "return (new part order = %d)\n", new_pid);
+#endif
   return new_pid;
 }
 

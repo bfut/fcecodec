@@ -173,7 +173,7 @@ typedef struct {
 /* 0x0000 */  int      Unknown1           ;  /* != 0x14101000 && != 0x15101000, nullable, sometimes 0x13101000 (ex. render/pc/cone.fce) */
 /* 0x0004 */  int      NumTriangles       ;  /* Number of triangles in model */
 /* 0x0008 */  int      NumVertices        ;  /* Number of vertices in model */
-/* 0x000C */  int      NumArts            ;  /* Number of arts */
+/* 0x000C */  int      NumArts            ;  /* Number of arts, used with cop#.fce and cop#.art, texpages instead of textures */
                     /* offsets from 0x1F04 */
 /* 0x0010 */  int      VertTblOffset      ;  /* usually 0x00. len() = 12 * NumVertices */
 /* 0x0014 */  int      NormTblOffset      ;  /* len() = len(VertTbl) */
@@ -362,7 +362,7 @@ Name    Description              Damage  FallOf  UsesFlag  Light  Animated   Pur
 :ORB    right brake front (HB)   N       N       N         N      Y          N
 :OLM    left mirror       (HB)   N       Y       Y         N      N          N
 :ORM    right mirror      (HB)   N       Y       Y         N      N          N
-:OC     interior                 N       N       N         N      N          N
+:OC     console, interior        N       N       N         N      N          N
 :ODL    dashboard lights         N       N       N         Y      N          N
 :OH     driver head              N       N       N         N      special    N        except flagged verts
 :OD     driver, chair, wheel     N       N       N         N      special    N        except flagged verts

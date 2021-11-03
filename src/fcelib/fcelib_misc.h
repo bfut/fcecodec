@@ -104,6 +104,7 @@ int FCELIB_MISC_ArrMax(const int *arr, const int arr_len)
     }
     memcpy(sortedarr, arr, (size_t)arr_len * sizeof(*sortedarr));
     qsort(sortedarr, (size_t)arr_len, sizeof(*sortedarr), FCELIB_MISC_CompareInts);
+
     retv = sortedarr[arr_len - 1];
     free(sortedarr);
     break;

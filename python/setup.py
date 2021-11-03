@@ -3,6 +3,8 @@ setup.py - adapted from https://github.com/pybind/python_example/blob/master/set
 
 fcecodec Copyright (C) 2021 Benjamin Futasz <https://github.com/bfut>
 
+You may not redistribute this program without its source code.
+
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -40,15 +42,6 @@ with open(script_path / "../src/fcelib/fcelib.h", 'r') as f:
     __version__ = f.readline().rstrip()[-5:-1]
     print("fcelib version:", __version__)
 long_description = (script_path / "../README.md").read_text(encoding="utf-8")
-
-# The main interface is through Pybind11Extension.
-# * You can add cxx_std=11/14/17, and then build_ext can be removed.
-# * You can set include_pybind11=false to add the include directory yourself,
-#   say from a submodule.
-#
-# Note:
-#   Sort input source files if you glob sources to ensure bit-for-bit
-#   reproducible builds (https://github.com/pybind/python_example/pull/53)
 
 if platform.system() == "Windows":
     extra_compile_args = [
@@ -95,6 +88,15 @@ else:
             ("-Wno-newline-eof"),
         ]
 
+# The main interface is through Pybind11Extension.
+# * You can add cxx_std=11/14/17, and then build_ext can be removed.
+# * You can set include_pybind11=false to add the include directory yourself,
+#   say from a submodule.
+#
+# Note:
+#   Sort input source files if you glob sources to ensure bit-for-bit
+#   reproducible builds (https://github.com/pybind/python_example/pull/53)
+
 ext_modules = [
     Pybind11Extension(
         "fcecodec",
@@ -103,6 +105,7 @@ ext_modules = [
         define_macros=[
             ('VERSION_INFO', __version__),
             ('FCEC_MODULE_DEBUG', 1),
+            ('FCECVERBOSE', 0),
         ],
         extra_compile_args=extra_compile_args
     ),

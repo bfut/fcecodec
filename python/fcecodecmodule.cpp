@@ -2,6 +2,8 @@
   fcecodecmodule.c - Python module
   fcecodec Copyright (C) 2021 Benjamin Futasz <https://github.com/bfut>
 
+  You may not redistribute this program without its source code.
+
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -81,7 +83,6 @@ class Mesh : public fcelib::FcelibMesh {
                     std::string &texture_name,
                     const int print_damage, const int print_dummies) const;
     int IoGeomDataToNewPart_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> vert_idxs,
-                                  // py::array_t<int, py::array::c_style | py::array::forcecast> triangles_flags,
                                   py::array_t<float, py::array::c_style | py::array::forcecast> vert_texcoords,
                                   py::array_t<float, py::array::c_style | py::array::forcecast> vert_pos,
                                   py::array_t<float, py::array::c_style | py::array::forcecast> normals);
@@ -219,21 +220,17 @@ void Mesh::ExportObj(std::string &objpath, std::string &mtlpath,
 }
 
 int Mesh::IoGeomDataToNewPart_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> vert_idxs,
-                                    // py::array_t<int, py::array::c_style | py::array::forcecast> triangles_flags,
                                     py::array_t<float, py::array::c_style | py::array::forcecast> vert_texcoords,
                                     py::array_t<float, py::array::c_style | py::array::forcecast> vert_pos,
                                     py::array_t<float, py::array::c_style | py::array::forcecast> normals)
 {
   py::buffer_info tbuf = vert_idxs.request();
-//  py::buffer_info tfbuf = triangles_flags.request();
   py::buffer_info tcbuf = vert_texcoords.request();
   py::buffer_info vbuf = vert_pos.request();
   py::buffer_info vnbuf = normals.request();
 
   if (tbuf.ndim != 1)
     throw std::runtime_error("IoGeomDataToNewPart_numpy: Number of dimensions must be 1 (vert_idxs)");
-  // if (tfbuf.ndim != 1)
-  //   throw std::runtime_error("IoGeomDataToNewPart_numpy: Number of dimensions must be 1 (triangles_flags)");
   if (tcbuf.ndim != 1)
     throw std::runtime_error("IoGeomDataToNewPart_numpy: Number of dimensions must be 1 (vert_texcoords)");
   if (vbuf.ndim != 1)
@@ -241,8 +238,6 @@ int Mesh::IoGeomDataToNewPart_numpy(py::array_t<int, py::array::c_style | py::ar
   if (vnbuf.ndim != 1)
     throw std::runtime_error("IoGeomDataToNewPart_numpy: Number of dimensions must be 1 (normals)");
 
-  // if (tbuf.shape[0] != tfbuf.shape[0] * 3)
-  //   throw std::runtime_error("IoGeomDataToNewPart_numpy: Must be vert_idxs shape=(N*3, ) and triangles_flags shape=(N, ) for N triangles");
   if (tbuf.shape[0] * 2 != tcbuf.shape[0])
     throw std::runtime_error("IoGeomDataToNewPart_numpy: Must be vert_idxs shape=(N*3, ) and texcoords shape=(N*6, ) for N triangles");
   if (vbuf.shape[0] != vnbuf.shape[0])
@@ -250,7 +245,6 @@ int Mesh::IoGeomDataToNewPart_numpy(py::array_t<int, py::array::c_style | py::ar
 
   const int new_pid = fcelib::FCELIB_GeomDataToNewPart(&mesh_,
                                                        static_cast<int *>(tbuf.ptr), static_cast<int>(tbuf.shape[0]),
-                                                       // static_cast<int *>(tfbuf.ptr), static_cast<int>(tfbuf.shape[0]),
                                                        static_cast<float *>(tcbuf.ptr), static_cast<int>(tcbuf.shape[0]),
                                                        static_cast<float *>(vbuf.ptr), static_cast<int>(vbuf.shape[0]),
                                                        static_cast<float *>(vnbuf.ptr), static_cast<int>(vnbuf.shape[0]));
@@ -1627,10 +1621,10 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def("IoEncode_Fce4M", &Mesh::Encode_Fce4M, py::arg("center_parts") = true)
     .def("IoExportObj", &Mesh::ExportObj, py::arg("objpath"), py::arg("mtlpath"), py::arg("texname"), py::arg("print_damage") = 0, py::arg("print_dummies") = 0)  // TODO: test
     .def("IoGeomDataToNewPart", &Mesh::IoGeomDataToNewPart_numpy,
-      py::arg("vert_idxs"), /*py::arg("triangles_flags"),*/ py::arg("vert_texcoords"), py::arg("vert_pos"), py::arg("normals"),
+      py::arg("vert_idxs"), py::arg("vert_texcoords"), py::arg("vert_pos"), py::arg("normals"),
       R"pbdoc( vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz... )pbdoc")
     .def("IoGeomDataToNewPart_numpy", &Mesh::IoGeomDataToNewPart_numpy,
-      py::arg("vert_idxs"), /*py::arg("triangles_flags"),*/ py::arg("vert_texcoords"), py::arg("vert_pos"), py::arg("normals"),
+      py::arg("vert_idxs"), py::arg("vert_texcoords"), py::arg("vert_pos"), py::arg("normals"),
       R"pbdoc( vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz... )pbdoc")
 
     .def("MGetColors", &Mesh::MGetColors_numpy)
