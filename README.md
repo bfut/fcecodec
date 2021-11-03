@@ -2,27 +2,29 @@
 `fcecodec` is a Python extension module that decodes, encodes, and operates on
 (modifies) FCE data. FCE is a geometry definition file format.
 
-This also allows importing / exporting raw geometry data, etc. using modern methods.
+This allows importing / exporting raw geometry data using modern methods,
+and much more.
 
 The Python extension module is based on a header-only library written in C.
 Python bindings are written in C++ (pybind11).
 
 ## Features
 * Python: numpy integration for most functions
-* Io: decodes / encodes / converts the following format versions: FCE3, FCE4, FCE4M
-* Io: cleanly creates new FCE from raw geometry data
+* Io: non-destructively decodes / encodes / converts the following format versions: FCE3, FCE4, FCE4M
+* Io: cleanly creates FCE binary data from the ground up
+* Io: imports raw geometry data
 * Io: exports to Wavefront OBJ
-* Io: center parts on FCE encoding
-* Get/Set: exposes raw geometry data from FCE (vertices, normals, triangles, texcoords, triangles flag, vertices animation flag)
-* Get/Set: exposes attributes, e.g., triangle flags, vertex animation flags, colors, dummies (fx/light objects), etc.
-* Operations: inserts part from another mesh
-* Operations: copies part
-* Operations: merges parts
-* Operations: deletes part
-* Operations: changes part order
-* Operations: deletes triangles, vertices
-* Stats: prints number of triangles and vertices, colors, part positions, etc.
-* Stats: prints FCE binary data info (e.g., format version, number of triangles and vertices, colors, part positions, etc.)
+* Io: optionally center parts on FCE encoding
+* Get/Set: exposes raw geometry data (vertices, normals, triangles, texcoords, etc.)
+* Get/Set: exposes attributes (vertex animation flags, triangle flags, colors, dummies (fx/light objects), etc.)
+* Operation: inserts part from another mesh
+* Operation: copies part
+* Operation: merges parts
+* Operation: deletes part
+* Operation: changes part order
+* Operation: deletes triangles, vertices
+* Stats: prints Mesh info (e.g., number of triangles & vertices, colors, part positions, etc.)
+* Stats: prints FCE binary data info (e.g., format version, half sizes, number of triangles & vertices, colors, part positions, etc.)
 * Validate: validates FCE binary data
 
 ## Installation / Documentation
