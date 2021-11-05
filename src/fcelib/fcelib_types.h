@@ -339,7 +339,7 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh mesh)
   }
   if (sum_verts != mesh.hdr.NumVertices)
   {
-    fprintf(stderr, "ValidateMesh: inconsistent list (mesh.hdr.NumVertices)\n");
+    fprintf(stderr, "ValidateMesh: inconsistent list (%d != mesh.hdr.NumVertices = %d)\n", sum_verts, mesh.hdr.NumVertices);
     return 0;
   }
 
@@ -434,6 +434,10 @@ int FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(const FcelibMesh *mesh)
   int i;
   FcelibPart *part;
 
+#if FCECVERBOSE == 1
+    fprintf(stdout, "GetFirstUnusedGlobalTriangleIdx: ");
+#endif
+
   /* Get internally last part (has internally last verts) */
   i = FCELIB_MISC_ArrMax(mesh->hdr.Parts, mesh->parts_len);
 #if FCECVERBOSE == 1
@@ -464,6 +468,10 @@ int FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(const FcelibMesh *mesh)
   int vidx = -1;
   int i;
   FcelibPart *part;
+
+#if FCECVERBOSE == 1
+    fprintf(stdout, "GetFirstUnusedGlobalVertexIdx: ");
+#endif
 
   /* Get internally last part (has internally last verts) */
   i = FCELIB_MISC_ArrMax(mesh->hdr.Parts, mesh->parts_len);
@@ -581,14 +589,15 @@ int FCELIB_TYPES_AddParts(FcelibMesh *mesh, const int num_required)
     return 0;
   }
   mesh->parts = (FcelibPart **)ptr;
+  ptr = NULL;
   memset(mesh->parts + mesh->parts_len, 0, (size_t)(new_len - mesh->parts_len) * sizeof(*mesh->parts));
 
   mesh->parts_len = new_len;
   return 1;
 }
 
-
-int FCELIB_TYPES_AddTriangles(FcelibMesh *mesh, const int num_required)
+/* mesh->hdr.NumTriangles is not changed */
+int FCELIB_TYPES_AddTrianglesToMesh(FcelibMesh *mesh, const int num_required)
 {
   void *ptr = NULL;
 
@@ -599,38 +608,38 @@ int FCELIB_TYPES_AddTriangles(FcelibMesh *mesh, const int num_required)
     return 0;
   }
   mesh->triangles = (FcelibTriangle **)ptr;
+  ptr = NULL;
   memset(mesh->triangles + mesh->triangles_len, 0, (size_t)num_required * sizeof(*mesh->triangles));
 
   mesh->triangles_len += num_required;
   return 1;
 }
 
-
-int FCELIB_TYPES_AddVertices(FcelibMesh *mesh, const int num_required)
+/* mesh->hdr.NumVertices is not changed */
+int FCELIB_TYPES_AddVerticesToMesh(FcelibMesh *mesh, const int num_required)
 {
   void *ptr = NULL;
-  int new_len = mesh->vertices_len + num_required;
 
-  ptr = realloc(mesh->vertices, (size_t)new_len * sizeof(*mesh->vertices));
+  ptr = realloc(mesh->vertices, (size_t)(mesh->vertices_len + num_required) * sizeof(*mesh->vertices));
   if (!ptr)
   {
     fprintf(stderr, "FCELIB_TYPES_AddVertices: Cannot reallocate memory\n");
     return 0;
   }
   mesh->vertices = (FcelibVertex **)ptr;
-  memset(mesh->vertices + mesh->vertices_len, 0, (size_t)(new_len - mesh->vertices_len) * sizeof(*mesh->vertices));
+  ptr = NULL;
+  memset(mesh->vertices + mesh->vertices_len, 0, (size_t)num_required * sizeof(*mesh->vertices));
 
-  mesh->vertices_len = new_len;
+  mesh->vertices_len += num_required;
   return 1;
 }
 
-int FCELIB_TYPES_AddTriangles2(FcelibMesh *mesh, FcelibPart *part, const int num_required)
+int FCELIB_TYPES_AddTrianglesToPart(FcelibPart *part, const int num_required)
 {
   void *ptr = NULL;
-  const int new_len_p = part->ptriangles_len + num_required;
-  const int new_len = mesh->triangles_len + num_required;
 
-  ptr = realloc(part->PTriangles, (size_t)new_len_p * sizeof(*part->PTriangles));
+  part->ptriangles_len += num_required;
+  ptr = realloc(part->PTriangles, (size_t)part->ptriangles_len * sizeof(*part->PTriangles));
   if (!ptr)
   {
     fprintf(stderr, "AddTriangles2: Cannot reallocate memory (part->PTriangles)\n");
@@ -638,29 +647,17 @@ int FCELIB_TYPES_AddTriangles2(FcelibMesh *mesh, FcelibPart *part, const int num
   }
   part->PTriangles = (int *)ptr;
   ptr = NULL;
-  memset(part->PTriangles, -1, (size_t)new_len_p * sizeof(*part->PTriangles));
+  memset(part->PTriangles, -1, (size_t)part->ptriangles_len * sizeof(*part->PTriangles));
 
-  ptr = realloc(mesh->triangles, (size_t)new_len * sizeof(*mesh->triangles));
-  if (!ptr)
-  {
-    fprintf(stderr, "AddTriangles2: Cannot reallocate memory (triangles)\n");
-    return 0;
-  }
-  mesh->triangles = (FcelibTriangle **)ptr;
-  memset(mesh->triangles + mesh->triangles_len, 0, (size_t)(new_len - mesh->triangles_len) * sizeof(*mesh->triangles));
-
-  part->ptriangles_len = new_len_p;
-  mesh->triangles_len = new_len;
   return 1;
 }
 
-int FCELIB_TYPES_AddVertices2(FcelibMesh *mesh, FcelibPart *part, const int num_required)
+int FCELIB_TYPES_AddVerticesToPart(FcelibPart *part, const int num_required)
 {
   void *ptr = NULL;
-  const int new_len_p = part->pvertices_len + num_required;
-  const int new_len = mesh->vertices_len + num_required;
 
-  ptr = realloc(part->PVertices, (size_t)new_len_p * sizeof(*part->PVertices));
+  part->pvertices_len += num_required;
+  ptr = realloc(part->PVertices, (size_t)part->pvertices_len * sizeof(*part->PVertices));
   if (!ptr)
   {
     fprintf(stderr, "AddVertices2: Cannot reallocate memory (part->PVertices)\n");
@@ -668,32 +665,18 @@ int FCELIB_TYPES_AddVertices2(FcelibMesh *mesh, FcelibPart *part, const int num_
   }
   part->PVertices = (int *)ptr;
   ptr = NULL;
-  memset(part->PVertices, -1, (size_t)new_len_p * sizeof(*part->PVertices));
+  memset(part->PVertices, -1, (size_t)part->pvertices_len * sizeof(*part->PVertices));
 
-  ptr = realloc(mesh->vertices, (size_t)new_len * sizeof(*mesh->vertices));
-  if (!ptr)
-  {
-    fprintf(stderr, "AddVertices2: Cannot reallocate memory (vertices)\n");
-    return 0;
-  }
-  mesh->vertices = (FcelibVertex **)ptr;
-  memset(mesh->vertices + mesh->vertices_len, 0, (size_t)(new_len - mesh->vertices_len) * sizeof(*mesh->vertices));
-
-  part->pvertices_len = new_len_p;
-  mesh->vertices_len = new_len;
   return 1;
 }
 
 void FCELIB_TYPES_CpyTriag(FcelibTriangle *dest, const FcelibTriangle *src)
 {
   dest->tex_page = src->tex_page;
-  // fprintf(stderr, "__%d,%d  ", dest->vidx[0], src->vidx[0], 0);
-  // fprintf(stderr, "%d,%d  ", dest->vidx[1], src->vidx[1], 0);
-  // fprintf(stderr, "%d,%d\n", dest->vidx[2], src->vidx[2], 0);
-  memcpy(dest->vidx, src->vidx, (size_t)3 * sizeof(int));
+  memcpy(dest->vidx, src->vidx, sizeof(src->vidx));
   dest->flag = src->flag;
-  memcpy(dest->U, src->U, (size_t)3 * sizeof(float));
-  memcpy(dest->V, src->V, (size_t)3 * sizeof(float));
+  memcpy(dest->U, src->U, sizeof(src->U));
+  memcpy(dest->V, src->V, sizeof(src->V));
 }
 
 void FCELIB_TYPES_CpyVert(FcelibVertex *dest, const FcelibVertex *src)

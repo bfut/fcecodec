@@ -121,12 +121,6 @@ Name    Application example                     Application example
 0x62E   car.fce   right window broken
 */
 
-/* FCE4M   tTriangle->flag   32 bit
-
-
-*/
-
-
 /* Length = 56. Vertex indices are local. Values from 'P1stVertices' make them global. */
 typedef struct {
 /* 0x00 */  int   tex_page;     /* Texture page number. FCE3, FCE4: == 0,
@@ -263,7 +257,6 @@ go0#.fce (FCE3) - track menu model (# = 0-8)
 Name/Description         Idx  UsesFlag  Light  Reflection
 Loft01                   0
 Loft02                   1    Y
-
 */
 
 /* 0x2038  -  size of this header */

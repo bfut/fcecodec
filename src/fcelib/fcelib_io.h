@@ -105,7 +105,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           /* NumVertices - counted below */
         mesh->hdr.NumArts = header.NumArts;
         mesh->hdr.NumParts = header.NumParts;
-        mesh->parts_len = 2 * mesh->hdr.NumParts;
+        mesh->parts_len = mesh->hdr.NumParts;
 
         mesh->hdr.Parts = (int *)malloc((size_t)mesh->parts_len * sizeof(int));
         memset(mesh->hdr.Parts, -1, (size_t)mesh->parts_len * sizeof(int));
@@ -150,7 +150,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
 
 
         /* Parts ------------------------------------------------------------ */
-        if (mesh->hdr.NumParts == 0)  /** TODO: test */
+        if (mesh->hdr.NumParts == 0)
         {
           retv = 1;
           break;
@@ -181,11 +181,11 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           mesh->parts[i]->PartPos.z = header.PartPos[i].z;
 
           mesh->parts[i]->PNumVertices = header.PNumVertices[i];
-          mesh->parts[i]->pvertices_len = 2 * mesh->parts[i]->PNumVertices;
+          mesh->parts[i]->pvertices_len = mesh->parts[i]->PNumVertices;
           mesh->parts[i]->PVertices = NULL;
 
           mesh->parts[i]->PNumTriangles = header.PNumTriangles[i];
-          mesh->parts[i]->ptriangles_len = 2 * mesh->parts[i]->PNumTriangles;
+          mesh->parts[i]->ptriangles_len = mesh->parts[i]->PNumTriangles;
           mesh->parts[i]->PTriangles = NULL;
 
           /* update global counts */
@@ -214,7 +214,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
 
 
         /* Triangles -------------------------------------------------------- */
-        if (mesh->triangles_len == 0)  /** TODO: test */
+        if (mesh->triangles_len == 0)
         {
           retv = 1;
           break;
@@ -271,7 +271,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
 
 
         /* Vertices --------------------------------------------------------- */
-        if (mesh->vertices_len == 0)  /** TODO: test */
+        if (mesh->vertices_len == 0)
         {
           retv = 1;
           break;
@@ -345,7 +345,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           /* NumVertices - counted below */
         mesh->hdr.NumArts = header.NumArts;
         mesh->hdr.NumParts = header.NumParts;
-        mesh->parts_len = 2 * mesh->hdr.NumParts;
+        mesh->parts_len = mesh->hdr.NumParts;
 
         mesh->hdr.Parts = (int *)malloc((size_t)mesh->parts_len * sizeof(int));
         memset(mesh->hdr.Parts, -1, (size_t)mesh->parts_len * sizeof(int));
@@ -425,11 +425,11 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           mesh->parts[i]->PartPos.z = header.PartPos[i].z;
 
           mesh->parts[i]->PNumVertices = header.PNumVertices[i];
-          mesh->parts[i]->pvertices_len = 2 * mesh->parts[i]->PNumVertices;
+          mesh->parts[i]->pvertices_len = mesh->parts[i]->PNumVertices;
           mesh->parts[i]->PVertices = NULL;
 
           mesh->parts[i]->PNumTriangles = header.PNumTriangles[i];
-          mesh->parts[i]->ptriangles_len = 2 * mesh->parts[i]->PNumTriangles;
+          mesh->parts[i]->ptriangles_len = mesh->parts[i]->PNumTriangles;
           mesh->parts[i]->PTriangles = NULL;
 
           /* update global counts */
@@ -2359,18 +2359,24 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     ++mesh->hdr.NumParts;
 
     /* Add triangles */
+    if (!FCELIB_TYPES_AddTrianglesToPart(part, part->PNumTriangles))
+    {
+      new_pid = -1;
+      break;
+    }
 #if FCECVERBOSE == 1
-    fprintf(stdout, "add triangles? (excess: %d)\n", mesh->triangles_len - (tidx_1st + part->PNumTriangles));
+    fprintf(stdout, "add triangles to mesh? (excess: %d)\n", mesh->triangles_len - (tidx_1st + part->PNumTriangles));
 #endif
     if (mesh->triangles_len < tidx_1st + part->PNumTriangles)
     {
-      if (!FCELIB_TYPES_AddTriangles2(mesh, part, part->PNumTriangles))
+      if (!FCELIB_TYPES_AddTrianglesToMesh(mesh, tidx_1st + part->PNumTriangles - mesh->triangles_len))
       {
         fprintf(stderr, "GeomDataToNewPart: Cannot add triangles\n");
         new_pid = -1;
         break;
       }
     }
+    mesh->hdr.NumTriangles += part->PNumTriangles;
 
     for (int j = 0; j < part->PNumTriangles; ++j)
     {
@@ -2394,21 +2400,26 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     }
     if (new_pid < 0)
       break;
-    mesh->hdr.NumTriangles += part->PNumTriangles;
 
     /* Add vertices */
+    if (!FCELIB_TYPES_AddVerticesToPart(part, part->PNumVertices))
+    {
+      new_pid = -1;
+      break;
+    }
 #if FCECVERBOSE == 1
-    fprintf(stdout, "add vertices? (excess: %d)\n", mesh->vertices_len - (vidx_1st + part->PNumVertices));
+    fprintf(stdout, "add vertices to mesh? (excess: %d)\n", mesh->vertices_len - (vidx_1st + part->PNumVertices));
 #endif
     if (mesh->vertices_len < vidx_1st + part->PNumVertices)
     {
-      if (!FCELIB_TYPES_AddVertices2(mesh, part, part->PNumVertices))
+      if (!FCELIB_TYPES_AddVerticesToMesh(mesh, vidx_1st + part->PNumVertices - mesh->vertices_len))
       {
         fprintf(stderr, "GeomDataToNewPart: Cannot add vertices\n");
         new_pid = -1;
         break;
       }
     }
+    mesh->hdr.NumVertices += part->PNumVertices;
 
     for (int j = 0; j < part->PNumVertices; ++j)
     {
@@ -2438,7 +2449,6 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     }
     if (new_pid < 0)
       break;
-    mesh->hdr.NumVertices += part->PNumVertices;
 
     new_pid = FCELIB_TYPES_GetOrderByInternalPartIdx(mesh, mesh->hdr.Parts[new_pid]);
     if (new_pid < 0)

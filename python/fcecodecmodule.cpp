@@ -147,6 +147,7 @@ class Mesh : public fcelib::FcelibMesh {
 
     /* Operations */
     bool CenterPart(const int pid);
+    int CopyPart(const int pid_src);
     int InsertPart(Mesh *mesh_src, const int pid_src);
     bool DeletePart(const int pid);
     bool DelPartTriags(const int pid, const std::vector<int> &idxs);
@@ -1529,6 +1530,16 @@ bool Mesh::CenterPart(const int pid)
   return fcelib::FCELIB_CenterPart(&mesh_, pid);
 }
 
+int Mesh::CopyPart(const int pid_src)
+{
+  if (pid_src > this->mesh_.hdr.NumParts || pid_src < 0)
+    throw std::out_of_range("CopyPart: part index (pid_src) out of range");
+  const int pid_new = fcelib::FCELIB_CopyPartToMesh(&this->mesh_, &this->mesh_, pid_src);
+  if (pid_new < 0)
+    throw std::runtime_error("CopyPart: Cannot copy part");
+  return pid_new;
+}
+
 int Mesh::InsertPart(Mesh *mesh_src, const int pid_src)
 {
   fcelib::FcelibMesh *mesh_src_ = mesh_src->Get_mesh_();
@@ -1676,6 +1687,7 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def_property("MVertsAnimation_numpy", &Mesh::GetVertsAnimation_numpy, &Mesh::SetVertsAnimation_numpy, R"pbdoc( Returns (N, ) numpy array for N vertices. )pbdoc")
 
     .def("OpCenterPart", &Mesh::CenterPart, py::arg("pid"), R"pbdoc( Center specified part vertices positions to local centroid. )pbdoc")
+    .def("OpCopyPart", &Mesh::CopyPart, py::arg("pid_src"), R"pbdoc( Copy specified part. Returns new part index. )pbdoc")
     .def("OpInsertPart", &Mesh::InsertPart, py::arg("mesh_src"), py::arg("pid_src"), R"pbdoc( Insert (copy) specified part from mesh_src. Returns new part index. )pbdoc")
     .def("OpDeletePart", &Mesh::DeletePart, py::arg("pid"))
     .def("OpDelPartTriags", &Mesh::DelPartTriags, py::arg("pid"), py::arg("idxs"))

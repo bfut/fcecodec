@@ -117,6 +117,11 @@ CLASSES
      |      
      |      Center specified part vertices positions to local centroid.
      |  
+     |  OpCopyPart(...)
+     |      OpCopyPart(self: fcecodec.Mesh, pid_src: int) -> int
+     |      
+     |      Copy specified part. Returns new part index.
+     |  
      |  OpDelPartTriags(...)
      |      OpDelPartTriags(self: fcecodec.Mesh, pid: int, idxs: List[int]) -> bool
      |  
@@ -236,6 +241,8 @@ CLASSES
      |  
      |  ----------------------------------------------------------------------
      |  Readonly properties defined here:
+     |  
+     |  MNumArts
      |  
      |  MNumParts
      |  
