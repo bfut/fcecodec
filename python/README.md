@@ -242,8 +242,6 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Readonly properties defined here:
      |  
-     |  MNumArts
-     |  
      |  MNumParts
      |  
      |  MNumTriags
@@ -258,6 +256,9 @@ CLASSES
      |  
      |  ----------------------------------------------------------------------
      |  Data descriptors defined here:
+     |  
+     |  MNumArts
+     |      Usually equal to 1. Larger values enable multi-texture access for cop#.fce
      |  
      |  MVertsAnimation
      |      Returns (N, ) array for N vertices.

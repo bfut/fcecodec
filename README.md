@@ -11,7 +11,7 @@ Python bindings are written in C++ (pybind11).
 ## Features
 * full FCE implementation
 * Python: numpy integration for most functions
-* Io: non-destructively decodes / encodes / converts the following format versions: FCE3, FCE4, FCE4M
+* Io: transparently decodes / encodes / converts the following format versions: FCE3, FCE4, FCE4M
 * Io: cleanly creates FCE binary data from the ground up
 * Io: imports raw geometry data
 * Io: exports to Wavefront OBJ

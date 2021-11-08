@@ -69,7 +69,6 @@ class Mesh : public fcelib::FcelibMesh {
     void PrintParts(void) const { fcelib::FCELIB_PrintMeshParts(mesh_); }
     void PrintTriags(void) const { fcelib::FCELIB_PrintMeshTriangles(mesh_); }
     void PrintVerts(void) const { fcelib::FCELIB_PrintMeshVertices(mesh_); }
-    int MNumArts() const { return mesh_.hdr.NumArts; };
     int num_parts() const { return mesh_.hdr.NumParts; };
     int num_triags() const { return mesh_.hdr.NumTriangles; };
     int num_verts() const { return mesh_.hdr.NumVertices; };
@@ -88,6 +87,8 @@ class Mesh : public fcelib::FcelibMesh {
                                   py::array_t<float, py::array::c_style | py::array::forcecast> normals);
 
     /* Mesh / Header */
+    int MGetNumArts() const { return mesh_.hdr.NumArts; };
+    void MSetNumArts(const int NumArts) { mesh_.hdr.NumArts = NumArts; };
     py::buffer MGetColors_numpy(void) const;
     void MSetColors_numpy(py::array_t<unsigned char, py::array::c_style | py::array::forcecast> arr);
     std::vector<std::string> GetDummyNames() const;
@@ -1621,7 +1622,6 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def("PrintParts", &Mesh::PrintParts)
     .def("PrintTriags", &Mesh::PrintTriags)
     .def("PrintVerts", &Mesh::PrintVerts)
-    .def_property_readonly("MNumArts", &Mesh::MNumArts)
     .def_property_readonly("MNumParts", &Mesh::num_parts)
     .def_property_readonly("MNumTriags", &Mesh::num_triags)
     .def_property_readonly("MNumVerts", &Mesh::num_verts)
@@ -1638,6 +1638,7 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
       py::arg("vert_idxs"), py::arg("vert_texcoords"), py::arg("vert_pos"), py::arg("normals"),
       R"pbdoc( vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz... )pbdoc")
 
+    .def_property("MNumArts", &Mesh::MGetNumArts, &Mesh::MSetNumArts, R"pbdoc( Usually equal to 1. Larger values enable multi-texture access for cop#.fce )pbdoc")
     .def("MGetColors", &Mesh::MGetColors_numpy)
     .def("MGetColors_numpy", &Mesh::MGetColors_numpy)
     .def("MSetColors", &Mesh::MSetColors_numpy, py::arg("colors"), R"pbdoc( Expects shape=(N, 4, 4) )pbdoc")
