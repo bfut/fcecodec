@@ -10,19 +10,18 @@
 
   This header may not be removed or altered from any source distribution.
 """
-
 import fcecodec
 import numpy as np
 
 def PrintFceInfo(path):
     with open(path, "rb") as f:
-#        print("PrintFceInfo(", path, ")")
+        # print("PrintFceInfo(", path, ")")
         buf = f.read()
         fcecodec.PrintFceInfo(buf)
         assert(fcecodec.ValidateFce( buf ) == 1)
 
 def LoadFce(mesh, path):
-#    print("LoadFce(", mesh, ",", path, ")")
+    # print("LoadFce(", mesh, ",", path, ")")
     with open(path, "rb") as f:
         fce_buf = f.read()
     assert(fcecodec.ValidateFce(fce_buf) == 1)
@@ -42,8 +41,8 @@ def WriteFce(version, mesh, path, center_parts = 1):
         f.write(buf)
 
 def ExportObj(mesh, objpath, mtlpath, texname, print_damage, print_dummies):
-#    print("IoExportObj(", mesh, objpath, mtlpath, texname, print_damage, print_dummies, ")")
-    mesh.IoExportObj(str(objpath), str(mtlpath), texname, print_damage, print_dummies)
+    # print("IoExportObj(", mesh, objpath, mtlpath, texname, print_damage, print_dummies, ")")
+    mesh.IoExportObj(str(objpath), str(mtlpath), str(texname), print_damage, print_dummies)
 
 def GetPartNames(mesh):
     # part_names = []
