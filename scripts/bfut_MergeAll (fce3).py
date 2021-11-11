@@ -1,5 +1,5 @@
 """
-  bfut_fcecodecScriptTemplate.py - script template
+  bfut_MergeAll (fce3).py - script template
 
 REQUIRES: installing <https://github.com/bfut/fcecodec>
 
@@ -12,13 +12,12 @@ LICENSE:
   arising from the use of this software.
 """
 CONFIG = {
-    "fce_version"  : 4,  # expects 3|4|'4M' for FCE3, FCE4, FCE4M, respectively
+    "fce_version"  : 3,  # expects 3|4|'4M' for FCE3, FCE4, FCE4M, respectively
     "center_parts" : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
 }
 import argparse
 import pathlib
 import sys
-import numpy as np
 
 script_path = pathlib.Path(__file__).parent
 
@@ -28,7 +27,7 @@ try:
 except ModuleNotFoundError:
     import sys
     p = pathlib.Path(script_path / "../python/build")
-    print(p)
+    # print(p)
     for x in p.glob("**"):
         sys.path.append(str(x.resolve()))
     import fcecodec
@@ -39,24 +38,30 @@ parser.add_argument("cmd", nargs=1, help="path")
 args = parser.parse_args()
 
 filepath_fce_input = pathlib.Path(args.cmd[0])
-filepath_fce_output = filepath_fce_input.with_stem(filepath_fce_input.stem + "_o")
+filepath_fce_output = filepath_fce_input.with_stem(filepath_fce_input.stem + "_out")
 
 
 # -------------------------------------- wrappers
 sys.path.append(str( pathlib.Path(pathlib.Path(__file__).parent / "../python/").resolve()))
 from bfut_mywrappers import *
-if 0:
-    import bfut_mywrappers
-    help(bfut_mywrappers)
 
 
 # -------------------------------------- workload
 mesh = fcecodec.Mesh()
 mesh = LoadFce(mesh, filepath_fce_input)
-## do stuff here
 
+# merge
+if mesh.MNumParts > 1:
+    pid1 = mesh.MNumParts - 1
+    for pid2 in reversed(range(mesh.MNumParts - 1)):
+        print("merging parts", pid1, pid2)
+        pid1 = mesh.OpMergeParts(pid1, pid2)
 
-## done doing stuff
+# cleanup
+while mesh.MNumParts > 1:
+    print("deleting part", mesh.PGetName(0))
+    mesh.OpDeletePart(0)
+
 WriteFce(CONFIG["fce_version"], mesh, filepath_fce_output, CONFIG["center_parts"])
 PrintFceInfo(filepath_fce_output)
 print("FILE =", filepath_fce_output, flush=True)

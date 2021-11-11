@@ -48,7 +48,7 @@ except FileExistsError:
 
 # -------------------------------------- import python wrappers
 sys.path.append(str( pathlib.Path(pathlib.Path(__file__).parent / "../python/").resolve()))
-from fcecodec_mywrappers import *
+from bfut_mywrappers import *
 
 
 # --------------------------------------
