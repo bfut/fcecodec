@@ -19,7 +19,7 @@
  */
 
 /**
-  import/export FCE3, FCE4, FCE4M
+  import/export FCE3, FCE4, FCE4M, export OBJ/MTL, import geometric data
  **/
 
 #ifndef FCELIB_IO_H
@@ -744,7 +744,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                         mesh->vertices[
                           mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
                         ]->VertPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                      )
+                      )  // flip sign in Z-coordinate
                );
       }
       fprintf(outf, "\n");
@@ -770,7 +770,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
       }
       fprintf(outf, "\n");
 
-      /** Normals (TODO: really add part pos ???) */
+      /* Normals */
       fprintf(outf, "#%d normals\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
       for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
       {
@@ -788,7 +788,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                         mesh->vertices[
                           mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
                         ]->NormPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                      )
+                      )  // flip sign in Z-coordinate
                );
       }
       fprintf(outf, "\n");
@@ -894,7 +894,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                           mesh->vertices[
                             mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
                           ]->DamgdVertPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                        )
+                        )  // flip sign in Z-coordinate
                 );
         }
         fprintf(outf, "\n");
@@ -920,7 +920,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
         }
         fprintf(outf, "\n");
 
-        /** Normals (TODO: really add part pos ???) */
+        /* Normals */
         fprintf(outf, "#%d normals\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
         for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
         {
@@ -938,7 +938,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                           mesh->vertices[
                             mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
                           ]->DamgdNormPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                        )
+                        )  // flip sign in Z-coordinate
                 );
         }
         fprintf(outf, "\n");
@@ -1010,7 +1010,8 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
     {
       for (i = 0; i < mesh->hdr.NumDummies; ++i)
       {
-        fprintf(outf, "\no DUMMY_%s\n", mesh->hdr.DummyNames + (i * 64));
+        // unique shape names
+        fprintf(outf, "\no DUMMY_%02d_%s\n", i, mesh->hdr.DummyNames + (i * 64));
 
         /* Vertices */
         fprintf(outf, "#position %f %f %f\n",
@@ -1134,7 +1135,7 @@ int FCELIB_IO_EncodeFce3_Fopen(FcelibMesh *mesh, const void *fcepath, const int 
 
         part = mesh->parts[ mesh->hdr.Parts[i] ];
         FCELIB_TYPES_GetPartLocalCentroid(mesh, part, &centroid);
-        FCELIB_TYPES_ResetPartPos(mesh, part, centroid);
+        FCELIB_TYPES_ResetPartCenter(mesh, part, centroid);
 
         ++j;
       }
@@ -1589,7 +1590,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
           continue;
         part = mesh->parts[ mesh->hdr.Parts[i] ];
         FCELIB_TYPES_GetPartLocalCentroid(mesh, part, &centroid);
-        FCELIB_TYPES_ResetPartPos(mesh, part, centroid);
+        FCELIB_TYPES_ResetPartCenter(mesh, part, centroid);
         ++j;
       }
     }
@@ -1918,7 +1919,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
           continue;
         part = mesh->parts[ mesh->hdr.Parts[i] ];
         FCELIB_TYPES_GetPartLocalCentroid(mesh, part, &centroid);
-        FCELIB_TYPES_ResetPartPos(mesh, part, centroid);
+        FCELIB_TYPES_ResetPartCenter(mesh, part, centroid);
         ++j;
       }
     }

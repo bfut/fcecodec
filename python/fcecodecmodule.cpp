@@ -51,7 +51,7 @@
 namespace py = pybind11;
 
 
-/* classes, structs ----------------------------------------------------------------- */
+/* classes, structs --------------------------------------------------------- */
 
 class Mesh : public fcelib::FcelibMesh {
   public:
@@ -148,6 +148,8 @@ class Mesh : public fcelib::FcelibMesh {
 
     /* Operations */
     bool CenterPart(const int pid);
+    bool OpSetPartCenter(const int pid, std::array<float, 3> &new_center);
+    bool OpSetPartCenter_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> new_center);
     int CopyPart(const int pid_src);
     int InsertPart(Mesh *mesh_src, const int pid_src);
     bool DeletePart(const int pid);
@@ -1531,6 +1533,25 @@ bool Mesh::CenterPart(const int pid)
   return fcelib::FCELIB_CenterPart(&mesh_, pid);
 }
 
+bool Mesh::OpSetPartCenter(const int pid, std::array<float, 3> &new_center)
+{
+  if (pid > mesh_.hdr.NumParts || pid < 0)
+    throw std::out_of_range("OpSetPartCenter: part index (pid) out of range");
+  return fcelib::FCELIB_SetPartCenter(&mesh_, pid, new_center.data());
+}
+
+bool Mesh::OpSetPartCenter_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> new_center)
+{
+  if (pid > mesh_.hdr.NumParts || pid < 0)
+    throw std::out_of_range("OpSetPartCenter: part index (pid) out of range");
+  py::buffer_info buf = new_center.request();
+  if (buf.ndim != 1)
+    throw std::runtime_error("Number of dimensions must be 1");
+  if (buf.shape[0] != 3)
+    throw std::runtime_error("Shape must be (3, )");
+  return fcelib::FCELIB_SetPartCenter(&mesh_, pid, static_cast<float *>(buf.ptr));
+}
+
 int Mesh::CopyPart(const int pid_src)
 {
   if (pid_src > this->mesh_.hdr.NumParts || pid_src < 0)
@@ -1586,7 +1607,7 @@ int Mesh::MovePart(const int pid)
 }
 
 
-/* wrappers ---------------------------------------------------------------- */
+/* wrappers ----------------------------------------------------------------- */
 
 /* fcecodec. */
 void FCECODECMODULE_PrintFceInfo(const std::string &buf)
@@ -1604,7 +1625,7 @@ int FCECODECMODULE_ValidateFce(const std::string &buf)
 }
 
 
-/* ------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 
 PYBIND11_MODULE(fcecodec, fcecodec_module)
 {
@@ -1687,7 +1708,9 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def_property("MVertsAnimation", &Mesh::GetVertsAnimation, &Mesh::SetVertsAnimation, R"pbdoc( Returns (N, ) array for N vertices. )pbdoc")
     .def_property("MVertsAnimation_numpy", &Mesh::GetVertsAnimation_numpy, &Mesh::SetVertsAnimation_numpy, R"pbdoc( Returns (N, ) numpy array for N vertices. )pbdoc")
 
-    .def("OpCenterPart", &Mesh::CenterPart, py::arg("pid"), R"pbdoc( Center specified part vertices positions to local centroid. )pbdoc")
+    .def("OpCenterPart", &Mesh::CenterPart, py::arg("pid"), R"pbdoc( Center specified part to local centroid. Does not move part w.r.t. to global coordinates. )pbdoc")
+    .def("OpSetPartCenter", &Mesh::OpSetPartCenter, py::arg("pid"), py::arg("new_center"), R"pbdoc( Center specified part to given position. Does not move part w.r.t. to global coordinates. )pbdoc")
+    .def("OpSetPartCenter_numpy", &Mesh::OpSetPartCenter_numpy, py::arg("pid"), py::arg("new_center"), R"pbdoc( Center specified part to given position. Does not move part w.r.t. to global coordinates. )pbdoc")
     .def("OpCopyPart", &Mesh::CopyPart, py::arg("pid_src"), R"pbdoc( Copy specified part. Returns new part index. )pbdoc")
     .def("OpInsertPart", &Mesh::InsertPart, py::arg("mesh_src"), py::arg("pid_src"), R"pbdoc( Insert (copy) specified part from mesh_src. Returns new part index. )pbdoc")
     .def("OpDeletePart", &Mesh::DeletePart, py::arg("pid"))

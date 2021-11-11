@@ -43,7 +43,8 @@ extern "C" {
 
 /* mesh --------------------------------------------------------------------- */
 
-/* Center specified part around local centroid */
+/* Center specified part around local centroid.
+   Does not move part w.r.t. to global coordinates */
 int FCELIB_OP_CenterPart(FcelibMesh *mesh, const int idx)
 {
   int retv = 0;
@@ -53,6 +54,9 @@ int FCELIB_OP_CenterPart(FcelibMesh *mesh, const int idx)
 
   for (;;)
   {
+    if (!FCELIB_TYPES_ValidateMesh(*mesh))
+      break;
+
     internal_idx = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, idx);
     if (internal_idx < 0)
     {
@@ -62,7 +66,42 @@ int FCELIB_OP_CenterPart(FcelibMesh *mesh, const int idx)
 
     part = mesh->parts[ mesh->hdr.Parts[internal_idx] ];
     FCELIB_TYPES_GetPartLocalCentroid(mesh, part, &centroid);
-    FCELIB_TYPES_ResetPartPos(mesh, part, centroid);
+    FCELIB_TYPES_ResetPartCenter(mesh, part, centroid);
+
+    retv = 1;
+    break;
+  }
+
+  return retv;
+}
+
+/* Center specified part around new_center.
+   Does not move part w.r.t. to global coordinates */
+int FCELIB_OP_SetPartCenter(FcelibMesh *mesh, const int pidx,
+                            const float new_center[3])
+{
+  int retv = 0;
+  int internal_pidx;
+  FcelibPart *part;
+  tVector temp;
+
+  for (;;)
+  {
+    if (!FCELIB_TYPES_ValidateMesh(*mesh))
+      break;
+
+    internal_pidx = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, pidx);
+    if (internal_pidx < 0)
+    {
+      fprintf(stderr, "SetPartCenter: Invalid index (internal_idx)\n");
+      break;
+    }
+
+    part = mesh->parts[ mesh->hdr.Parts[internal_pidx] ];
+    memcpy(&temp.x, &new_center[0], sizeof(temp.x));
+    memcpy(&temp.y, &new_center[1], sizeof(temp.y));
+    memcpy(&temp.z, &new_center[2], sizeof(temp.z));
+    FCELIB_TYPES_ResetPartCenter(mesh, part, temp);
 
     retv = 1;
     break;
@@ -748,6 +787,8 @@ int FCELIB_OP_MoveUpPart(FcelibMesh *mesh, const int idx)
 
   return idx - 1;
 }
+
+
 
 #ifdef __cplusplus
 }  /* extern "C" */

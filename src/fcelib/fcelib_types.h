@@ -737,7 +737,7 @@ int FCELIB_TYPES_GetPartLocalCentroid(FcelibMesh *mesh, FcelibPart *part, tVecto
     xyz_arr = (float *)malloc((size_t)(3 * (PNumVertices + 1)) * sizeof(*xyz_arr));
     if (!xyz_arr)
     {
-      fprintf(stderr, "GetPartCentroid: Cannot allocate memory\n");
+      fprintf(stderr, "GetPartLocalCentroid: Cannot allocate memory\n");
       break;
     }
     memset(xyz_arr, 0, (size_t)(3 * (PNumVertices + 1)) * sizeof(*xyz_arr));
@@ -784,7 +784,7 @@ int FCELIB_TYPES_GetPartLocalCentroid(FcelibMesh *mesh, FcelibPart *part, tVecto
 }
 
 /* Does not move part w.r.t. to global coordinates */
-void FCELIB_TYPES_ResetPartPos(FcelibMesh *mesh, FcelibPart *part, const tVector new_PartPos)
+void FCELIB_TYPES_ResetPartCenter(FcelibMesh *mesh, FcelibPart *part, const tVector new_PartPos)
 {
   FcelibVertex *vert;
   int count_verts = 0;
@@ -807,9 +807,9 @@ void FCELIB_TYPES_ResetPartPos(FcelibMesh *mesh, FcelibPart *part, const tVector
     vert->DamgdNormPos.z += part->PartPos.z - new_PartPos.z;
     ++count_verts;
   }
-  memcpy(&part->PartPos.x, &new_PartPos.x, sizeof(float));
-  memcpy(&part->PartPos.y, &new_PartPos.y, sizeof(float));
-  memcpy(&part->PartPos.z, &new_PartPos.z, sizeof(float));
+  memcpy(&part->PartPos.x, &new_PartPos.x, sizeof(part->PartPos.x));
+  memcpy(&part->PartPos.y, &new_PartPos.y, sizeof(part->PartPos.y));
+  memcpy(&part->PartPos.z, &new_PartPos.z, sizeof(part->PartPos.z));
 }
 
 

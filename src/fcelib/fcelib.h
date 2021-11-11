@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FCECVERS "0.56"
+#define FCECVERS "0.57"
 #ifndef FCECVERBOSE
 #define FCECVERBOSE 0
 #endif
@@ -127,6 +127,12 @@ int FCELIB_CenterPart(FcelibMesh *mesh, const int idx)
   return FCELIB_OP_CenterPart(mesh, idx);
 }
 
+int FCELIB_SetPartCenter(FcelibMesh *mesh, const int pidx,
+                         const float new_center[3])
+{
+  return FCELIB_OP_SetPartCenter(mesh, pidx, new_center);
+}
+
 int FCELIB_CopyPartToMesh(FcelibMesh *mesh_rcv,
                           FcelibMesh *mesh_src, const int idx)
 {
@@ -158,6 +164,7 @@ int FCELIB_MeshMoveUpPart(FcelibMesh *mesh, const int idx)
 {
   return FCELIB_OP_MoveUpPart(mesh, idx);
 }
+
 
 /* tools -------------------------------------------------------------------- */
 

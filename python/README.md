@@ -3,9 +3,8 @@ This file describes installation, and usage of `fcecodec` as Python extension
 module.
 
 ## Examples
-See scripts used for testing<br/>
-[/tests/ci-smoketest.py](/tests/ci-smoketest.py)<br/>
-[/python/fcecodec_mywrappers.py](/python/fcecodec_mywrappers.py)
+See [/scripts](/scripts) and
+[/python/bfut_mywrappers.py](/python/bfut_mywrappers.py)
 
 ## Installation
 Requires Python 3.7+ and the following dependencies
@@ -115,7 +114,7 @@ CLASSES
      |  OpCenterPart(...)
      |      OpCenterPart(self: fcecodec.Mesh, pid: int) -> bool
      |      
-     |      Center specified part vertices positions to local centroid.
+     |      Center specified part to local centroid. Does not move part w.r.t. to global coordinates.
      |  
      |  OpCopyPart(...)
      |      OpCopyPart(self: fcecodec.Mesh, pid_src: int) -> int
@@ -147,6 +146,16 @@ CLASSES
      |      OpMovePart(self: fcecodec.Mesh, pid: int) -> int
      |      
      |      Move up specified part towards order 0. Returns new part index.
+     |  
+     |  OpSetPartCenter(...)
+     |      OpSetPartCenter(self: fcecodec.Mesh, pid: int, new_center: List[float[3]]) -> bool
+     |      
+     |      Center specified part to given position. Does not move part w.r.t. to global coordinates.
+     |  
+     |  OpSetPartCenter_numpy(...)
+     |      OpSetPartCenter_numpy(self: fcecodec.Mesh, pid: int, new_center: numpy.ndarray[numpy.float32]) -> bool
+     |      
+     |      Center specified part to given position. Does not move part w.r.t. to global coordinates.
      |  
      |  PGetName(...)
      |      PGetName(self: fcecodec.Mesh, pid: int) -> str
