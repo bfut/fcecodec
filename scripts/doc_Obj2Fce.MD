@@ -13,9 +13,9 @@ bfut_Obj2Fce4.py
 bfut_Obj2Fce4 (do not center parts).py
 bfut_Obj2Fce4 (do not center parts, material to texpage).py
 bfut_Obj2Fce4 (do not center parts, material to triagflag).py
-bfut_Obj2Fce4M.py
 bfut_Obj2Fce4 (material to texpage).py
 bfut_Obj2Fce4 (material to triagflag).py
+bfut_Obj2Fce4M.py
 bfut_Obj2Fce4M (do not center parts).py
 bfut_Obj2Fce4M (do not center parts, material to texpage).py
 bfut_Obj2Fce4M (do not center parts, material to triagflag).py
@@ -48,12 +48,12 @@ _fcecodec_ and create damage models.
 In your project in your 3D application of choice, once a part/shape is finished
 (e.g. `:HB`), create a copy of that shape/part and name it `DAMAGE_:HB`
 
-In this new part, it is absolutely crucial to change nothing except the vertice
-positions.
+In this new part, it is important that nothing except vertice positions and
+vertice normals are changed.
 
-The Obj2Fce4 and Obj2Fce4M scripts will automatically copy the vertice positions
-and vertice normals from the `DAMAGE_:HB` part to the damage vertice positions
-and damage vertice normals of the `:HB` part.
+The Obj2Fce scripts will automatically copy vertice positions and vertice
+normals from the `DAMAGE_:HB` part to the damage vertice positions and damage
+vertice normals of the `:HB` part.
 
 ## Dummies (Light / FX objects)
 
@@ -62,15 +62,15 @@ and damage vertice normals of the `:HB` part.
 To create an FCE dummy, in your project in your 3D application of choice, create
 a part called `DUMMY_##_<dummyname>`, where each # is a digit 0-9.
 
-The only requirement is that partnames are not identical, hence the digits.
+The only requirement is that partnames are not identical.
 
 Dummynames are documented in [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
 
 _Obj2Fce_ will from that part create a dummy called `<dummyname>`. The dummy
 position is computed from the part's centroid.
 
-Only the part name and its centroid are relevant. The part can be a ball, a
-diamond or anything else.
+Only the part name and its centroid are significant, not what the part is (e.g.,
+typically it can be a cube, a ball or a diamond).
 
 ## Triangle flags
 
@@ -79,8 +79,6 @@ This functionality is executed in the _material to triagflag_ scripts.
 FCE triangle flags are positive integer values. The values are identical across
 FCE3, FCE, and FCE4M, in sofar they are implemented. FCE generally allows
 to set any value, even if it serves no purpose.
-
-The triangle flag concept does not exist in Wavefront OBJ.
 
 The _Obj2Fce_ converter scripts set triangle flags from tags in material names.
 
@@ -106,7 +104,7 @@ material with a name that includes `_FHIC_FNOC_FSET_FALW_FLEW_` (i.e., high
 chrome, no cull, semi-transparent, all windows, left window).
 
 It is ok when the material name includes additional elements that are not tags.
-The order of the tags is irrelevant.
+The order of the tags is not significant.
 
 ## Texture page
 
@@ -117,8 +115,6 @@ values. Similarly, the _Obj2Fce_ converter scripts looks for one tag in the
 material names.
 
 The texture page and triangle flag tags can be used alongside each other.
-
-This concept is not used in car.fce or dash.fce
 
 | Texture page |  Tag      |   Hex value |
 |:-------------|:--------- |------------:|
@@ -133,4 +129,4 @@ Example: To set texture page `0`, no tag needs to be added. Texture page `2`
 is set by assigning the triangle to a material name that includes the tag `_T2_`
 
 It is ok when the material name includes additional elements that are not tags.
-The order of the tags is irrelevant.
+The order of the tags is not significant.
