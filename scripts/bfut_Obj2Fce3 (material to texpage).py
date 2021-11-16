@@ -29,11 +29,11 @@ LICENSE
         misrepresented as being the original software.
     3. This notice may not be removed or altered from any source distribution.
 """
-CONFIG = { 
-     "fce_version"        : 3,  # output format version; expects 3|4|'4M' for FCE3, FCE4, FCE4M, respectively 
-     "center_parts"       : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1) 
-     "material2texpage"   : 1,  # maps OBJ face materials to FCE texpages (expects 0|1) 
-     "material2triagflag" : 0,  # maps OBJ face materials to FCE triangles flag (expects 0|1)
+CONFIG = {
+    "fce_version"        : 3,  # output format version; expects 3|4|'4M' for FCE3, FCE4, FCE4M, respectively
+    "center_parts"       : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
+    "material2texpage"   : 1,  # maps OBJ face materials to FCE texpages (expects 0|1)
+    "material2triagflag" : 0,  # maps OBJ face materials to FCE triangles flag (expects 0|1)
 }
 import argparse
 import pathlib
@@ -100,7 +100,7 @@ def GetPartGlobalOrderVidxs(mesh, pid):
     for i in range(part_vidxs.shape[0]):
         # print(part_vidxs[i], map[part_vidxs[i]])
         part_vidxs[i] = map[part_vidxs[i]]
-    return np.unique(part_vidxs)
+    return part_vidxs
 
 
 # -------------------------------------- tinyobjloader wrappers
@@ -172,10 +172,16 @@ def GetShapeFaces(reader, vertices, normals, texcoords, shapename, material2texp
     print(shape.name, "normals={}".format(int(normals_idxs.shape[0])))
     print(shape.name, "texcoords={}".format(int(texcoord_idxs.shape[0])))
 
-    s_verts = vertices.reshape(-1, 3)[ np.unique(s_faces) ].flatten()
+    # cannot use np.unique(), as shape may have unreferenced verts
+    # example: mcf1/car.viv->car.fce :HB
+    vert_selection = np.arange(np.amin(s_faces), np.amax(s_faces) + 1)
+    print(vert_selection.shape)
+    print(s_faces - np.amin(s_faces))
+
+    s_verts = vertices.reshape(-1, 3)[ vert_selection ].flatten()
     # Get normals (use vert positions, if no normals for shape)
     if np.amax(s_faces) <= int(normals.shape[0] / 3):
-        s_norms = normals.reshape(-1, 3)[ np.unique(s_faces) ].flatten()  # normals[normals_idxs]
+        s_norms = normals.reshape(-1, 3)[ vert_selection ].flatten()  # normals[normals_idxs]
     else:
         s_norms = np.copy(s_verts)
 
@@ -183,8 +189,8 @@ def GetShapeFaces(reader, vertices, normals, texcoords, shapename, material2texp
     s_texcs = np.empty(s_NumFaces * 6)
     for i in range( s_NumFaces ):
         for j in range(3):
-            s_texcs[i * 6 + 0 * 3 + j] = texcoords[ texcoord_idxs[i * 3 + j] * 2 + 0 ]
-            s_texcs[i * 6 + 1 * 3 + j] = texcoords[ texcoord_idxs[i * 3 + j] * 2 + 1 ]
+            s_texcs[i * 6 + 0 * 3 + j] = texcoords[texcoord_idxs[i * 3 + j] * 2 + 0]
+            s_texcs[i * 6 + 1 * 3 + j] = texcoords[texcoord_idxs[i * 3 + j] * 2 + 1]
 
     s_matls = shape.mesh.numpy_material_ids()
 
@@ -194,6 +200,34 @@ def GetShapeFaces(reader, vertices, normals, texcoords, shapename, material2texp
 # -------------------------------------- more wrappers
 def LocalizeVertIdxs(faces):
   return faces - np.amin(faces)
+
+def GetFlagFromTags(tags):
+    flag = 0x0
+    for t in tags:
+        # if t == "FDEF" : flag += 0x000
+        if t == "FMAT" : flag += 0x001
+        elif t == "FHIC" : flag += 0x002
+        elif t == "FNOC" : flag += 0x004
+        elif t == "FSET" : flag += 0x008
+        elif t == "FUN1" : flag += 0x010
+        elif t == "FALW" : flag += 0x020
+        elif t == "FFRW" : flag += 0x040
+        elif t == "FLEW" : flag += 0x080
+        elif t == "FBAW" : flag += 0x100
+        elif t == "FRIW" : flag += 0x200
+        elif t == "FBRW" : flag += 0x400
+        elif t == "FUN2" : flag += 0x800
+    return flag
+
+def GetTexPageFromTags(tags):
+    txp = 0x0
+    for t in tags:
+        if t[:1] == "T":
+            try:
+                txp = int(t[1:])
+            except ValueError:
+                print("Cannot convert tag {} to texpage".format(t))
+    return txp
 
 def ShapeToPart(reader,
                 mesh, objverts, objnorms, objtexcoords, request_shapename,
@@ -209,7 +243,8 @@ def ShapeToPart(reader,
     # print(s_faces)
     s_faces = LocalizeVertIdxs(s_faces)
 
-    s_verts[2::3] = -s_verts[2::3]  # flip sign in Z-coordinate
+    s_verts[2::3] = - s_verts[2::3]  # flip sign in Z-coordinate
+    s_norms[2::3] = - s_norms[2::3]  # flip sign in Z-coordinate
     mesh.IoGeomDataToNewPart(s_faces, s_texcs, s_verts, s_norms)
     mesh.PSetName(mesh.MNumParts - 1, request_shapename)  # shapename to partname
 
@@ -224,8 +259,21 @@ def ShapeToPart(reader,
     # map faces material names to triangles flags iff
     # all material names are integer hex values (strings of the form '0xiii')
     if material2triagflag == 1:
+        print("mapping faces material names to triangles flags...")
         materials = reader.GetMaterials()
-        map = True
+        tflags = mesh.PGetTriagsFlags_numpy(mesh.MNumParts - 1)
+
+        # if material name is hex value, map straight to triag flag
+        # if it isn't, treat as string of tags
+        for i in range(tflags.shape[0]):
+            try:
+                # print(materials[s_matls[i]].name, int(materials[s_matls[i]].name[2:], base=16))
+                tflags[i] = int(materials[s_matls[i]].name[2:], base=16)
+            except ValueError:
+                tags = materials[s_matls[i]].split('_')
+                tflags[i] = GetFlagFromTags(tags)
+        mesh.PSetTriagsFlags_numpy(mesh.MNumParts - 1, tflags)
+
         for i in range(len(materials)):
             tmp = materials[i].name
             # print(tmp)
@@ -234,20 +282,35 @@ def ShapeToPart(reader,
                     # print(tmp, "->", int(tmp[2:], base=16), "0x{}".format(hex(int(tmp[2:], base=16))))
                     val = int(tmp[2:], base=16)
                 except ValueError:
-                    print("Cannot map faces material names to triangles flags ('{0}' is not hex value) 1".format(materials[i].name))
+                    print("Cannot map faces material name to triangles flags ('{0}' is not hex value) 1".format(materials[i].name))
                     map = False
                     break
-            else:
-                print("Cannot map faces material names to triangles flags ('{0}' is not hex value) 2".format(materials[i].name))
-                map = False
-                break
-        if map:
-            print("mapping faces material names to triangles flags...")
-            tflags = mesh.PGetTriagsFlags_numpy(mesh.MNumParts - 1)
-            for i in range(tflags.shape[0]):
-                # print(materials[s_matls[i]].name, int(materials[s_matls[i]].name[2:], base=16))
-                tflags[i] = int(materials[s_matls[i]].name[2:], base=16)
-            mesh.PSetTriagsFlags_numpy(mesh.MNumParts - 1, tflags)
+
+#     if material2triagflag == 1:
+#         materials = reader.GetMaterials()
+#         map = True
+#         for i in range(len(materials)):
+#             tmp = materials[i].name
+#             # print(tmp)
+#             if tmp[:2] == '0x':
+#                 try:
+#                     # print(tmp, "->", int(tmp[2:], base=16), "0x{}".format(hex(int(tmp[2:], base=16))))
+#                     val = int(tmp[2:], base=16)
+#                 except ValueError:
+#                     print("Cannot map faces material names to triangles flags ('{0}' is not hex value) 1".format(materials[i].name))
+#                     map = False
+#                     break
+#             else:
+#                 print("Cannot map faces material names to triangles flags ('{0}' is not hex value) 2".format(materials[i].name))
+#                 map = False
+#                 break
+#         if map:
+#             print("mapping faces material names to triangles flags...")
+#             tflags = mesh.PGetTriagsFlags_numpy(mesh.MNumParts - 1)
+#             for i in range(tflags.shape[0]):
+#                 # print(materials[s_matls[i]].name, int(materials[s_matls[i]].name[2:], base=16))
+#                 tflags[i] = int(materials[s_matls[i]].name[2:], base=16)
+#             mesh.PSetTriagsFlags_numpy(mesh.MNumParts - 1, tflags)
 
     return mesh
 
@@ -268,17 +331,26 @@ def CopyDamagePartsVertsToPartsVerts(mesh):
             print("copy verts/norms of {0} to damaged verts/norms of {1}".format(part_names[damgd_pid], part_names[pid]))
             damgd_part_vidxs = GetPartGlobalOrderVidxs(mesh, damgd_pid)
             part_vidxs = GetPartGlobalOrderVidxs(mesh, pid)
-            dn = mesh.MVertsDamgdNorms_numpy
-            dv = mesh.MVertsDamgdPos_numpy
-            dn[part_vidxs] = mesh.MVertsNorms_numpy[damgd_part_vidxs]
-            dv[part_vidxs] = mesh.MVertsPos_numpy[damgd_part_vidxs]
-            mesh.MVertsDamgdNorms_numpy = dn
-            mesh.MVertsDamgdPos_numpy = dv
+
+            # cannot use np.unique(), as shape may have unreferenced verts
+            # example: mcf1/car.viv->car.fce :HB
+            # requires that OBJ parts verts are ordered in non-overlapping
+            # ranges and that verts 0 and last, resp., are referenced
+            damgd_part_vidxs = np.arange(np.amin(damgd_part_vidxs), np.amax(damgd_part_vidxs) + 1)
+            part_vidxs = np.arange(np.amin(part_vidxs), np.amax(part_vidxs) + 1)
+
+            dn = mesh.MVertsDamgdNorms_numpy.reshape((-1, 3))
+            dv = mesh.MVertsDamgdPos_numpy.reshape((-1, 3))
+            dn[part_vidxs] = mesh.MVertsNorms_numpy.reshape((-1, 3))[damgd_part_vidxs]
+            dv[part_vidxs] = mesh.MVertsPos_numpy.reshape((-1, 3))[damgd_part_vidxs]
+            mesh.MVertsDamgdNorms_numpy = dn.flatten()
+            mesh.MVertsDamgdPos_numpy = dv.flatten()
             damgd_pids += [damgd_pid]
     for i in sorted(damgd_pids, reverse=True):
         mesh.OpDeletePart(i)
     print(damgd_pids)
     return mesh
+
 def PartsToDummies(mesh):
     """
     From shapes named DUMMY_##_<dummyname> create dummies at centroids.
@@ -289,7 +361,7 @@ def PartsToDummies(mesh):
     r = re.compile("DUMMY_[0-9][0-9]_", re.IGNORECASE)
     for i in range(mesh.MNumParts):
         if r.match(mesh.PGetName(i)[:9]) is not None:
-            print("convert part {0} '{1}' to dummy {2}".format(i, mesh.PGetName(i), mesh.PGetName(i)[6:]))
+            print("convert part {0} '{1}' to dummy {2}".format(i, mesh.PGetName(i), mesh.PGetName(i)[9:]))
             pids += [i]
             dms += [mesh.PGetName(i)[9:]]
             mesh.OpCenterPart(i)
@@ -329,7 +401,7 @@ def CenterParts(mesh):
 
 # -------------------------------------- workload
 if CONFIG["fce_version"] not in [3, 4, '4m', '4M']:
-    print("requires fce_version = 3|4|'4m' (received", CONFIG["fce_version"], ")")
+    print("requires fce_version = 3|4|'4m' (received {})".format(CONFIG["fce_version"]))
     quit()
 if CONFIG["center_parts"] not in [0, 1]:
     print("requires center_parts = 0|1 (received", CONFIG["center_parts"], ")")
@@ -368,4 +440,5 @@ if CONFIG["center_parts"] == 1:
 # Write FCE
 # mesh.PrintInfo()
 WriteFce(CONFIG["fce_version"], mesh, filepath_fce_output, center_parts=0)
+print(flush=True)
 PrintFceInfo(filepath_fce_output)

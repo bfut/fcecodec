@@ -82,8 +82,10 @@ if CONFIG["print_dummies"] == 1:
 mesh = fcecodec.Mesh()
 mesh = LoadFce(mesh, filepath_fce_input)
 os.chdir(filepath_obj_output.parent)
+print(flush=True)
 ExportObj(mesh,
           filepath_obj_output.name, filepath_mtl_output.name, CONFIG["objtexname"],
           CONFIG["print_damage"], CONFIG["print_dummies"])
+print(flush=True)
 print(filepath_obj_output)
 print(filepath_mtl_output)

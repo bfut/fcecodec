@@ -80,4 +80,4 @@ def GetPartGlobalOrderVidxs(mesh, pid):
     for i in range(part_vidxs.shape[0]):
         # print(part_vidxs[i], map[part_vidxs[i]])
         part_vidxs[i] = map[part_vidxs[i]]
-    return np.unique(part_vidxs)
+    return part_vidxs

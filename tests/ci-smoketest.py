@@ -100,10 +100,11 @@ tracemalloc.start()
 
 
 # -------------------------------------- smoketest
-PrintFceInfo(filepath_fce_input)
 print(flush = True)
+PrintFceInfo(filepath_fce_input)
 mesh = fcecodec.Mesh()
-print(mesh, type(mesh), flush = True)
+print(mesh, type(mesh))
+print(flush = True)
 
 mesh = LoadFce(mesh, filepath_fce_input)
 mesh.PrintInfo()

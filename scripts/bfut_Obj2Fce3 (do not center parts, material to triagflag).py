@@ -1,5 +1,5 @@
 """
-    bfut_Obj2Fce4M.py
+    bfut_Obj2Fce3 (do not center parts, material to triagflag).py
 
 DESCRIPTION
     import OBJ file using tinyobjloader, export as FCE file using fcecodec
@@ -30,10 +30,10 @@ LICENSE
     3. This notice may not be removed or altered from any source distribution.
 """
 CONFIG = {
-    "fce_version"        : '4M',  # output format version; expects 3|4|'4M' for FCE3, FCE4, FCE4M, respectively
-    "center_parts"       : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
+    "fce_version"        : 3,  # output format version; expects 3|4|'4M' for FCE3, FCE4, FCE4M, respectively
+    "center_parts"       : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
     "material2texpage"   : 0,  # maps OBJ face materials to FCE texpages (expects 0|1)
-    "material2triagflag" : 0,  # maps OBJ face materials to FCE triangles flag (expects 0|1)
+    "material2triagflag" : 1,  # maps OBJ face materials to FCE triangles flag (expects 0|1)
 }
 import argparse
 import pathlib
