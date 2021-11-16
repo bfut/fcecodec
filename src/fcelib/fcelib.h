@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FCECVERS "0.57"
+#define FCECVERS "0.58"
 #ifndef FCECVERBOSE
 #define FCECVERBOSE 0
 #endif
@@ -217,11 +217,13 @@ int FCELIB_ExportObj(FcelibMesh *mesh,
                              print_damage, print_dummies);
 }
 
+#if 0
 int FCELIB_EncodeFce3_Fopen(FcelibMesh *mesh, const char *fcepath,
                             const int center_parts)
 {
   return FCELIB_IO_EncodeFce3_Fopen(mesh, fcepath, center_parts);
 }
+#endif
 
 int FCELIB_EncodeFce3(unsigned char **buf, const int buf_size,
                       FcelibMesh *mesh, const int center_parts)

@@ -52,7 +52,6 @@ extern "C" {
 A = 2 + 8
 E = 2 + 4 + 8
 
-fcelib supports the following OBJ material names:
 Name    Application example                     Application example
 0x000     car.fce   body
 0x001     car.fce   underbody
@@ -70,14 +69,14 @@ its index is smaller.
 */
 
 /* FCE4   tTriangle->flag   12 bit
-      0x000   default           body parts: reflection,
-                                interior etc.: no reflection
-0:    0x001   no reflection
-1:    0x002   high chrome       body parts: used for windows etc.
-2:    0x004   no cull           two-faced triangle
-3:    0x008   semi-transparent  body parts: used for windows etc.
+      0x000   default             body parts: reflection,
+                                  interior etc.: no reflection
+0:    0x001   matte (no chrome)
+1:    0x002   high chrome         body parts: used for windows etc.
+2:    0x004   no cull             two-faced triangle
+3:    0x008   semi-transparent    body parts: used for windows etc.
 
-4:    0x010   ?                 elni/car.fce :OH :OD :OLM :ORM :H**W :M**W, partial :HB :MB :LB :TB
+4:    0x010   ?                   elni/car.fce :OH :OD :OLM :ORM :H**W :M**W, partial :HB :MB :LB :TB
 5:    0x020   all windows
 6:    0x040   front window
 7:    0x080   left window
@@ -97,7 +96,6 @@ dash.fce  mirror glass       high chrome + semi-transparent
 A = 2 + 8
 E = 2 + 4 + 8
 
-fcelib supports the following OBJ material names:
 Name    Application example                     Application example
 0x000   car.fce   body                          dash.fce  not mirror glass
 0x001   car.fce   underbody

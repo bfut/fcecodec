@@ -30,7 +30,7 @@
 #include <string.h>
 
 #ifndef _WIN32
-//#include "LFB/LFB_io.h"
+/* #include "LFB/LFB_io.h" */
 #endif
 
 #include "fcelib_fcetypes.h"
@@ -255,7 +255,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
             memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->U,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x20, (size_t)12);
             memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->V,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x2C, (size_t)12);
 
-            // if (fce_version == 0x00101014)
+            /* if (fce_version == 0x00101014) */
             {
               for (n = 0; n < 3; ++n)
                 mesh->triangles[mesh->hdr.NumTriangles]->V[n] = 1 - mesh->triangles[mesh->hdr.NumTriangles]->V[n];
@@ -662,7 +662,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                         "Kd 1.000 1.000 1.000\n"
                         "Ks 0.000 0.000 0.000\n"
                         "d 0.7\n"
-                        "Tr 0.3\n"
+                        /* "Tr 0.3\n" */
                         "illum 2\n"
                         "map_Kd %s\n",
                         i, texture_name);
@@ -744,7 +744,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                         mesh->vertices[
                           mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
                         ]->VertPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                      )  // flip sign in Z-coordinate
+                      )  /* flip sign in Z-coordinate */
                );
       }
       fprintf(outf, "\n");
@@ -788,7 +788,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                         mesh->vertices[
                           mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
                         ]->NormPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                      )  // flip sign in Z-coordinate
+                      )  /* flip sign in Z-coordinate */
                );
       }
       fprintf(outf, "\n");
@@ -894,7 +894,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                           mesh->vertices[
                             mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
                           ]->DamgdVertPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                        )  // flip sign in Z-coordinate
+                        )  /* flip sign in Z-coordinate */
                 );
         }
         fprintf(outf, "\n");
@@ -938,7 +938,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                           mesh->vertices[
                             mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
                           ]->DamgdNormPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                        )  // flip sign in Z-coordinate
+                        )  /* flip sign in Z-coordinate */
                 );
         }
         fprintf(outf, "\n");
@@ -1010,7 +1010,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
     {
       for (i = 0; i < mesh->hdr.NumDummies; ++i)
       {
-        // unique shape names
+        /* unique shape names */
         fprintf(outf, "\no DUMMY_%02d_%s\n", i, mesh->hdr.DummyNames + (i * 64));
 
         /* Vertices */
@@ -1059,7 +1059,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
   return retv;
 }
 
-
+#if 0
 /* DEPRECATED Returns boolean. Limited to 64 parts. center_parts == 1 centers all parts. */
 int FCELIB_IO_EncodeFce3_Fopen(FcelibMesh *mesh, const void *fcepath, const int center_parts)
 {
@@ -1127,7 +1127,7 @@ int FCELIB_IO_EncodeFce3_Fopen(FcelibMesh *mesh, const void *fcepath, const int 
     if (center_parts == 1)
     {
       tVector centroid;
-      // i - internal part index, j - part order
+      /* i - internal part index, j - part order */
       for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(12, mesh->hdr.NumParts); ++i)
       {
         if (mesh->hdr.Parts[i] < 0 || (j > 4 && j != 12))
@@ -1160,7 +1160,7 @@ int FCELIB_IO_EncodeFce3_Fopen(FcelibMesh *mesh, const void *fcepath, const int 
       y_array = x_array + mesh->vertices_len;
       z_array = y_array + mesh->vertices_len;
 
-      // i - internal part index, j - part order
+      /* i - internal part index, j - part order */
       for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(12, mesh->hdr.NumParts); ++i)
       {
         if (mesh->hdr.Parts[i] < 0 || (j > 4 && j != 12))
@@ -1168,7 +1168,7 @@ int FCELIB_IO_EncodeFce3_Fopen(FcelibMesh *mesh, const void *fcepath, const int 
 
         part = mesh->parts[ mesh->hdr.Parts[i] ];
 
-        // n - internal vert index, k - vert order
+        /* n - internal vert index, k - vert order */
         for (n = 0, k = 0; n < part->pvertices_len && k < part->PNumVertices; ++n)
         {
           if (part->PVertices[n] < 0)
@@ -1513,7 +1513,7 @@ int FCELIB_IO_EncodeFce3_Fopen(FcelibMesh *mesh, const void *fcepath, const int 
 
   return retv;
 }
-
+#endif
 
 
 /* Limited to 64 parts. Returns boolean. */
@@ -1565,8 +1565,8 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     memcpy(*outbuf + 0x0008, &mesh->hdr.NumVertices, (size_t)4);
     memcpy(*outbuf + 0x000C, &mesh->hdr.NumArts, (size_t)4);
 
-//    buf = 0;
-//    memcpy(*outbuf + 0x0010, &buf, (size_t)4);
+/*    buf = 0; */
+/*    memcpy(*outbuf + 0x0010, &buf, (size_t)4); */
     buf  = 12 * mesh->hdr.NumVertices;
     memcpy(*outbuf + 0x0014, &buf, (size_t)4);
     buf += 12 * mesh->hdr.NumVertices;
@@ -1583,7 +1583,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     if (center_parts == 1)
     {
       tVector centroid;
-      // i - internal part index, j - part order
+      /* i - internal part index, j - part order */
       for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(12, mesh->hdr.NumParts); ++i)
       {
         if (mesh->hdr.Parts[i] < 0)
@@ -1614,7 +1614,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
       y_array = x_array + mesh->vertices_len;
       z_array = y_array + mesh->vertices_len;
 
-      // i - internal part index, j - part order
+      /* i - internal part index, j - part order */
       for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(12, mesh->hdr.NumParts); ++i)
       {
         if (mesh->hdr.Parts[i] < 0 || (j > 4 && j != 12))
@@ -1622,7 +1622,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
 
         part = mesh->parts[ mesh->hdr.Parts[i] ];
 
-        // n - internal vert index, k - vert order
+        /* n - internal vert index, k - vert order */
         for (n = 0, k = 0; n < part->pvertices_len && k < part->PNumVertices; ++n)
         {
           if (part->PVertices[n] < 0)
@@ -1744,7 +1744,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     }
 
     /* Print normals ------------------------------------------------------- */
-    buf = 0x1F04 + 12 * mesh->hdr.NumVertices;  // NormTblOffset
+    buf = 0x1F04 + 12 * mesh->hdr.NumVertices;  /* NormTblOffset */
     sum_verts = 0;
     for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(64, mesh->hdr.NumParts); ++i)
     {
@@ -1767,7 +1767,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     /* Print triangles ------------------------------------------------------ */
     tmp = 0xff00;
     sum_triags = 0;
-    buf += 12 * mesh->hdr.NumVertices;  // TriaTblOffset
+    buf += 12 * mesh->hdr.NumVertices;  /* TriaTblOffset */
     for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(64, mesh->hdr.NumParts); ++i)
     {
       if (mesh->hdr.Parts[i] < 0)
@@ -1869,14 +1869,14 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       tmp = 0x00101015;
     else
       tmp = 0x00101014;
-    memcpy(*outbuf + 0x0000, &tmp, (size_t)4);  // Version
-    /* memcpy(*outbuf + 0x0003, &tmp, (size_t)4);  // Unknown1 */
+    memcpy(*outbuf + 0x0000, &tmp, (size_t)4);  /* Version */
+    /* memcpy(*outbuf + 0x0003, &tmp, (size_t)4);  */ /* Unknown1 */
     memcpy(*outbuf + 0x0008, &mesh->hdr.NumTriangles, (size_t)4);
     memcpy(*outbuf + 0x000C, &mesh->hdr.NumVertices, (size_t)4);
     memcpy(*outbuf + 0x0010, &mesh->hdr.NumArts, (size_t)4);
 
-    // tmp = 0;
-    // memcpy(*outbuf + 0x0014, &tmp, (size_t)4);
+    /* tmp = 0; */
+    /* memcpy(*outbuf + 0x0014, &tmp, (size_t)4); */
     tmp  = 12 * mesh->hdr.NumVertices;
     memcpy(*outbuf + 0x0018, &tmp, (size_t)4);
     tmp += 12 * mesh->hdr.NumVertices;
@@ -1912,7 +1912,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     if (center_parts == 1)
     {
       tVector centroid;
-      // i - internal part index, j - part order
+      /* i - internal part index, j - part order */
       for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(12, mesh->hdr.NumParts); ++i)
       {
         if (mesh->hdr.Parts[i] < 0)
@@ -1943,18 +1943,18 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       y_array = x_array + mesh->vertices_len;
       z_array = y_array + mesh->vertices_len;
 
-      // i - internal part index, j - part order
+      /* i - internal part index, j - part order */
       for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(12, mesh->hdr.NumParts); ++i)
       {
         if (mesh->hdr.Parts[i] < 0)
           continue;
 
         part = mesh->parts[ mesh->hdr.Parts[i] ];
-        if (fce_version == 0x00101014)  // use all parts for Fce4M (experimental)
+        if (fce_version == 0x00101014)  /* use all parts for Fce4M (experimental) */
           if (!FCELIB_MISC_StrIsInArray(part->PartName, kFce4HiBodyParts))
             continue;
 
-        // n - internal vert index, k - vert order
+        /* n - internal vert index, k - vert order */
         for (n = 0, k = 0; n < part->pvertices_len && k < part->PNumVertices; ++n)
         {
           if (part->PVertices[n] < 0)
@@ -2058,11 +2058,13 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       memcpy(*outbuf + 0x08e4 + i * 4 + 3, &mesh->hdr.DriColors[i].transparency, (size_t)1);
     }
 
-    // if (fce_version == 0x00101015)
-    // {
-    //   tmp = 123;
-    //   memcpy(*outbuf + 0x0924, &tmp, (size_t)4);  // Unknown3 (FCE4M: ?)
-    // }
+#if 0
+    if (fce_version == 0x00101015)
+    {
+      tmp = 123;
+      memcpy(*outbuf + 0x0924, &tmp, (size_t)4);  /* Unknown3 (FCE4M: ?) */
+    }
+#endif
 
     /* DummyNames */
     memcpy(*outbuf + 0x0a28, &mesh->hdr.DummyNames, (size_t)(64 * 16));
@@ -2088,10 +2090,10 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       sum_verts += part->PNumVertices;
       ++j;
     }
-    memcpy(&tmp, *outbuf + 0x002c, 4);  // UndamgdVertTblOffset
+    memcpy(&tmp, *outbuf + 0x002c, 4);  /* UndamgdVertTblOffset */
     memcpy(*outbuf + 0x2038 + tmp, *outbuf + 0x2038, (size_t)(12 * mesh->hdr.NumVertices));
 
-    memcpy(&tmp, *outbuf + 0x0034, 4);  // DamgdVertTblOffset
+    memcpy(&tmp, *outbuf + 0x0034, 4);  /* DamgdVertTblOffset */
     sum_verts = 0;
     for (i = 0, j = 0; (i < mesh->parts_len) && (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)); ++i)
     {
@@ -2113,7 +2115,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     }
 
     /* Print normals -------------------------------------------------------- */
-    memcpy(&tmp, *outbuf + 0x0018, 4);  // NormTblOffset
+    memcpy(&tmp, *outbuf + 0x0018, 4);  /* NormTblOffset */
     sum_verts = 0;
     for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(64, mesh->hdr.NumParts); ++i)
     {
@@ -2132,10 +2134,10 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       sum_verts += part->PNumVertices;
       ++j;
     }
-    memcpy(&tmp, *outbuf + 0x0030, 4);  // UndamgdNormTblOffset
+    memcpy(&tmp, *outbuf + 0x0030, 4);  /* UndamgdNormTblOffset */
     memcpy(*outbuf + 0x2038 + tmp, *outbuf + 0x2038 + 12 * mesh->hdr.NumVertices, (size_t)(12 * mesh->hdr.NumVertices));
 
-    memcpy(&tmp, *outbuf + 0x0038, 4);  // DamgdNormTblOffset
+    memcpy(&tmp, *outbuf + 0x0038, 4);  /* DamgdNormTblOffset */
     sum_verts = 0;
     for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(64, mesh->hdr.NumParts); ++i)
     {
@@ -2156,7 +2158,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     }
 
     /* Print animation ------------------------------------------------------ */
-    memcpy(&tmp, *outbuf + 0x0040, 4);  // AnimationTblOffset
+    memcpy(&tmp, *outbuf + 0x0040, 4);  /* AnimationTblOffset */
     sum_verts = 0;
     for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(64, mesh->hdr.NumParts); ++i)
     {
@@ -2176,7 +2178,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
 
     /* Print triangles ------------------------------------------------------ */
     sum_triags = 0;
-    memcpy(&tmp, *outbuf + 0x001c, 4);  // TriaTblOffset
+    memcpy(&tmp, *outbuf + 0x001c, 4);  /* TriaTblOffset */
     {
       const int padding = 0xff00;
       float V_tmp[3];
@@ -2206,7 +2208,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
           triag = mesh->triangles[ part->PTriangles[n] ];
 
           memcpy(&V_tmp, &triag->V, (size_t)12);
-          // if (fce_version == 0x00101014)
+          /* if (fce_version == 0x00101014) */
           {
             for (int h = 0; h < 3; ++h)
               V_tmp[h] = 1 - V_tmp[h];
@@ -2237,10 +2239,10 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
 }
 
 int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
-                                int *vert_idxs, const int vert_idxs_len,  // N*3, N triags
-                                float *vert_texcoords, const int vert_texcoords_len,  // N*6
-                                float *vert_pos, const int vert_pos_len,  // M*3, M verts
-                                float *normals, const int normals_len)  // M*3
+                                int *vert_idxs, const int vert_idxs_len,  /* N*3, N triags */
+                                float *vert_texcoords, const int vert_texcoords_len,  /* N*6 */
+                                float *vert_pos, const int vert_pos_len,  /* M*3, M verts */
+                                float *normals, const int normals_len)  /* M*3 */
 {
   int new_pid = -1;
   FcelibPart *part = NULL;
@@ -2290,7 +2292,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       break;
     }
 
-    if (FCELIB_MISC_ArrMax(vert_idxs, vert_idxs_len) >= int(vert_pos_len / 3))  // allow adding vertices not referenced by triangles
+    if (FCELIB_MISC_ArrMax(vert_idxs, vert_idxs_len) >= int(vert_pos_len / 3))  /* allow adding vertices not referenced by triangles */
     {
       fprintf(stderr, "GeomDataToNewPart: Triangle vertice index(es) out of range (assumes zero-indexed)\n");
       break;
@@ -2299,7 +2301,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     fprintf(stdout, "validation done...\n");
 #endif
 
-    // Lengthen part index map only if necessary
+    /* Lengthen part index map only if necessary */
     if (mesh->parts_len < 1 || mesh->hdr.Parts[mesh->parts_len - 1] >= 0)
     {
       if (!FCELIB_TYPES_AddParts(mesh, 1))
@@ -2349,7 +2351,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     fprintf(stdout, "created new part... (order %d, internal %d)\n", new_pid, mesh->hdr.Parts[new_pid]);
 #endif
 
-    sprintf(part->PartName, "IoGeomDataToNewPart_%d", new_pid);  // unlikely to exceed 63 characters
+    sprintf(part->PartName, "IoGeomDataToNewPart_%d", new_pid);  /* unlikely to exceed 63 characters */
     part->PartPos.x = 0.0f;
     part->PartPos.y = 0.0f;
     part->PartPos.z = 0.0f;
@@ -2391,11 +2393,11 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
         new_pid = -1;
         break;
       }
-      triag->tex_page = 0x0;  // default: textured
+      triag->tex_page = 0x0;  /* default: textured */
       triag->vidx[0] = vidx_1st + vert_idxs[j * 3 + 0];
       triag->vidx[1] = vidx_1st + vert_idxs[j * 3 + 1];
       triag->vidx[2] = vidx_1st + vert_idxs[j * 3 + 2];
-      triag->flag = 0x000;  // default
+      triag->flag = 0x000;  /* default */
       memcpy(triag->U, vert_texcoords + j * 6 + 0, (size_t)3 * sizeof(float));
       memcpy(triag->V, vert_texcoords + j * 6 + 3, (size_t)3 * sizeof(float));
     }
@@ -2446,7 +2448,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       memcpy(&vert->DamgdNormPos.x, normals + j * 3 + 0, sizeof(float));
       memcpy(&vert->DamgdNormPos.y, normals + j * 3 + 1, sizeof(float));
       memcpy(&vert->DamgdNormPos.z, normals + j * 3 + 2, sizeof(float));
-      vert->Animation = 0x0;  // default: not immovable
+      vert->Animation = 0x0;  /* default: not immovable */
     }
     if (new_pid < 0)
       break;
