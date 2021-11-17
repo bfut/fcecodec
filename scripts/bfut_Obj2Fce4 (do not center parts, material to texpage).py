@@ -175,14 +175,28 @@ def GetShapeFaces(reader, vertices, normals, texcoords, shapename, material2texp
     # cannot use np.unique(), as shape may have unreferenced verts
     # example: mcf1/car.viv->car.fce :HB
     vert_selection = np.arange(np.amin(s_faces), np.amax(s_faces) + 1)
-    print(vert_selection.shape)
-    print(s_faces - np.amin(s_faces))
-
     s_verts = vertices.reshape(-1, 3)[ vert_selection ].flatten()
+
     # Get normals (use vert positions, if no normals for shape)
+    # obj: number of verts and normals may differ; fce: each vert has a normal
+    norm_selection = np.empty(vert_selection.shape[0], dtype=int)
+    map_v_t = np.copy(vert_selection)
+    for i in range(map_v_t.shape[0]):
+        argwhere = np.argwhere(s_faces == map_v_t[i])
+        if len(argwhere) == 0:
+            map_v_t[i] = -1
+        else:
+            map_v_t[i] = argwhere[0]
+    for i in range(map_v_t.shape[0]):
+        if map_v_t[i] < 0:
+            norm_selection[i] = np.copy(vert_selection[i])
+        else:
+            norm_selection[i] = np.copy(normals_idxs[map_v_t[i]])
     if np.amax(s_faces) <= int(normals.shape[0] / 3):
-        s_norms = normals.reshape(-1, 3)[ vert_selection ].flatten()  # normals[normals_idxs]
+        print("norm_selection")
+        s_norms = normals.reshape(-1, 3)[ norm_selection ].flatten()  # normals[normals_idxs]
     else:
+        print("shape has no normals... use vert positions as normals")
         s_norms = np.copy(s_verts)
 
     # uvuvuv... -> uuuvvv...
@@ -270,7 +284,8 @@ def ShapeToPart(reader,
                 # print(materials[s_matls[i]].name, int(materials[s_matls[i]].name[2:], base=16))
                 tflags[i] = int(materials[s_matls[i]].name[2:], base=16)
             except ValueError:
-                tags = materials[s_matls[i]].split('_')
+                # print(s_matls[i], materials[s_matls[i]].name)
+                tags = materials[s_matls[i]].name.split('_')
                 tflags[i] = GetFlagFromTags(tags)
         mesh.PSetTriagsFlags_numpy(mesh.MNumParts - 1, tflags)
 
@@ -285,32 +300,6 @@ def ShapeToPart(reader,
                     print("Cannot map faces material name to triangles flags ('{0}' is not hex value) 1".format(materials[i].name))
                     map = False
                     break
-
-#     if material2triagflag == 1:
-#         materials = reader.GetMaterials()
-#         map = True
-#         for i in range(len(materials)):
-#             tmp = materials[i].name
-#             # print(tmp)
-#             if tmp[:2] == '0x':
-#                 try:
-#                     # print(tmp, "->", int(tmp[2:], base=16), "0x{}".format(hex(int(tmp[2:], base=16))))
-#                     val = int(tmp[2:], base=16)
-#                 except ValueError:
-#                     print("Cannot map faces material names to triangles flags ('{0}' is not hex value) 1".format(materials[i].name))
-#                     map = False
-#                     break
-#             else:
-#                 print("Cannot map faces material names to triangles flags ('{0}' is not hex value) 2".format(materials[i].name))
-#                 map = False
-#                 break
-#         if map:
-#             print("mapping faces material names to triangles flags...")
-#             tflags = mesh.PGetTriagsFlags_numpy(mesh.MNumParts - 1)
-#             for i in range(tflags.shape[0]):
-#                 # print(materials[s_matls[i]].name, int(materials[s_matls[i]].name[2:], base=16))
-#                 tflags[i] = int(materials[s_matls[i]].name[2:], base=16)
-#             mesh.PSetTriagsFlags_numpy(mesh.MNumParts - 1, tflags)
 
     return mesh
 
