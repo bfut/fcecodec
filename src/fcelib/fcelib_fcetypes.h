@@ -598,6 +598,28 @@ Omni01     0   POV
 
 */
 
+/* Version ------------------------------------------------------------------ */
+
+/* Returns 3 (FCE3), 4 (FCE4), 5 (FCE4M), negative (invalid) */
+int FCELIB_FCETYPES_GetFceVersion(const void *buf, const int buf_size)
+{
+  int version;
+  if (buf_size < 0x1F04) return -3;
+  memcpy(&version, buf, (size_t)4);
+  switch (version)
+  {
+    case 0x00101014:
+      if (buf_size < 0x2038) return -4;
+      return 4;
+    case 0x00101015:
+      if (buf_size < 0x2038) return -5;
+      return 5;
+    default:
+      return 3;
+  }
+}
+
+
 /* Get header --------------------------------------------------------------- */
 
 /* Assumes valid FCE data */

@@ -30,7 +30,7 @@ Python bindings are written in C++ (pybind11).
 
 ## Installation / Documentation
 Python extension module: [_/python/README.md_](/python/README.md)<br/>
-Extensive FCE format specifications in comments: [_/src/fcelib/fcelib_fcetypes.h_](/src/fcelib/fcelib_fcetypes.h)<br/>
+Extensive FCE format documentation in comments: [_/src/fcelib/fcelib_fcetypes.h_](/src/fcelib/fcelib_fcetypes.h)<br/>
 
 ## Example
 ```py

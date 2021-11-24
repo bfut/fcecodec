@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FCECVERS "0.58"
+#define FCECVERS "0.59"
 #ifndef FCECVERBOSE
 #define FCECVERBOSE 0
 #endif
@@ -168,16 +168,19 @@ int FCELIB_MeshMoveUpPart(FcelibMesh *mesh, const int idx)
 
 /* tools -------------------------------------------------------------------- */
 
+int FCELIB_GetFceVersion(const void *buf, const int length)
+{
+  return FCELIB_FCETYPES_GetFceVersion(buf, length);
+}
+
 void FCELIB_PrintFceInfo(const int fce_size, const void *hdr)
 {
-  int version;
-  if (fce_size < 0x1F04) return;
-  memcpy(&version, hdr, (size_t)4);
-  switch (version)
+  switch (FCELIB_FCETYPES_GetFceVersion(hdr, fce_size))
   {
-    case 0x00101014: case 0x00101015:
-      if (fce_size < 0x2038) return;
+    case 4: case 5:
       FCELIB_FCETYPES_PrintHeaderFce4(fce_size, hdr);
+      break;
+    case -3: case -4: case -5:
       break;
     default:
       FCELIB_FCETYPES_PrintHeaderFce3(fce_size, hdr);
@@ -190,14 +193,12 @@ void FCELIB_PrintFceInfo(const int fce_size, const void *hdr)
 
 int FCELIB_ValidateFce(const void *buf, const int length)
 {
-  int version;
-  if (length < 0x1F04) return 0;
-  memcpy(&version, buf, (size_t)4);
-  switch (version)
+  switch (FCELIB_FCETYPES_GetFceVersion(buf, length))
   {
-    case 0x00101014: case 0x00101015:
-      if (length < 0x2038) return 0;
+    case 4: case 5:
       return FCELIB_FCETYPES_Fce4ValidateHeader(buf, length);
+    case -3: case -4: case -5:
+      return 0;
     default:
       return FCELIB_FCETYPES_Fce3ValidateHeader(buf, length);
   }
