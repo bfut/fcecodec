@@ -101,7 +101,9 @@ tracemalloc.start()
 
 # -------------------------------------- smoketest
 print(flush = True)
+print("version: {}".format(GetFceVersion(filepath_fce_input)))
 PrintFceInfo(filepath_fce_input)
+
 mesh = fcecodec.Mesh()
 print(mesh, type(mesh))
 print(flush = True)
@@ -110,9 +112,9 @@ mesh = LoadFce(mesh, filepath_fce_input)
 mesh.PrintInfo()
 print(flush = True)
 
-WriteFce(3, mesh, filepath_fce3_output)
-WriteFce(4, mesh, filepath_fce4_output)
-WriteFce("4m", mesh, filepath_fce4m_output)
+WriteFce('3', mesh, filepath_fce3_output)
+WriteFce('4', mesh, filepath_fce4_output)
+WriteFce('4M', mesh, filepath_fce4m_output)
 ExportObj(mesh,
           filepath_obj_output, filepath_mtl_output, objtexname,
           print_damage=0, print_dummies=0)
@@ -122,6 +124,11 @@ print(flush = True)
 PrintFceInfo(filepath_fce3_output)
 PrintFceInfo(filepath_fce4_output)
 PrintFceInfo(filepath_fce4m_output)
+
+print("fce version: {} ({})".format(GetFceVersion(filepath_fce3_output), filepath_fce3_output))
+print("fce version: {} ({})".format(GetFceVersion(filepath_fce4_output), filepath_fce4_output))
+print("fce version: {} ({})".format(GetFceVersion(filepath_fce4m_output), filepath_fce4m_output))
+print(flush = True)
 
 print("EOF ci-smoketest.py", flush = True)
 
