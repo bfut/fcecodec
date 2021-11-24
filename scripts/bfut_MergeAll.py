@@ -1,5 +1,5 @@
 """
-  bfut_MergeAll (fce3).py - script template
+  bfut_MergeAll.py - merge all parts, keep FCE version
 
 REQUIRES: installing <https://github.com/bfut/fcecodec>
 
@@ -12,7 +12,7 @@ LICENSE:
   arising from the use of this software.
 """
 CONFIG = {
-    "fce_version"  : 3,  # expects 3|4|'4M' for FCE3, FCE4, FCE4M, respectively
+    "fce_version"  : 'keep version',  # output format version; expects 'keep version' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M output, respectively
     "center_parts" : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
 }
 import argparse
@@ -47,6 +47,12 @@ from bfut_mywrappers import *
 
 
 # -------------------------------------- workload
+if CONFIG["fce_version"] == 'keep_version':
+    fce_outversion = str(GetFceVersion(filepath_fce_input))
+    if fce_outversion == '5':
+        fce_outversion = '4M'
+else:
+    fce_outversion = CONFIG["fce_version"]
 mesh = fcecodec.Mesh()
 mesh = LoadFce(mesh, filepath_fce_input)
 

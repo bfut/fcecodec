@@ -1,18 +1,8 @@
 """
-  bfut_fcecodecScriptTemplate.py - script template
-
-REQUIRES: installing <https://github.com/bfut/fcecodec>
-
-LICENSE:
-  This file is distributed under: CC BY-SA 4.0
-      <https://creativecommons.org/licenses/by-sa/4.0/>
-
-  This software is provided 'as-is', without any express or implied
-  warranty.  In no event will the authors be held liable for any damages
-  arising from the use of this software.
+  fcecodecScriptTemplate.py - description
 """
 CONFIG = {
-    "fce_version"  : 4,  # expects 3|4|'4M' for FCE3, FCE4, FCE4M, respectively
+    "fce_version"  : 'keep version',  # output format version; expects 'keep version' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M output, respectively
     "center_parts" : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
 }
 import argparse
@@ -51,12 +41,18 @@ if 0:
 
 
 # -------------------------------------- workload
+if CONFIG["fce_version"] == 'keep_version':
+    fce_outversion = str(GetFceVersion(filepath_fce_input))
+    if fce_outversion == '5':
+        fce_outversion = '4M'
+else:
+    fce_outversion = CONFIG["fce_version"]
 mesh = fcecodec.Mesh()
 mesh = LoadFce(mesh, filepath_fce_input)
 ## do stuff here
 
 
 ## done doing stuff
-WriteFce(CONFIG["fce_version"], mesh, filepath_fce_output, CONFIG["center_parts"])
+WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"])
 PrintFceInfo(filepath_fce_output)
 print("FILE =", filepath_fce_output, flush=True)

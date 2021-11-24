@@ -30,7 +30,7 @@ LICENSE
     3. This notice may not be removed or altered from any source distribution.
 """
 CONFIG = {
-    "fce_version"        : 4,  # output format version; expects 3|4|'4M' for FCE3, FCE4, FCE4M, respectively
+    "fce_version"        : '4',  # output format version; expects 'keep version' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
     "center_parts"       : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
     "material2texpage"   : 0,  # maps OBJ face materials to FCE texpages (expects 0|1)
     "material2triagflag" : 1,  # maps OBJ face materials to FCE triangles flag (expects 0|1)
@@ -75,9 +75,9 @@ def PrintFceInfo(path):
 
 def WriteFce(version, mesh, path, center_parts = 1):
     with open(path, "wb") as f:
-        if version == 3:
+        if version == '3':
             buf = mesh.IoEncode_Fce3(center_parts)
-        elif version == 4:
+        elif version == '4':
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)
@@ -389,8 +389,8 @@ def CenterParts(mesh):
     return mesh
 
 # -------------------------------------- workload
-if CONFIG["fce_version"] not in [3, 4, '4m', '4M']:
-    print("requires fce_version = 3|4|'4m' (received {})".format(CONFIG["fce_version"]))
+if CONFIG["fce_version"] not in ['3', '4', '4m', '4M']:
+    print("requires fce_version = '3'|'4'|'4M' (received {})".format(CONFIG["fce_version"]))
     quit()
 if CONFIG["center_parts"] not in [0, 1]:
     print("requires center_parts = 0|1 (received", CONFIG["center_parts"], ")")
