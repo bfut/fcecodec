@@ -22,6 +22,13 @@
 import fcecodec
 import numpy as np
 
+def GetFceVersion(path):
+    with open(path, "rb") as f:
+        buf = f.read(0x2038)
+        version = fcecodec.GetFceVersion(buf)
+        assert(version > 0)
+        return version
+
 def PrintFceInfo(path):
     with open(path, "rb") as f:
         # print("PrintFceInfo(", path, ")")
@@ -40,9 +47,9 @@ def LoadFce(mesh, path):
 
 def WriteFce(version, mesh, path, center_parts = 1):
     with open(path, "wb") as f:
-        if version == 3:
+        if version == '3':
             buf = mesh.IoEncode_Fce3(center_parts)
-        elif version == 4:
+        elif version == '4':
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)

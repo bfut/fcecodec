@@ -121,9 +121,6 @@ CLASSES
      |      
      |      Copy specified part. Returns new part index.
      |  
-     |  OpDelPartTriags(...)
-     |      OpDelPartTriags(self: fcecodec.Mesh, pid: int, idxs: List[int]) -> bool
-     |  
      |  OpDelUnrefdVerts(...)
      |      OpDelUnrefdVerts(self: fcecodec.Mesh) -> bool
      |      
@@ -131,6 +128,9 @@ CLASSES
      |  
      |  OpDeletePart(...)
      |      OpDeletePart(self: fcecodec.Mesh, pid: int) -> bool
+     |  
+     |  OpDeletePartTriags(...)
+     |      OpDeletePartTriags(self: fcecodec.Mesh, pid: int, idxs: List[int]) -> bool
      |  
      |  OpInsertPart(...)
      |      OpInsertPart(self: fcecodec.Mesh, mesh_src: fcecodec.Mesh, pid_src: int) -> int
@@ -306,9 +306,16 @@ CLASSES
      |      Create and return a new object.  See help(type) for accurate signature.
 
 FUNCTIONS
+    GetFceVersion(...) method of builtins.PyCapsule instance
+        GetFceVersion(buf: str) -> int
+        
+        Returns 3 (FCE3), 4 (FCE4), 5 (FCE4M), negative (invalid)
+    
     PrintFceInfo(...) method of builtins.PyCapsule instance
         PrintFceInfo(buf: str) -> None
     
     ValidateFce(...) method of builtins.PyCapsule instance
         ValidateFce(buf: str) -> int
+        
+        Returns 1 for valid FCE data, 0 otherwise.
 ```

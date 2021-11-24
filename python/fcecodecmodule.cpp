@@ -62,23 +62,23 @@ class Mesh : public fcelib::FcelibMesh {
     fcelib::FcelibMesh *Get_mesh_() { return &mesh_; }
 
     // Service
-    bool Valid() const { return fcelib::FCELIB_ValidateMesh(mesh_); }
+    bool MValid() const { return fcelib::FCELIB_ValidateMesh(mesh_); }
 
     /* Stats */
-    void Info() const { fcelib::FCELIB_PrintMeshInfo(mesh_); }
+    void PrintInfo() const { fcelib::FCELIB_PrintMeshInfo(mesh_); }
     void PrintParts(void) const { fcelib::FCELIB_PrintMeshParts(mesh_); }
     void PrintTriags(void) const { fcelib::FCELIB_PrintMeshTriangles(mesh_); }
     void PrintVerts(void) const { fcelib::FCELIB_PrintMeshVertices(mesh_); }
-    int num_parts() const { return mesh_.hdr.NumParts; };
-    int num_triags() const { return mesh_.hdr.NumTriangles; };
-    int num_verts() const { return mesh_.hdr.NumVertices; };
+    int MNumParts() const { return mesh_.hdr.NumParts; };
+    int MNumTriags() const { return mesh_.hdr.NumTriangles; };
+    int MNumVerts() const { return mesh_.hdr.NumVertices; };
 
     /* i/o */
-    void Decode(const std::string &buf);
-    py::bytes Encode_Fce3(const bool center_parts) const;
-    py::bytes Encode_Fce4(const bool center_parts) const;
-    py::bytes Encode_Fce4M(const bool center_parts) const;
-    void ExportObj(std::string &objpath, std::string &mtlpath,
+    void IoDecode(const std::string &buf);
+    py::bytes IoEncode_Fce3(const bool center_parts) const;
+    py::bytes IoEncode_Fce4(const bool center_parts) const;
+    py::bytes IoEncode_Fce4M(const bool center_parts) const;
+    void IoExportObj(std::string &objpath, std::string &mtlpath,
                     std::string &texture_name,
                     const int print_damage, const int print_dummies) const;
     int IoGeomDataToNewPart_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> vert_idxs,
@@ -100,12 +100,12 @@ class Mesh : public fcelib::FcelibMesh {
     int PNumTriags(const int pid) const;
     int PNumVerts(const int pid) const;
 
-    const std::string GetPartName(const int pid) const;
-    void SetPartName(const int pid, const std::string &s);
-    const std::array<float, 3> GetPartPos(const int pid) const;
-    py::buffer GetPartPos_numpy(const int pid) const;
-    void SetPartPos(const int pid, std::array<float, 3> &arr);
-    void SetPartPos_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr);
+    const std::string PGetName(const int pid) const;
+    void PSetName(const int pid, const std::string &s);
+    const std::array<float, 3> PGetPos(const int pid) const;
+    py::buffer PGetPos_numpy(const int pid) const;
+    void PSetPos(const int pid, std::array<float, 3> &arr);
+    void PSetPos_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr);
 
     /* Triags */
     std::vector<int> GetTriagsVidx(const int pid) const;
@@ -147,16 +147,16 @@ class Mesh : public fcelib::FcelibMesh {
     void SetVertsAnimation_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> arr);
 
     /* Operations */
-    bool CenterPart(const int pid);
+    bool OpCenterPart(const int pid);
     bool OpSetPartCenter(const int pid, std::array<float, 3> &new_center);
     bool OpSetPartCenter_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> new_center);
-    int CopyPart(const int pid_src);
-    int InsertPart(Mesh *mesh_src, const int pid_src);
-    bool DeletePart(const int pid);
-    bool DelPartTriags(const int pid, const std::vector<int> &idxs);
-    bool DelUnrefdVerts() { return fcelib::FCELIB_DeleteUnrefdVerts(&mesh_); }
-    int MergeParts(const int pid1, const int pid2);
-    int MovePart(const int pid);
+    int OpCopyPart(const int pid_src);
+    int OpInsertPart(Mesh *mesh_src, const int pid_src);
+    bool OpDeletePart(const int pid);
+    bool OpDeletePartTriags(const int pid, const std::vector<int> &idxs);
+    bool OpDelUnrefdVerts() { return fcelib::FCELIB_DeleteUnrefdVerts(&mesh_); }
+    int OpMergeParts(const int pid1, const int pid2);
+    int OpMovePart(const int pid);
 
   private:
     fcelib::FcelibMesh& mesh_;
@@ -166,61 +166,61 @@ class Mesh : public fcelib::FcelibMesh {
 /* Mesh:: wrappers ---------------------------------------------------------- */
 /* i/o ------------------------------ */
 
-void Mesh::Decode(const std::string &buf)
+void Mesh::IoDecode(const std::string &buf)
 {
   fcelib::FCELIB_FreeMesh(&mesh_);
   fcelib::FCELIB_InitMesh(&mesh_);
   if (!fcelib::FCELIB_DecodeFce(buf.c_str(), buf.size(), &mesh_))
-    throw std::runtime_error("Decode: Cannot parse FCE data");
+    throw std::runtime_error("IoDecode: Cannot parse FCE data");
 }
 
-py::bytes Mesh::Encode_Fce3(const bool center_parts) const
+py::bytes Mesh::IoEncode_Fce3(const bool center_parts) const
 {
   const int bufsize_ = fcelib::FCELIB_FCETYPES_Fce3ComputeSize(mesh_.hdr.NumVertices, mesh_.hdr.NumTriangles);
   unsigned char *buf_ = (unsigned char *)malloc(static_cast<std::size_t>(bufsize_) * sizeof(*buf_));
   if (!buf_)
-    throw std::runtime_error("Encode_Fce3: Cannot allocate memory");
+    throw std::runtime_error("IoEncode_Fce3: Cannot allocate memory");
   if (!fcelib::FCELIB_EncodeFce3(&buf_, bufsize_, &mesh_, static_cast<int>(center_parts)))
-    throw std::runtime_error("Encode_Fce3: Cannot encode FCE3");
+    throw std::runtime_error("IoEncode_Fce3: Cannot encode FCE3");
   py::bytes result = py::bytes((char *)buf_, static_cast<std::size_t>(bufsize_));
   free(buf_);
   return result;
 }
 
-py::bytes Mesh::Encode_Fce4(const bool center_parts) const
+py::bytes Mesh::IoEncode_Fce4(const bool center_parts) const
 {
   const int bufsize_ = fcelib::FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, mesh_.hdr.NumVertices, mesh_.hdr.NumTriangles);
   unsigned char *buf_ = (unsigned char *)malloc(static_cast<std::size_t>(bufsize_) * sizeof(*buf_));
   if (!buf_)
-    throw std::runtime_error("Encode_Fce4: Cannot allocate memory");
+    throw std::runtime_error("IoEncode_Fce4: Cannot allocate memory");
   if (!fcelib::FCELIB_EncodeFce4(&buf_, bufsize_, &mesh_, static_cast<int>(center_parts)))
-    throw std::runtime_error("Encode_Fce4: Cannot encode FCE4");
+    throw std::runtime_error("IoEncode_Fce4: Cannot encode FCE4");
   py::bytes result = py::bytes((char *)buf_, static_cast<std::size_t>(bufsize_));
   free(buf_);
   return result;
 }
 
-py::bytes Mesh::Encode_Fce4M(const bool center_parts) const
+py::bytes Mesh::IoEncode_Fce4M(const bool center_parts) const
 {
   const int bufsize_ = fcelib::FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, mesh_.hdr.NumVertices, mesh_.hdr.NumTriangles);
   unsigned char *buf_ = (unsigned char *)malloc(static_cast<std::size_t>(bufsize_) * sizeof(*buf_));
   if (!buf_)
-    throw std::runtime_error("Encode_Fce4M: Cannot allocate memory");
+    throw std::runtime_error("IoEncode_Fce4M: Cannot allocate memory");
   if (!fcelib::FCELIB_EncodeFce4M(&buf_, bufsize_, &mesh_, static_cast<int>(center_parts)))
-    throw std::runtime_error("Encode_Fce4M: Cannot encode FCE4M");
+    throw std::runtime_error("IoEncode_Fce4M: Cannot encode FCE4M");
   py::bytes result = py::bytes((char *)buf_, static_cast<std::size_t>(bufsize_));
   free(buf_);
   return result;
 }
 
-void Mesh::ExportObj(std::string &objpath, std::string &mtlpath,
+void Mesh::IoExportObj(std::string &objpath, std::string &mtlpath,
                      std::string &texture_name,
                      const int print_damage, const int print_dummies) const
 {
   if (fcelib::FCELIB_ExportObj(&mesh_, objpath.c_str(), mtlpath.c_str(),
                                    texture_name.c_str(),
                                    print_damage, print_dummies) == 0)
-    throw std::runtime_error("ExportObj: Cannot export OBJ");
+    throw std::runtime_error("IoExportObj: Cannot export OBJ");
 }
 
 int Mesh::IoGeomDataToNewPart_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> vert_idxs,
@@ -447,46 +447,46 @@ int Mesh::PNumVerts(const int pid) const
   return mesh_.parts[ mesh_.hdr.Parts[idx] ]->PNumVertices;
 }
 
-const std::string Mesh::GetPartName(const int pid) const
+const std::string Mesh::PGetName(const int pid) const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetPartName: failure");
+    std::runtime_error("PGetName: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
-    throw std::out_of_range("GetPartName: part index (pid) out of range");
+    throw std::out_of_range("PGetName: part index (pid) out of range");
   return std::string(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName);
 }
-void Mesh::SetPartName(const int pid, const std::string &s)
+void Mesh::PSetName(const int pid, const std::string &s)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetPartName: failure");
+    std::runtime_error("PSetName: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
-    throw std::out_of_range("SetPartName: part index (pid) out of range");
+    throw std::out_of_range("PSetName: part index (pid) out of range");
   std::strncpy(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName, s.c_str(),
                sizeof(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName) - 1);  // max 63 chars
 }
 
-const std::array<float, 3> Mesh::GetPartPos(const int pid) const
+const std::array<float, 3> Mesh::PGetPos(const int pid) const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetPartPos: failure");
+    std::runtime_error("PGetPos: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
-    throw std::out_of_range("GetPartPos: part index (pid) out of range");
+    throw std::out_of_range("PGetPos: part index (pid) out of range");
   std::array<float, 3> result;
   result[0] = mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.x;
   result[1] = mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.y;
   result[2] = mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.z;
   return result;
 }
-py::buffer Mesh::GetPartPos_numpy(const int pid) const
+py::buffer Mesh::PGetPos_numpy(const int pid) const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetPartPos_numpy: failure");
+    std::runtime_error("PGetPos_numpy: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
-    throw std::out_of_range("GetPartPos_numpy: part index (pid) out of range");
+    throw std::out_of_range("PGetPos_numpy: part index (pid) out of range");
 
   py::array_t<float> result = py::array_t<float>({ 3 }, {  });
   auto buf = result.mutable_unchecked<1>();
@@ -495,33 +495,33 @@ py::buffer Mesh::GetPartPos_numpy(const int pid) const
   memcpy(&buf(2), &mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.z, sizeof(float));
   return std::move(result);
 }
-void Mesh::SetPartPos(const int pid, std::array<float, 3> &arr)
+void Mesh::PSetPos(const int pid, std::array<float, 3> &arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetPartPos: failure");
+    std::runtime_error("PSetPos: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
-    throw std::out_of_range("SetPartPos: part index (pid) out of range");
+    throw std::out_of_range("PSetPos: part index (pid) out of range");
 
   mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.x = arr[0];
   mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.y = arr[1];
   mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.z = arr[2];
 }
-void Mesh::SetPartPos_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr)
+void Mesh::PSetPos_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetPartPos_numpy: failure");
+    std::runtime_error("PSetPos_numpy: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
-    throw std::out_of_range("SetPartPos_numpy: part index (pid) out of range");
+    throw std::out_of_range("PSetPos_numpy: part index (pid) out of range");
 
   py::buffer_info buf = arr.request();
   float *ptr;
 
   if (buf.ndim != 1)
-    throw std::runtime_error("SetPartPos_numpy: Number of dimensions must be 1");
+    throw std::runtime_error("PSetPos_numpy: Number of dimensions must be 1");
   if (buf.shape[0] != 3)
-    throw std::runtime_error("SetPartPos_numpy: Shape must be (3, )");
+    throw std::runtime_error("PSetPos_numpy: Shape must be (3, )");
   ptr = static_cast<float *>(buf.ptr);
   memcpy(&mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.x, ptr + 0, sizeof(float));
   memcpy(&mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.y, ptr + 1, sizeof(float));
@@ -973,7 +973,7 @@ void Mesh::SetVertsPos(std::vector<float> arr)
     std::runtime_error("SetVertsPos: failure");
   const std::size_t nrows = static_cast<std::size_t>(mesh_.hdr.NumVertices);
   if (arr.size() != nrows * 3)
-    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.num_verts()");
+    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.MNumVerts()");
   float *ptr = arr.data();
   fcelib::FcelibPart *part;
   fcelib::FcelibVertex *vert;
@@ -1006,7 +1006,7 @@ void Mesh::SetVertsPos_numpy(py::array_t<float, py::array::c_style | py::array::
   if (buf.ndim != 1)
     throw std::runtime_error("Number of dimensions must be 1");
   if (buf.shape[0] != nrows * 3)
-    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.num_verts()");
+    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.MNumVerts()");
   float *ptr = static_cast<float *>(buf.ptr);
   fcelib::FcelibPart *part;
   fcelib::FcelibVertex *vert;
@@ -1098,7 +1098,7 @@ void Mesh::SetVertsNorms(std::vector<float> arr)
     std::runtime_error("SetVertsNorms: failure");
   const std::size_t nrows = static_cast<std::size_t>(mesh_.hdr.NumVertices);
   if (arr.size() != nrows * 3)
-    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.num_verts()");
+    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.MNumVerts()");
   float *ptr = arr.data();
   fcelib::FcelibPart *part;
   fcelib::FcelibVertex *vert;
@@ -1131,7 +1131,7 @@ void Mesh::SetVertsNorms_numpy(py::array_t<float, py::array::c_style | py::array
   if (buf.ndim != 1)
     throw std::runtime_error("Number of dimensions must be 1");
   if (buf.shape[0] != nrows * 3)
-    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.num_verts()");
+    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.MNumVerts()");
   float *ptr = static_cast<float *>(buf.ptr);
   fcelib::FcelibPart *part;
   fcelib::FcelibVertex *vert;
@@ -1223,7 +1223,7 @@ void Mesh::SetDamgdVertsPos(std::vector<float> arr)
     std::runtime_error("SetDamgdVertsPos: failure");
   const std::size_t nrows = static_cast<std::size_t>(mesh_.hdr.NumVertices);
   if (arr.size() != nrows * 3)
-    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.num_verts()");
+    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.MNumVerts()");
   float *ptr = arr.data();
   fcelib::FcelibPart *part;
   fcelib::FcelibVertex *vert;
@@ -1256,7 +1256,7 @@ void Mesh::SetDamgdVertsPos_numpy(py::array_t<float, py::array::c_style | py::ar
   if (buf.ndim != 1)
     throw std::runtime_error("Number of dimensions must be 1");
   if (buf.shape[0] != nrows * 3)
-    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.num_verts()");
+    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.MNumVerts()");
   float *ptr = static_cast<float *>(buf.ptr);
   fcelib::FcelibPart *part;
   fcelib::FcelibVertex *vert;
@@ -1348,7 +1348,7 @@ void Mesh::SetDamgdVertsNorms(std::vector<float> arr)
     std::runtime_error("SetDamgdVertsNorms: failure");
   const std::size_t nrows = static_cast<std::size_t>(mesh_.hdr.NumVertices);
   if (arr.size() != nrows * 3)
-    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.num_verts()");
+    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.MNumVerts()");
   float *ptr = arr.data();
   fcelib::FcelibPart *part;
   fcelib::FcelibVertex *vert;
@@ -1381,7 +1381,7 @@ void Mesh::SetDamgdVertsNorms_numpy(py::array_t<float, py::array::c_style | py::
   if (buf.ndim != 1)
     throw std::runtime_error("Number of dimensions must be 1");
   if (buf.shape[0] != nrows * 3)
-    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.num_verts()");
+    throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.MNumVerts()");
   float *ptr = static_cast<float *>(buf.ptr);
   fcelib::FcelibPart *part;
   fcelib::FcelibVertex *vert;
@@ -1469,7 +1469,7 @@ void Mesh::SetVertsAnimation(std::vector<int> arr)
     std::runtime_error("SetVertsAnimation: failure");
   const std::size_t nrows = static_cast<std::size_t>(mesh_.hdr.NumVertices);
   if (arr.size() != nrows)
-    throw std::runtime_error("Shape must be (N, ) where N = Mesh.num_verts()");
+    throw std::runtime_error("Shape must be (N, ) where N = Mesh.MNumVerts()");
   int *ptr = arr.data();
   fcelib::FcelibPart *part;
   fcelib::FcelibVertex *vert;
@@ -1500,7 +1500,7 @@ void Mesh::SetVertsAnimation_numpy(py::array_t<int, py::array::c_style | py::arr
   if (buf.ndim != 1)
     throw std::runtime_error("Number of dimensions must be 1");
   if (buf.shape[0] != nrows)
-    throw std::runtime_error("Shape must be (N, ) where N = Mesh.num_verts()");
+    throw std::runtime_error("Shape must be (N, ) where N = Mesh.MNumVerts()");
   int *ptr = static_cast<int *>(buf.ptr);
   fcelib::FcelibPart *part;
   fcelib::FcelibVertex *vert;
@@ -1526,10 +1526,10 @@ void Mesh::SetVertsAnimation_numpy(py::array_t<int, py::array::c_style | py::arr
 
 /* mesh: operations ----------------- */
 
-bool Mesh::CenterPart(const int pid)
+bool Mesh::OpCenterPart(const int pid)
 {
   if (pid > mesh_.hdr.NumParts || pid < 0)
-    throw std::out_of_range("CenterPart: part index (pid) out of range");
+    throw std::out_of_range("OpCenterPart: part index (pid) out of range");
   return fcelib::FCELIB_CenterPart(&mesh_, pid);
 }
 
@@ -1552,62 +1552,68 @@ bool Mesh::OpSetPartCenter_numpy(const int pid, py::array_t<float, py::array::c_
   return fcelib::FCELIB_SetPartCenter(&mesh_, pid, static_cast<float *>(buf.ptr));
 }
 
-int Mesh::CopyPart(const int pid_src)
+int Mesh::OpCopyPart(const int pid_src)
 {
   if (pid_src > this->mesh_.hdr.NumParts || pid_src < 0)
-    throw std::out_of_range("CopyPart: part index (pid_src) out of range");
+    throw std::out_of_range("OpCopyPart: part index (pid_src) out of range");
   const int pid_new = fcelib::FCELIB_CopyPartToMesh(&this->mesh_, &this->mesh_, pid_src);
   if (pid_new < 0)
-    throw std::runtime_error("CopyPart: Cannot copy part");
+    throw std::runtime_error("OpCopyPart: Cannot copy part");
   return pid_new;
 }
 
-int Mesh::InsertPart(Mesh *mesh_src, const int pid_src)
+int Mesh::OpInsertPart(Mesh *mesh_src, const int pid_src)
 {
   fcelib::FcelibMesh *mesh_src_ = mesh_src->Get_mesh_();
   if (pid_src > mesh_src_->hdr.NumParts || pid_src < 0)
-    throw std::out_of_range("InsertPart: part index (pid_src) out of range");
+    throw std::out_of_range("OpInsertPart: part index (pid_src) out of range");
   const int pid_new = fcelib::FCELIB_CopyPartToMesh(&this->mesh_, mesh_src_, pid_src);
   if (pid_new < 0)
-    throw std::runtime_error("InsertPart: Cannot copy part");
+    throw std::runtime_error("OpInsertPart: Cannot copy part");
   return pid_new;
 }
 
-bool Mesh::DeletePart(const int pid)
+bool Mesh::OpDeletePart(const int pid)
 {
   if (pid > mesh_.hdr.NumParts || pid < 0)
-    throw std::out_of_range("DeletePart: part index (pid) out of range");
+    throw std::out_of_range("OpDeletePart: part index (pid) out of range");
   return fcelib::FCELIB_DeletePart(&mesh_, pid);
 }
 
-bool Mesh::DelPartTriags(const int pid, const std::vector<int> &idxs)
+bool Mesh::OpDeletePartTriags(const int pid, const std::vector<int> &idxs)
 {
   if (pid > mesh_.hdr.NumParts || pid < 0)
-    throw std::out_of_range("DelPartTriags: part index (pid) out of range");
+    throw std::out_of_range("OpDeletePartTriags: part index (pid) out of range");
   return fcelib::FCELIB_DeletePartTriags(&mesh_, pid, idxs.data(), static_cast<int>(idxs.size()));
 }
 
-int Mesh::MergeParts(const int pid1, const int pid2)
+int Mesh::OpMergeParts(const int pid1, const int pid2)
 {
   if (pid1 > mesh_.hdr.NumParts || pid1 < 0)
-    throw std::out_of_range("MergeParts: part index (pid1) out of range");
+    throw std::out_of_range("OpMergeParts: part index (pid1) out of range");
   if (pid2 > mesh_.hdr.NumParts || pid2 < 0)
-    throw std::out_of_range("MergeParts: part index (pid2) out of range");
+    throw std::out_of_range("OpMergeParts: part index (pid2) out of range");
   const int pid_new = fcelib::FCELIB_MergePartsToNew(&mesh_, pid1, pid2);
   if (pid_new < 0)
-    throw std::runtime_error("MergeParts");
+    throw std::runtime_error("OpMergeParts");
   return pid_new;
 }
 
-int Mesh::MovePart(const int pid)
+int Mesh::OpMovePart(const int pid)
 {
   if (pid > mesh_.hdr.NumParts || pid < 0)
-    throw std::out_of_range("MovePart: part index (pid) out of range");
+    throw std::out_of_range("OpMovePart: part index (pid) out of range");
   return fcelib::FCELIB_MeshMoveUpPart(&mesh_, pid);
 }
 
 
 /* wrappers ----------------------------------------------------------------- */
+
+/* fcecodec. */
+int FCECODECMODULE_GetFceVersion(const std::string &buf)
+{
+  return fcelib::FCELIB_GetFceVersion(buf.c_str(), buf.size());
+}
 
 /* fcecodec. */
 void FCECODECMODULE_PrintFceInfo(const std::string &buf)
@@ -1631,27 +1637,28 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
 {
   fcecodec_module.doc() = "FCE decoder/encoder";
 
+  fcecodec_module.def("GetFceVersion", &FCECODECMODULE_GetFceVersion, py::arg("buf"), R"pbdoc( Returns 3 (FCE3), 4 (FCE4), 5 (FCE4M), negative (invalid) )pbdoc");
   fcecodec_module.def("PrintFceInfo", &FCECODECMODULE_PrintFceInfo, py::arg("buf"));
-  fcecodec_module.def("ValidateFce", &FCECODECMODULE_ValidateFce, py::arg("buf"));
+  fcecodec_module.def("ValidateFce", &FCECODECMODULE_ValidateFce, py::arg("buf"), R"pbdoc( Returns 1 for valid FCE data, 0 otherwise. )pbdoc");
 
   py::class_<Mesh>(fcecodec_module, "Mesh", py::buffer_protocol())
     .def(py::init<>())
 
-    .def("MValid", &Mesh::Valid)
+    .def("MValid", &Mesh::MValid)
 
-    .def("PrintInfo", &Mesh::Info)
+    .def("PrintInfo", &Mesh::PrintInfo)
     .def("PrintParts", &Mesh::PrintParts)
     .def("PrintTriags", &Mesh::PrintTriags)
     .def("PrintVerts", &Mesh::PrintVerts)
-    .def_property_readonly("MNumParts", &Mesh::num_parts)
-    .def_property_readonly("MNumTriags", &Mesh::num_triags)
-    .def_property_readonly("MNumVerts", &Mesh::num_verts)
+    .def_property_readonly("MNumParts", &Mesh::MNumParts)
+    .def_property_readonly("MNumTriags", &Mesh::MNumTriags)
+    .def_property_readonly("MNumVerts", &Mesh::MNumVerts)
 
-    .def("IoDecode", &Mesh::Decode)
-    .def("IoEncode_Fce3", &Mesh::Encode_Fce3, py::arg("center_parts") = true)
-    .def("IoEncode_Fce4", &Mesh::Encode_Fce4, py::arg("center_parts") = true)
-    .def("IoEncode_Fce4M", &Mesh::Encode_Fce4M, py::arg("center_parts") = true)
-    .def("IoExportObj", &Mesh::ExportObj, py::arg("objpath"), py::arg("mtlpath"), py::arg("texname"), py::arg("print_damage") = 0, py::arg("print_dummies") = 0)  // TODO: test
+    .def("IoDecode", &Mesh::IoDecode)
+    .def("IoEncode_Fce3", &Mesh::IoEncode_Fce3, py::arg("center_parts") = true)
+    .def("IoEncode_Fce4", &Mesh::IoEncode_Fce4, py::arg("center_parts") = true)
+    .def("IoEncode_Fce4M", &Mesh::IoEncode_Fce4M, py::arg("center_parts") = true)
+    .def("IoExportObj", &Mesh::IoExportObj, py::arg("objpath"), py::arg("mtlpath"), py::arg("texname"), py::arg("print_damage") = 0, py::arg("print_dummies") = 0)  // TODO: test
     .def("IoGeomDataToNewPart", &Mesh::IoGeomDataToNewPart_numpy,
       py::arg("vert_idxs"), py::arg("vert_texcoords"), py::arg("vert_pos"), py::arg("normals"),
       R"pbdoc( vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz... )pbdoc")
@@ -1674,12 +1681,12 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def("PNumTriags", &Mesh::PNumTriags, py::arg("pid"))
     .def("PNumVerts", &Mesh::PNumVerts, py::arg("pid"))
 
-    .def("PGetName", &Mesh::GetPartName, py::arg("pid"))
-    .def("PSetName", &Mesh::SetPartName, py::arg("pid"), py::arg("name"))
-    .def("PGetPos", &Mesh::GetPartPos, py::arg("pid"))
-    .def("PGetPos_numpy", &Mesh::GetPartPos_numpy, py::arg("pid"))
-    .def("PSetPos", &Mesh::SetPartPos, py::arg("pid"), py::arg("pos"))
-    .def("PSetPos_numpy", &Mesh::SetPartPos_numpy, py::arg("pid"), py::arg("pos"))
+    .def("PGetName", &Mesh::PGetName, py::arg("pid"))
+    .def("PSetName", &Mesh::PSetName, py::arg("pid"), py::arg("name"))
+    .def("PGetPos", &Mesh::PGetPos, py::arg("pid"))
+    .def("PGetPos_numpy", &Mesh::PGetPos_numpy, py::arg("pid"))
+    .def("PSetPos", &Mesh::PSetPos, py::arg("pid"), py::arg("pos"))
+    .def("PSetPos_numpy", &Mesh::PSetPos_numpy, py::arg("pid"), py::arg("pos"))
 
     .def("PGetTriagsVidx", &Mesh::GetTriagsVidx, py::arg("pid"), R"pbdoc( Returns (N*3, ) array of global vert indexes for N triangles. )pbdoc")
     .def("PGetTriagsVidx_numpy", &Mesh::GetTriagsVidx_numpy, py::arg("pid"), R"pbdoc( Returns (N*3, ) numpy array of global vert indexes for N triangles. )pbdoc")
@@ -1708,15 +1715,15 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def_property("MVertsAnimation", &Mesh::GetVertsAnimation, &Mesh::SetVertsAnimation, R"pbdoc( Returns (N, ) array for N vertices. )pbdoc")
     .def_property("MVertsAnimation_numpy", &Mesh::GetVertsAnimation_numpy, &Mesh::SetVertsAnimation_numpy, R"pbdoc( Returns (N, ) numpy array for N vertices. )pbdoc")
 
-    .def("OpCenterPart", &Mesh::CenterPart, py::arg("pid"), R"pbdoc( Center specified part to local centroid. Does not move part w.r.t. to global coordinates. )pbdoc")
+    .def("OpCenterPart", &Mesh::OpCenterPart, py::arg("pid"), R"pbdoc( Center specified part to local centroid. Does not move part w.r.t. to global coordinates. )pbdoc")
     .def("OpSetPartCenter", &Mesh::OpSetPartCenter, py::arg("pid"), py::arg("new_center"), R"pbdoc( Center specified part to given position. Does not move part w.r.t. to global coordinates. )pbdoc")
     .def("OpSetPartCenter_numpy", &Mesh::OpSetPartCenter_numpy, py::arg("pid"), py::arg("new_center"), R"pbdoc( Center specified part to given position. Does not move part w.r.t. to global coordinates. )pbdoc")
-    .def("OpCopyPart", &Mesh::CopyPart, py::arg("pid_src"), R"pbdoc( Copy specified part. Returns new part index. )pbdoc")
-    .def("OpInsertPart", &Mesh::InsertPart, py::arg("mesh_src"), py::arg("pid_src"), R"pbdoc( Insert (copy) specified part from mesh_src. Returns new part index. )pbdoc")
-    .def("OpDeletePart", &Mesh::DeletePart, py::arg("pid"))
-    .def("OpDelPartTriags", &Mesh::DelPartTriags, py::arg("pid"), py::arg("idxs"))
-    .def("OpDelUnrefdVerts", &Mesh::DelUnrefdVerts, R"pbdoc( Delete all vertices that are not referenced by any triangle. )pbdoc")
-    .def("OpMergeParts", &Mesh::MergeParts, py::arg("pid1"), py::arg("pid2"), R"pbdoc( Returns new part index. )pbdoc")
-    .def("OpMovePart", &Mesh::MovePart, py::arg("pid"), R"pbdoc( Move up specified part towards order 0. Returns new part index. )pbdoc")
+    .def("OpCopyPart", &Mesh::OpCopyPart, py::arg("pid_src"), R"pbdoc( Copy specified part. Returns new part index. )pbdoc")
+    .def("OpInsertPart", &Mesh::OpInsertPart, py::arg("mesh_src"), py::arg("pid_src"), R"pbdoc( Insert (copy) specified part from mesh_src. Returns new part index. )pbdoc")
+    .def("OpDeletePart", &Mesh::OpDeletePart, py::arg("pid"))
+    .def("OpDeletePartTriags", &Mesh::OpDeletePartTriags, py::arg("pid"), py::arg("idxs"))
+    .def("OpDelUnrefdVerts", &Mesh::OpDelUnrefdVerts, R"pbdoc( Delete all vertices that are not referenced by any triangle. )pbdoc")
+    .def("OpMergeParts", &Mesh::OpMergeParts, py::arg("pid1"), py::arg("pid2"), R"pbdoc( Returns new part index. )pbdoc")
+    .def("OpMovePart", &Mesh::OpMovePart, py::arg("pid"), R"pbdoc( Move up specified part towards order 0. Returns new part index. )pbdoc")
     ;
 }
