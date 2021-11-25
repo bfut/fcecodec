@@ -141,7 +141,7 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_dest,
 
   for (;;)
   {
-    // Lengthen part index map only if necessary
+    /* Lengthen part index map only if necessary */
     if (!mesh_dest->hdr.Parts)
     {
       if (!FCELIB_TYPES_AddParts(mesh_dest, 1))
@@ -231,7 +231,7 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_dest,
     }
     memset(old_global_to_new_global_idxs, -1, (size_t)mesh_src->vertices_len * sizeof(*old_global_to_new_global_idxs));
 
-    // i - vert index in source, j - vert index in receiver
+    /* i - vert index in source, j - vert index in receiver */
     for (i = 0, j = 0; (i < part_src->pvertices_len) && (j < part_src->PNumVertices); ++i)
     {
       if (part_src->PVertices[i] < 0)
@@ -272,7 +272,7 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_dest,
     }
     mesh_dest->hdr.NumTriangles += part_dest->PNumTriangles;
 
-    // i - triag index in source, j - triag index in receiver
+    /* i - triag index in source, j - triag index in receiver */
     for (i = 0, j = 0; (i < part_src->ptriangles_len) && (j < part_src->PNumTriangles); ++i)
     {
       if (part_src->PTriangles[i] < 0)
@@ -625,7 +625,7 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
     }
     memset(old_global_to_new_global_idxs, -1, (size_t)mesh->vertices_len * sizeof(int));
 
-    // i - vert index in source, j - vert index in receiver
+    /* i - vert index in source, j - vert index in receiver */
     for (i = 0, j = 0; i < part_src1->pvertices_len && j < part_src1->PNumVertices; ++i)
     {
       if (part_src1->PVertices[i] < 0)

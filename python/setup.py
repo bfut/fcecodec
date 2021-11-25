@@ -37,7 +37,7 @@ script_path = pathlib.Path(__file__).parent.resolve()
 os.chdir(script_path)
 
 with open(script_path / "../src/fcelib/fcelib.h", 'r') as f:
-    for i in range(32):
+    for i in range(33):
         next(f)
     __version__ = f.readline().rstrip()[-5:-1]
     print("fcelib version:", __version__)
@@ -104,7 +104,6 @@ ext_modules = [
         # Example: passing in the version to the compiled code
         define_macros=[
             ('VERSION_INFO', __version__),
-            ('FCEC_MODULE_DEBUG', 1),
             ('FCECVERBOSE', 0),
         ],
         extra_compile_args=extra_compile_args

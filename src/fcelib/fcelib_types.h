@@ -93,8 +93,8 @@ typedef struct FcelibHeader {
   tColor4  DriColors[16];  /* FCE4 only */
 } FcelibHeader;
 
-// Wnon-c-typedef-for-linkage, http://wg21.link/p1766r1
-// potential issue with C++03 https://github.com/tinyobjloader/tinyobjloader/issues/259#issuecomment-590675708
+/* Wnon-c-typedef-for-linkage, http://wg21.link/p1766r1 */
+/* potential issue with C++03 https://github.com/tinyobjloader/tinyobjloader/issues/259#issuecomment-590675708 */
 typedef struct FcelibMesh {
   int              freed = 1;      /* has instance been destroyed before? */
 
@@ -172,6 +172,8 @@ void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
 void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
 {
   int i;
+  int k;
+  int n;
   FcelibPart *part;
 
   if (mesh->freed == 1)
@@ -183,7 +185,7 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
       continue;
     part = mesh->parts[ mesh->hdr.Parts[i] ];
 
-    for (int n = part->pvertices_len - 1, k = part->PNumVertices - 1; n >= 0 && k >= 0; --n)
+    for (n = part->pvertices_len - 1, k = part->PNumVertices - 1; n >= 0 && k >= 0; --n)
     {
       if (part->PVertices[n] < 0)
         continue;
@@ -192,7 +194,7 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
     }  /* for n, k */
     free(part->PVertices);
 
-    for (int n = part->ptriangles_len - 1, k = part->PNumTriangles - 1; n >= 0 && k >= 0; --n)
+    for (n = part->ptriangles_len - 1, k = part->PNumTriangles - 1; n >= 0 && k >= 0; --n)
     {
       if (part->PTriangles[n] < 0)
         continue;
@@ -715,6 +717,7 @@ void FCELIB_TYPES_VertAddPosition(FcelibVertex *vert, const tVector *pos)
 int FCELIB_TYPES_GetPartLocalCentroid(FcelibMesh *mesh, FcelibPart *part, tVector *centroid)
 {
   int retv = 0;
+  int i;
   float* x_arr;
   float* y_arr;
   float* z_arr;
@@ -746,8 +749,8 @@ int FCELIB_TYPES_GetPartLocalCentroid(FcelibMesh *mesh, FcelibPart *part, tVecto
     y_arr = xyz_arr + PNumVertices;
     z_arr = xyz_arr + PNumVertices * 2;
 
-    // i - internal vert index, count_verts - vert order
-    for (int i = 0; i < part->pvertices_len && count_verts < PNumVertices; ++i)
+    /* i - internal vert index, count_verts - vert order */
+    for (i = 0; i < part->pvertices_len && count_verts < PNumVertices; ++i)
     {
       if (part->PVertices[i] < 0)
         continue;
@@ -764,9 +767,9 @@ int FCELIB_TYPES_GetPartLocalCentroid(FcelibMesh *mesh, FcelibPart *part, tVecto
     qsort(y_arr, (size_t)count_verts, sizeof(*y_arr), FCELIB_MISC_CompareFloats);
     qsort(z_arr, (size_t)count_verts, sizeof(*z_arr), FCELIB_MISC_CompareFloats);
 
-    centroid->x = 0.5f * abs(x_arr[count_verts - 1] - x_arr[0]) + x_arr[0];
-    centroid->y = 0.5f * abs(y_arr[count_verts - 1] - y_arr[0]) + y_arr[0];
-    centroid->z = 0.5f * abs(z_arr[count_verts - 1] - z_arr[0]) + z_arr[0];
+    centroid->x = 0.5f * FCELIB_MISC_Abs(x_arr[count_verts - 1] - x_arr[0]) + x_arr[0];
+    centroid->y = 0.5f * FCELIB_MISC_Abs(y_arr[count_verts - 1] - y_arr[0]) + y_arr[0];
+    centroid->z = 0.5f * FCELIB_MISC_Abs(z_arr[count_verts - 1] - z_arr[0]) + z_arr[0];
 
     retv = 1;
     break;
@@ -788,7 +791,8 @@ void FCELIB_TYPES_ResetPartCenter(FcelibMesh *mesh, FcelibPart *part, const tVec
 {
   FcelibVertex *vert;
   int count_verts = 0;
-  for (int i = 0; i < part->pvertices_len && count_verts < part->PNumVertices; ++i)
+  int i;
+  for (i = 0; i < part->pvertices_len && count_verts < part->PNumVertices; ++i)
   {
     if (part->PVertices[i] < 0)
       continue;

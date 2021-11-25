@@ -21,6 +21,7 @@
 /**
   library interface
 
+  structs are defined in fcelib_types.h
   FCE-specific documentation can be found in fcelib_fcetypes.h
  **/
 

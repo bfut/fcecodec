@@ -30,7 +30,6 @@
 #include <string.h>
 
 #ifndef _WIN32
-/* #include "LFB/LFB_io.h" */
 #endif
 
 #include "fcelib_fcetypes.h"
@@ -1190,9 +1189,9 @@ int FCELIB_IO_EncodeFce3_Fopen(FcelibMesh *mesh, const void *fcepath, const int 
       qsort(y_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
       qsort(z_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
 
-      x_array[0] = 0.5f * abs(x_array[count_verts - 1] - x_array[0]);
-      y_array[0] = abs(y_array[0]) - 0.02f;
-      z_array[0] = 0.5f * abs(z_array[count_verts - 1] - z_array[0]);
+      x_array[0] = 0.5f * FCELIB_MISC_Abs(x_array[count_verts - 1] - x_array[0]);
+      y_array[0] = FCELIB_MISC_Abs(y_array[0]) - 0.02f;
+      z_array[0] = 0.5f * FCELIB_MISC_Abs(z_array[count_verts - 1] - z_array[0]);
 
       fwrite(x_array, sizeof(float), (size_t)1, outf);
       fwrite(y_array, sizeof(float), (size_t)1, outf);
@@ -1644,9 +1643,9 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
       qsort(y_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
       qsort(z_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
 
-      x_array[0] = 0.5f * abs(x_array[count_verts - 1] - x_array[0]);
-      y_array[0] = abs(y_array[0]) - 0.02f;
-      z_array[0] = 0.5f * abs(z_array[count_verts - 1] - z_array[0]);
+      x_array[0] = 0.5f * FCELIB_MISC_Abs(x_array[count_verts - 1] - x_array[0]);
+      y_array[0] = FCELIB_MISC_Abs(y_array[0]) - 0.02f;
+      z_array[0] = 0.5f * FCELIB_MISC_Abs(z_array[count_verts - 1] - z_array[0]);
 
       memcpy(*outbuf + 0x0028, x_array, (size_t)4);
       memcpy(*outbuf + 0x002C, y_array, (size_t)4);
@@ -1976,9 +1975,9 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       qsort(y_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
       qsort(z_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
 
-      x_array[0] = 0.5f * abs(x_array[count_verts - 1] - x_array[0]);
-      y_array[0] = abs(y_array[0]) - 0.02f;
-      z_array[0] = 0.5f * abs(z_array[count_verts - 1] - z_array[0]);
+      x_array[0] = 0.5f * FCELIB_MISC_Abs(x_array[count_verts - 1] - x_array[0]);
+      y_array[0] = FCELIB_MISC_Abs(y_array[0]) - 0.02f;
+      z_array[0] = 0.5f * FCELIB_MISC_Abs(z_array[count_verts - 1] - z_array[0]);
 
       memcpy(*outbuf + 0x004c, x_array, (size_t)4);
       memcpy(*outbuf + 0x0050, y_array, (size_t)4);
@@ -2182,6 +2181,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     {
       const int padding = 0xff00;
       float V_tmp[3];
+      int h;
 
       for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(64, mesh->hdr.NumParts); ++i)
       {
@@ -2210,7 +2210,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
           memcpy(&V_tmp, &triag->V, (size_t)12);
           /* if (fce_version == 0x00101014) */
           {
-            for (int h = 0; h < 3; ++h)
+            for (h = 0; h < 3; ++h)
               V_tmp[h] = 1 - V_tmp[h];
           }
 
@@ -2249,6 +2249,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
   FcelibTriangle *triag;
   FcelibVertex *vert;
   int i;
+  int j;
   int vidx_1st;
   int tidx_1st;
 
@@ -2381,7 +2382,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     }
     mesh->hdr.NumTriangles += part->PNumTriangles;
 
-    for (int j = 0; j < part->PNumTriangles; ++j)
+    for (j = 0; j < part->PNumTriangles; ++j)
     {
       part->PTriangles[j] = tidx_1st + j;
 
@@ -2424,7 +2425,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     }
     mesh->hdr.NumVertices += part->PNumVertices;
 
-    for (int j = 0; j < part->PNumVertices; ++j)
+    for (j = 0; j < part->PNumVertices; ++j)
     {
       part->PVertices[j] = vidx_1st + j;
 

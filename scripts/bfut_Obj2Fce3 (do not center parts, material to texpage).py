@@ -30,7 +30,7 @@ LICENSE
     3. This notice may not be removed or altered from any source distribution.
 """
 CONFIG = {
-    "fce_version"        : '3',  # output format version; expects 'keep version' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
+    "fce_version"        : '3',  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
     "center_parts"       : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
     "material2texpage"   : 1,  # maps OBJ face materials to FCE texpages (expects 0|1)
     "material2triagflag" : 0,  # maps OBJ face materials to FCE triangles flag (expects 0|1)
@@ -284,7 +284,6 @@ def ShapeToPart(reader,
                 # print(materials[s_matls[i]].name, int(materials[s_matls[i]].name[2:], base=16))
                 tflags[i] = int(materials[s_matls[i]].name[2:], base=16)
             except ValueError:
-                # print(s_matls[i], materials[s_matls[i]].name)
                 tags = materials[s_matls[i]].name.split('_')
                 tflags[i] = GetFlagFromTags(tags)
         mesh.PSetTriagsFlags_numpy(mesh.MNumParts - 1, tflags)

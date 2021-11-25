@@ -37,13 +37,9 @@
 #include <utility>  // std::move
 #include <vector>
 
-/* FCEC_MODULE_DEBUG -------------------------------------------------------- */
-#ifdef FCEC_MODULE_DEBUG
 #define malloc PyMem_Malloc
 #define realloc PyMem_Realloc
 #define free PyMem_Free
-#endif
-/* FCEC_MODULE_DEBUG -------------------------------------------------------- */
 
 #include "../src/fcelib/fcelib.h"
 #include "../src/fcelib/fcelib_types.h"
@@ -79,8 +75,8 @@ class Mesh : public fcelib::FcelibMesh {
     py::bytes IoEncode_Fce4(const bool center_parts) const;
     py::bytes IoEncode_Fce4M(const bool center_parts) const;
     void IoExportObj(std::string &objpath, std::string &mtlpath,
-                    std::string &texture_name,
-                    const int print_damage, const int print_dummies) const;
+                     std::string &texture_name,
+                     const int print_damage, const int print_dummies) const;
     int IoGeomDataToNewPart_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> vert_idxs,
                                   py::array_t<float, py::array::c_style | py::array::forcecast> vert_texcoords,
                                   py::array_t<float, py::array::c_style | py::array::forcecast> vert_pos,
@@ -108,43 +104,43 @@ class Mesh : public fcelib::FcelibMesh {
     void PSetPos_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr);
 
     /* Triags */
-    std::vector<int> GetTriagsVidx(const int pid) const;
-    py::buffer GetTriagsVidx_numpy(const int pid) const;
-    std::vector<int> GetTriagsFlags(const int pid) const;
-    py::buffer GetTriagsFlags_numpy(const int pid) const;
-    void SetTriagsFlags(const int pid, std::vector<int> &arr);
-    void SetTriagsFlags_numpy(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr);
+    std::vector<int> PGetTriagsVidx(const int pid) const;
+    py::buffer PGetTriagsVidx_numpy(const int pid) const;
+    std::vector<int> PGetTriagsFlags(const int pid) const;
+    py::buffer PGetTriagsFlags_numpy(const int pid) const;
+    void PSetTriagsFlags(const int pid, std::vector<int> &arr);
+    void PSetTriagsFlags_numpy(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr);
     py::buffer PGetTriagsTexcoords_numpy(const int pid) const;
     void PSetTriagsTexcoords_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr);
-    std::vector<int> GetTriagsTexpages(const int pid) const;
-    py::buffer GetTriagsTexpages_numpy(const int pid) const;
-    void SetTriagsTexpages(const int pid, std::vector<int> &arr);
-    void SetTriagsTexpages_numpy(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr);
+    std::vector<int> PGetTriagsTexpages(const int pid) const;
+    py::buffer PGetTriagsTexpages_numpy(const int pid) const;
+    void PSetTriagsTexpages(const int pid, std::vector<int> &arr);
+    void PSetTriagsTexpages_numpy(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr);
 
     /* Verts */
-    std::vector<int> GetVertsMap_idx2order() const;
-    py::buffer GetVertsMap_idx2order_numpy() const;
+    std::vector<int> MVertsGetMap_idx2order() const;
+    py::buffer MVertsGetMap_idx2order_numpy() const;
 
-    std::vector<float> GetVertsPos() const;
-    py::buffer GetVertsPos_numpy() const;
-    void SetVertsPos(std::vector<float> arr);
-    void SetVertsPos_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr);
-    std::vector<float> GetVertsNorms() const;
-    py::buffer GetVertsNorms_numpy() const;
-    void SetVertsNorms(std::vector<float> arr);
-    void SetVertsNorms_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr);
-    std::vector<float> GetDamgdVertsPos() const;
-    py::buffer GetDamgdVertsPos_numpy() const;
-    void SetDamgdVertsPos(std::vector<float> arr);
-    void SetDamgdVertsPos_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr);
-    std::vector<float> GetDamgdVertsNorms() const;
-    py::buffer GetDamgdVertsNorms_numpy() const;
-    void SetDamgdVertsNorms(std::vector<float> arr);
-    void SetDamgdVertsNorms_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr);
-    std::vector<int> GetVertsAnimation() const;
-    py::buffer GetVertsAnimation_numpy() const;
-    void SetVertsAnimation(std::vector<int> arr);
-    void SetVertsAnimation_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> arr);
+    std::vector<float> MGetVertsPos() const;
+    py::buffer MGetVertsPos_numpy() const;
+    void MSetVertsPos(std::vector<float> arr);
+    void MSetVertsPos_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr);
+    std::vector<float> MGetVertsNorms() const;
+    py::buffer MGetVertsNorms_numpy() const;
+    void MSetVertsNorms(std::vector<float> arr);
+    void MSetVertsNorms_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr);
+    std::vector<float> MGetDamgdVertsPos() const;
+    py::buffer MGetDamgdVertsPos_numpy() const;
+    void MSetDamgdVertsPos(std::vector<float> arr);
+    void MSetDamgdVertsPos_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr);
+    std::vector<float> MGetDamgdVertsNorms() const;
+    py::buffer MGetDamgdVertsNorms_numpy() const;
+    void MSetDamgdVertsNorms(std::vector<float> arr);
+    void MSetDamgdVertsNorms_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr);
+    std::vector<int> MGetVertsAnimation() const;
+    py::buffer MGetVertsAnimation_numpy() const;
+    void MSetVertsAnimation(std::vector<int> arr);
+    void MSetVertsAnimation_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> arr);
 
     /* Operations */
     bool OpCenterPart(const int pid);
@@ -214,12 +210,12 @@ py::bytes Mesh::IoEncode_Fce4M(const bool center_parts) const
 }
 
 void Mesh::IoExportObj(std::string &objpath, std::string &mtlpath,
-                     std::string &texture_name,
-                     const int print_damage, const int print_dummies) const
+                       std::string &texture_name,
+                       const int print_damage, const int print_dummies) const
 {
   if (fcelib::FCELIB_ExportObj(&mesh_, objpath.c_str(), mtlpath.c_str(),
-                                   texture_name.c_str(),
-                                   print_damage, print_dummies) == 0)
+                               texture_name.c_str(),
+                               print_damage, print_dummies) == 0)
     throw std::runtime_error("IoExportObj: Cannot export OBJ");
 }
 
@@ -291,6 +287,7 @@ py::buffer Mesh::MGetColors_numpy() const
 
   return std::move(result);
 }
+
 void Mesh::MSetColors_numpy(py::array_t<unsigned char, py::array::c_style | py::array::forcecast> arr)
 {
   py::buffer_info buf = arr.request();
@@ -531,12 +528,12 @@ void Mesh::PSetPos_numpy(const int pid, py::array_t<float, py::array::c_style | 
 
 /* triags --------------------------- */
 
-std::vector<int> Mesh::GetTriagsVidx(const int pid) const
+std::vector<int> Mesh::PGetTriagsVidx(const int pid) const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetTriagsVidx: failure");
+    std::runtime_error("PGetTriagsVidx: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
-    throw std::range_error("GetTriagsVidx: pid");
+    throw std::range_error("PGetTriagsVidx: pid");
   fcelib::FcelibPart *part = mesh_.parts[ mesh_.hdr.Parts[fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid)] ];
 
   const std::size_t nrows = static_cast<std::size_t>(part->PNumTriangles);
@@ -559,12 +556,12 @@ std::vector<int> Mesh::GetTriagsVidx(const int pid) const
 
   return result;
 }
-py::buffer Mesh::GetTriagsVidx_numpy(const int pid) const
+py::buffer Mesh::PGetTriagsVidx_numpy(const int pid) const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetTriagsVidx_numpy: failure");
+    std::runtime_error("PGetTriagsVidx_numpy: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
-    throw std::range_error("GetTriagsVidx_numpy: pid");
+    throw std::range_error("PGetTriagsVidx_numpy: pid");
 
   fcelib::FcelibPart *part = mesh_.parts[ mesh_.hdr.Parts[fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid)] ];
 
@@ -590,12 +587,12 @@ py::buffer Mesh::GetTriagsVidx_numpy(const int pid) const
 }
 
 
-std::vector<int> Mesh::GetTriagsFlags(const int pid) const
+std::vector<int> Mesh::PGetTriagsFlags(const int pid) const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetTriagsFlags: failure");
+    std::runtime_error("PGetTriagsFlags: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
-    throw std::range_error("GetTriagsFlags: pid");
+    throw std::range_error("PGetTriagsFlags: pid");
   fcelib::FcelibPart *part = mesh_.parts[ mesh_.hdr.Parts[fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid)] ];
 
   const std::size_t nrows = static_cast<std::size_t>(part->PNumTriangles);
@@ -612,12 +609,12 @@ std::vector<int> Mesh::GetTriagsFlags(const int pid) const
   }
   return result;
 }
-py::buffer Mesh::GetTriagsFlags_numpy(const int pid) const
+py::buffer Mesh::PGetTriagsFlags_numpy(const int pid) const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetTriagsFlags_numpy: failure");
+    std::runtime_error("PGetTriagsFlags_numpy: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
-    throw std::range_error("GetTriagsFlags_numpy: pid");
+    throw std::range_error("PGetTriagsFlags_numpy: pid");
   fcelib::FcelibPart *part = mesh_.parts[ mesh_.hdr.Parts[fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid)] ];
 
   const py::ssize_t nrows = static_cast<py::ssize_t>(part->PNumTriangles);
@@ -634,12 +631,12 @@ py::buffer Mesh::GetTriagsFlags_numpy(const int pid) const
   }
   return std::move(result);
 }
-void Mesh::SetTriagsFlags(const int pid, std::vector<int> &arr)
+void Mesh::PSetTriagsFlags(const int pid, std::vector<int> &arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetTriagsFlags: failure");
+    std::runtime_error("PSetTriagsFlags: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
-    throw std::range_error("SetTriagsFlags: pid");
+    throw std::range_error("PSetTriagsFlags: pid");
   fcelib::FcelibPart *part = mesh_.parts[ mesh_.hdr.Parts[fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid)] ];
 
   const int nrows = part->PNumTriangles;
@@ -657,12 +654,12 @@ void Mesh::SetTriagsFlags(const int pid, std::vector<int> &arr)
     ++j;
   }
 }
-void Mesh::SetTriagsFlags_numpy(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr)
+void Mesh::PSetTriagsFlags_numpy(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetTriagsFlags_numpy: failure");
+    std::runtime_error("PSetTriagsFlags_numpy: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
-    throw std::range_error("SetTriagsFlags_numpy: pid");
+    throw std::range_error("PSetTriagsFlags_numpy: pid");
   fcelib::FcelibPart *part = mesh_.parts[ mesh_.hdr.Parts[fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid)] ];
 
   const py::ssize_t nrows = static_cast<py::ssize_t>(part->PNumTriangles);
@@ -708,12 +705,6 @@ py::buffer Mesh::PGetTriagsTexcoords_numpy(const int pid) const
     triag = mesh_.triangles[ part->PTriangles[i] ];
     memcpy(&buf(j * 6 + 0), &triag->U, sizeof(triag->U));
     memcpy(&buf(j * 6 + 3), &triag->V, sizeof(triag->U));
-    // memcpy(&buf(j * 6 + 0), &triag->U[0], sizeof(triag->U[0]));
-    // memcpy(&buf(j * 6 + 1), &triag->U[1], sizeof(triag->U[1]));
-    // memcpy(&buf(j * 6 + 2), &triag->U[2], sizeof(triag->U[2]));
-    // memcpy(&buf(j * 6 + 3), &triag->V[0], sizeof(triag->V[0]));
-    // memcpy(&buf(j * 6 + 4), &triag->V[1], sizeof(triag->V[1]));
-    // memcpy(&buf(j * 6 + 5), &triag->V[2], sizeof(triag->V[2]));
     ++j;
   }
 
@@ -745,18 +736,17 @@ void Mesh::PSetTriagsTexcoords_numpy(const int pid, py::array_t<float, py::array
     triag = mesh_.triangles[ part->PTriangles[i] ];
     memcpy(triag->U, ptr + j * 6 + 0, sizeof(triag->U));
     memcpy(triag->V, ptr + j * 6 + 3, sizeof(triag->V));
-    // mesh_.triangles[ part->PTriangles[i] ]->flag = ptr[j];
     ++j;
   }
 }
 
 
-std::vector<int> Mesh::GetTriagsTexpages(const int pid) const
+std::vector<int> Mesh::PGetTriagsTexpages(const int pid) const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetTriagsTexpages: failure");
+    std::runtime_error("PGetTriagsTexpages: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
-    throw std::range_error("GetTriagsTexpages: pid");
+    throw std::range_error("PGetTriagsTexpages: pid");
   fcelib::FcelibPart *part = mesh_.parts[ mesh_.hdr.Parts[fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid)] ];
 
   const std::size_t nrows = static_cast<std::size_t>(part->PNumTriangles);
@@ -773,12 +763,12 @@ std::vector<int> Mesh::GetTriagsTexpages(const int pid) const
   }
   return result;
 }
-py::buffer Mesh::GetTriagsTexpages_numpy(const int pid) const
+py::buffer Mesh::PGetTriagsTexpages_numpy(const int pid) const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetTriagsTexpages_numpy: failure");
+    std::runtime_error("PGetTriagsTexpages_numpy: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
-    throw std::range_error("GetTriagsTexpages_numpy: pid");
+    throw std::range_error("PGetTriagsTexpages_numpy: pid");
   fcelib::FcelibPart *part = mesh_.parts[ mesh_.hdr.Parts[fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid)] ];
 
   const py::ssize_t nrows = static_cast<py::ssize_t>(part->PNumTriangles);
@@ -795,12 +785,12 @@ py::buffer Mesh::GetTriagsTexpages_numpy(const int pid) const
   }
   return std::move(result);
 }
-void Mesh::SetTriagsTexpages(const int pid, std::vector<int> &arr)
+void Mesh::PSetTriagsTexpages(const int pid, std::vector<int> &arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetTriagsTexpages: failure");
+    std::runtime_error("PSetTriagsTexpages: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
-    throw std::range_error("SetTriagsTexpages: pid");
+    throw std::range_error("PSetTriagsTexpages: pid");
   fcelib::FcelibPart *part = mesh_.parts[ mesh_.hdr.Parts[fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid)] ];
 
   const int nrows = part->PNumTriangles;
@@ -818,12 +808,12 @@ void Mesh::SetTriagsTexpages(const int pid, std::vector<int> &arr)
     ++j;
   }
 }
-void Mesh::SetTriagsTexpages_numpy(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr)
+void Mesh::PSetTriagsTexpages_numpy(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetTriagsTexpages_numpy: failure");
+    std::runtime_error("PSetTriagsTexpages_numpy: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
-    throw std::range_error("SetTriagsTexpages_numpy: pid");
+    throw std::range_error("PSetTriagsTexpages_numpy: pid");
   fcelib::FcelibPart *part = mesh_.parts[ mesh_.hdr.Parts[fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid)] ];
 
   const py::ssize_t nrows = static_cast<py::ssize_t>(part->PNumTriangles);
@@ -849,10 +839,10 @@ void Mesh::SetTriagsTexpages_numpy(const int pid, py::array_t<int, py::array::c_
 /* verts ---------------------------- */
 
 /* Via vector index (=global vert idx) map to global vert order. */
-std::vector<int> Mesh::GetVertsMap_idx2order() const
+std::vector<int> Mesh::MVertsGetMap_idx2order() const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetVertsMap_idx2order: failure");
+    std::runtime_error("MVertsGetMap_idx2order: failure");
   std::vector<int> result = std::vector<int>(static_cast<std::size_t>(mesh_.vertices_len), -1);
   int *ptr = result.data();
   fcelib::FcelibPart *part;
@@ -877,10 +867,10 @@ std::vector<int> Mesh::GetVertsMap_idx2order() const
   return result;
 }
 /* Via vector index (=global vert idx) map to global vert order. */
-py::buffer Mesh::GetVertsMap_idx2order_numpy() const
+py::buffer Mesh::MVertsGetMap_idx2order_numpy() const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetVertsMap_idx2order_numpy: failure");
+    std::runtime_error("MVertsGetMap_idx2order_numpy: failure");
   py::array_t<int> result = py::array_t<int>({ static_cast<py::ssize_t>(mesh_.vertices_len) }, {  });
   auto buf = result.request();
   int *ptr = static_cast<int *>(buf.ptr);
@@ -907,10 +897,10 @@ py::buffer Mesh::GetVertsMap_idx2order_numpy() const
 }
 
 
-std::vector<float> Mesh::GetVertsPos() const
+std::vector<float> Mesh::MGetVertsPos() const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetVertsPos: failure");
+    std::runtime_error("MGetVertsPos: failure");
   std::vector<float> result = std::vector<float>(static_cast<std::size_t>(mesh_.hdr.NumVertices) * 3);
   float *ptr = result.data();
   fcelib::FcelibPart *part;
@@ -937,10 +927,10 @@ std::vector<float> Mesh::GetVertsPos() const
 
   return result;
 }
-py::buffer Mesh::GetVertsPos_numpy() const
+py::buffer Mesh::MGetVertsPos_numpy() const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetVertsPos_numpy: failure");
+    std::runtime_error("MGetVertsPos_numpy: failure");
   py::array_t<float> result = py::array_t<float>({ static_cast<py::ssize_t>(mesh_.hdr.NumVertices) * 3 }, {  });
   auto buf = result.mutable_unchecked<>();
   fcelib::FcelibPart *part;
@@ -967,10 +957,10 @@ py::buffer Mesh::GetVertsPos_numpy() const
 
   return std::move(result);
 }
-void Mesh::SetVertsPos(std::vector<float> arr)
+void Mesh::MSetVertsPos(std::vector<float> arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetVertsPos: failure");
+    std::runtime_error("MSetVertsPos: failure");
   const std::size_t nrows = static_cast<std::size_t>(mesh_.hdr.NumVertices);
   if (arr.size() != nrows * 3)
     throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.MNumVerts()");
@@ -997,10 +987,10 @@ void Mesh::SetVertsPos(std::vector<float> arr)
     }  // for i
   }  // for k
 }
-void Mesh::SetVertsPos_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
+void Mesh::MSetVertsPos_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetVertsPos_numpy: failure");
+    std::runtime_error("MSetVertsPos_numpy: failure");
   const py::ssize_t nrows = static_cast<py::ssize_t>(mesh_.hdr.NumVertices);
   py::buffer_info buf = arr.request();
   if (buf.ndim != 1)
@@ -1032,10 +1022,10 @@ void Mesh::SetVertsPos_numpy(py::array_t<float, py::array::c_style | py::array::
 }
 
 
-std::vector<float> Mesh::GetVertsNorms() const
+std::vector<float> Mesh::MGetVertsNorms() const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetVertsNorms: failure");
+    std::runtime_error("MGetVertsNorms: failure");
   std::vector<float> result = std::vector<float>(static_cast<std::size_t>(mesh_.hdr.NumVertices) * 3);
   float *ptr = result.data();
   fcelib::FcelibPart *part;
@@ -1062,10 +1052,10 @@ std::vector<float> Mesh::GetVertsNorms() const
 
   return result;
 }
-py::buffer Mesh::GetVertsNorms_numpy() const
+py::buffer Mesh::MGetVertsNorms_numpy() const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetVertsNorms_numpy: failure");
+    std::runtime_error("MGetVertsNorms_numpy: failure");
   py::array_t<float> result = py::array_t<float>({ static_cast<py::ssize_t>(mesh_.hdr.NumVertices) * 3 }, {  });
   auto buf = result.mutable_unchecked<>();
   fcelib::FcelibPart *part;
@@ -1092,10 +1082,10 @@ py::buffer Mesh::GetVertsNorms_numpy() const
 
   return std::move(result);
 }
-void Mesh::SetVertsNorms(std::vector<float> arr)
+void Mesh::MSetVertsNorms(std::vector<float> arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetVertsNorms: failure");
+    std::runtime_error("MSetVertsNorms: failure");
   const std::size_t nrows = static_cast<std::size_t>(mesh_.hdr.NumVertices);
   if (arr.size() != nrows * 3)
     throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.MNumVerts()");
@@ -1122,10 +1112,10 @@ void Mesh::SetVertsNorms(std::vector<float> arr)
     }  // for i
   }  // for k
 }
-void Mesh::SetVertsNorms_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
+void Mesh::MSetVertsNorms_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetVertsNorms_numpy: failure");
+    std::runtime_error("MSetVertsNorms_numpy: failure");
   const py::ssize_t nrows = static_cast<py::ssize_t>(mesh_.hdr.NumVertices);
   py::buffer_info buf = arr.request();
   if (buf.ndim != 1)
@@ -1157,10 +1147,10 @@ void Mesh::SetVertsNorms_numpy(py::array_t<float, py::array::c_style | py::array
 }
 
 
-std::vector<float> Mesh::GetDamgdVertsPos() const
+std::vector<float> Mesh::MGetDamgdVertsPos() const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetDamgdVertsPos: failure");
+    std::runtime_error("MGetDamgdVertsPos: failure");
   std::vector<float> result = std::vector<float>(static_cast<std::size_t>(mesh_.hdr.NumVertices) * 3);
   float *ptr = result.data();
   fcelib::FcelibPart *part;
@@ -1187,10 +1177,10 @@ std::vector<float> Mesh::GetDamgdVertsPos() const
 
   return result;
 }
-py::buffer Mesh::GetDamgdVertsPos_numpy() const
+py::buffer Mesh::MGetDamgdVertsPos_numpy() const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetDamgdVertsPos_numpy: failure");
+    std::runtime_error("MGetDamgdVertsPos_numpy: failure");
   py::array_t<float> result = py::array_t<float>({ static_cast<py::ssize_t>(mesh_.hdr.NumVertices) * 3 }, {  });
   auto buf = result.mutable_unchecked<>();
   fcelib::FcelibPart *part;
@@ -1217,10 +1207,10 @@ py::buffer Mesh::GetDamgdVertsPos_numpy() const
 
   return std::move(result);
 }
-void Mesh::SetDamgdVertsPos(std::vector<float> arr)
+void Mesh::MSetDamgdVertsPos(std::vector<float> arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetDamgdVertsPos: failure");
+    std::runtime_error("MSetDamgdVertsPos: failure");
   const std::size_t nrows = static_cast<std::size_t>(mesh_.hdr.NumVertices);
   if (arr.size() != nrows * 3)
     throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.MNumVerts()");
@@ -1247,10 +1237,10 @@ void Mesh::SetDamgdVertsPos(std::vector<float> arr)
     }  // for i
   }  // for k
 }
-void Mesh::SetDamgdVertsPos_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
+void Mesh::MSetDamgdVertsPos_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetDamgdVertsPos_numpy: failure");
+    std::runtime_error("MSetDamgdVertsPos_numpy: failure");
   const py::ssize_t nrows = static_cast<py::ssize_t>(mesh_.hdr.NumVertices);
   py::buffer_info buf = arr.request();
   if (buf.ndim != 1)
@@ -1282,10 +1272,10 @@ void Mesh::SetDamgdVertsPos_numpy(py::array_t<float, py::array::c_style | py::ar
 }
 
 
-std::vector<float> Mesh::GetDamgdVertsNorms() const
+std::vector<float> Mesh::MGetDamgdVertsNorms() const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetDamgdVertsNorms: failure");
+    std::runtime_error("MGetDamgdVertsNorms: failure");
   std::vector<float> result = std::vector<float>(static_cast<std::size_t>(mesh_.hdr.NumVertices) * 3);
   float *ptr = result.data();
   fcelib::FcelibPart *part;
@@ -1312,10 +1302,10 @@ std::vector<float> Mesh::GetDamgdVertsNorms() const
 
   return result;
 }
-py::buffer Mesh::GetDamgdVertsNorms_numpy() const
+py::buffer Mesh::MGetDamgdVertsNorms_numpy() const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetDamgdVertsNorms_numpy: failure");
+    std::runtime_error("MGetDamgdVertsNorms_numpy: failure");
   py::array_t<float> result = py::array_t<float>({ static_cast<py::ssize_t>(mesh_.hdr.NumVertices) * 3 }, {  });
   auto buf = result.mutable_unchecked<>();
   fcelib::FcelibPart *part;
@@ -1342,10 +1332,10 @@ py::buffer Mesh::GetDamgdVertsNorms_numpy() const
 
   return std::move(result);
 }
-void Mesh::SetDamgdVertsNorms(std::vector<float> arr)
+void Mesh::MSetDamgdVertsNorms(std::vector<float> arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetDamgdVertsNorms: failure");
+    std::runtime_error("MSetDamgdVertsNorms: failure");
   const std::size_t nrows = static_cast<std::size_t>(mesh_.hdr.NumVertices);
   if (arr.size() != nrows * 3)
     throw std::runtime_error("Shape must be (N*3, ) where N = Mesh.MNumVerts()");
@@ -1372,10 +1362,10 @@ void Mesh::SetDamgdVertsNorms(std::vector<float> arr)
     }  // for i
   }  // for k
 }
-void Mesh::SetDamgdVertsNorms_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
+void Mesh::MSetDamgdVertsNorms_numpy(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetDamgdVertsNorms_numpy: failure");
+    std::runtime_error("MSetDamgdVertsNorms_numpy: failure");
   const py::ssize_t nrows = static_cast<py::ssize_t>(mesh_.hdr.NumVertices);
   py::buffer_info buf = arr.request();
   if (buf.ndim != 1)
@@ -1407,10 +1397,10 @@ void Mesh::SetDamgdVertsNorms_numpy(py::array_t<float, py::array::c_style | py::
 }
 
 
-std::vector<int> Mesh::GetVertsAnimation() const
+std::vector<int> Mesh::MGetVertsAnimation() const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetVertsAnimation: failure");
+    std::runtime_error("MGetVertsAnimation: failure");
   std::vector<int> result = std::vector<int>(static_cast<std::size_t>(mesh_.hdr.NumVertices));
   int *ptr = result.data();
   fcelib::FcelibPart *part;
@@ -1435,10 +1425,10 @@ std::vector<int> Mesh::GetVertsAnimation() const
 
   return result;
 }
-py::buffer Mesh::GetVertsAnimation_numpy() const
+py::buffer Mesh::MGetVertsAnimation_numpy() const
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("GetVertsAnimation_numpy: failure");
+    std::runtime_error("MGetVertsAnimation_numpy: failure");
   py::array_t<int> result = py::array_t<int>({ static_cast<py::ssize_t>(mesh_.hdr.NumVertices) }, {  });
   auto buf = result.mutable_unchecked<>();
   fcelib::FcelibPart *part;
@@ -1463,10 +1453,10 @@ py::buffer Mesh::GetVertsAnimation_numpy() const
 
   return std::move(result);
 }
-void Mesh::SetVertsAnimation(std::vector<int> arr)
+void Mesh::MSetVertsAnimation(std::vector<int> arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetVertsAnimation: failure");
+    std::runtime_error("MSetVertsAnimation: failure");
   const std::size_t nrows = static_cast<std::size_t>(mesh_.hdr.NumVertices);
   if (arr.size() != nrows)
     throw std::runtime_error("Shape must be (N, ) where N = Mesh.MNumVerts()");
@@ -1491,10 +1481,10 @@ void Mesh::SetVertsAnimation(std::vector<int> arr)
     }  // for i
   }  // for k
 }
-void Mesh::SetVertsAnimation_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> arr)
+void Mesh::MSetVertsAnimation_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
   if (!fcelib::FCELIB_ValidateMesh(mesh_))
-    std::runtime_error("SetVertsAnimation_numpy: failure");
+    std::runtime_error("MSetVertsAnimation_numpy: failure");
   const py::ssize_t nrows = static_cast<py::ssize_t>(mesh_.hdr.NumVertices);
   py::buffer_info buf = arr.request();
   if (buf.ndim != 1)
@@ -1688,32 +1678,32 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def("PSetPos", &Mesh::PSetPos, py::arg("pid"), py::arg("pos"))
     .def("PSetPos_numpy", &Mesh::PSetPos_numpy, py::arg("pid"), py::arg("pos"))
 
-    .def("PGetTriagsVidx", &Mesh::GetTriagsVidx, py::arg("pid"), R"pbdoc( Returns (N*3, ) array of global vert indexes for N triangles. )pbdoc")
-    .def("PGetTriagsVidx_numpy", &Mesh::GetTriagsVidx_numpy, py::arg("pid"), R"pbdoc( Returns (N*3, ) numpy array of global vert indexes for N triangles. )pbdoc")
+    .def("PGetTriagsVidx", &Mesh::PGetTriagsVidx, py::arg("pid"), R"pbdoc( Returns (N*3, ) array of global vert indexes for N triangles. )pbdoc")
+    .def("PGetTriagsVidx_numpy", &Mesh::PGetTriagsVidx_numpy, py::arg("pid"), R"pbdoc( Returns (N*3, ) numpy array of global vert indexes for N triangles. )pbdoc")
     /* PSetTriagsVidx() is not in scope */
-    .def("PGetTriagsFlags", &Mesh::GetTriagsFlags, py::arg("pid"))
-    .def("PGetTriagsFlags_numpy", &Mesh::GetTriagsFlags_numpy, py::arg("pid"))
-    .def("PSetTriagsFlags", &Mesh::SetTriagsFlags, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) array for N triangles )pbdoc")
-    .def("PSetTriagsFlags_numpy", &Mesh::SetTriagsFlags_numpy, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) numpy array for N triangles )pbdoc")
+    .def("PGetTriagsFlags", &Mesh::PGetTriagsFlags, py::arg("pid"))
+    .def("PGetTriagsFlags_numpy", &Mesh::PGetTriagsFlags_numpy, py::arg("pid"))
+    .def("PSetTriagsFlags", &Mesh::PSetTriagsFlags, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) array for N triangles )pbdoc")
+    .def("PSetTriagsFlags_numpy", &Mesh::PSetTriagsFlags_numpy, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) numpy array for N triangles )pbdoc")
     .def("PGetTriagsTexcoords_numpy", &Mesh::PGetTriagsTexcoords_numpy, py::arg("pid"), R"pbdoc( uuuvvv..., Returns (N*6, ) numpy array for N triangles. )pbdoc")
     .def("PSetTriagsTexcoords_numpy", &Mesh::PSetTriagsTexcoords_numpy, py::arg("pid"), py::arg("arr"), R"pbdoc( arr: uuuvvv..., Expects (N*6, ) numpy array for N triangles. )pbdoc")
-    .def("PGetTriagsTexpages", &Mesh::GetTriagsTexpages, py::arg("pid"))
-    .def("PGetTriagsTexpages_numpy", &Mesh::GetTriagsTexpages_numpy, py::arg("pid"))
-    .def("PSetTriagsTexpages", &Mesh::SetTriagsTexpages, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) array for N triangles )pbdoc")
-    .def("PSetTriagsTexpages_numpy", &Mesh::SetTriagsTexpages_numpy, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) numpy array for N triangles )pbdoc")
+    .def("PGetTriagsTexpages", &Mesh::PGetTriagsTexpages, py::arg("pid"))
+    .def("PGetTriagsTexpages_numpy", &Mesh::PGetTriagsTexpages_numpy, py::arg("pid"))
+    .def("PSetTriagsTexpages", &Mesh::PSetTriagsTexpages, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) array for N triangles )pbdoc")
+    .def("PSetTriagsTexpages_numpy", &Mesh::PSetTriagsTexpages_numpy, py::arg("pid"), py::arg("arr"), R"pbdoc( Expects (N, ) numpy array for N triangles )pbdoc")
 
-    .def_property_readonly("MVertsGetMap_idx2order", &Mesh::GetVertsMap_idx2order, R"pbdoc( Maps from global vert indexes (contained in triangles) to global vertex order. )pbdoc")
-    .def_property_readonly("MVertsGetMap_idx2order_numpy", &Mesh::GetVertsMap_idx2order_numpy, R"pbdoc( Maps from global vert indexes (contained in triangles) to global vertex order. )pbdoc")
-    .def_property("MVertsPos", &Mesh::GetVertsPos, &Mesh::SetVertsPos, R"pbdoc( Local vertice positions. Returns (N*3, ) array for N vertices. )pbdoc")
-    .def_property("MVertsPos_numpy", &Mesh::GetVertsPos_numpy, &Mesh::SetVertsPos_numpy, R"pbdoc( Local vertice positions. Returns (N*3, ) numpy array for N vertices. )pbdoc")
-    .def_property("MVertsNorms", &Mesh::GetVertsNorms, &Mesh::SetVertsNorms, R"pbdoc( Returns (N*3, ) array for N vertices. )pbdoc")
-    .def_property("MVertsNorms_numpy", &Mesh::GetVertsNorms_numpy, &Mesh::SetVertsNorms_numpy, R"pbdoc( Returns (N*3, ) numpy array for N vertices. )pbdoc")
-    .def_property("MVertsDamgdPos", &Mesh::GetDamgdVertsPos, &Mesh::SetDamgdVertsPos, R"pbdoc( Local vertice positions. Returns (N*3, ) array for N vertices. )pbdoc")
-    .def_property("MVertsDamgdPos_numpy", &Mesh::GetDamgdVertsPos_numpy, &Mesh::SetDamgdVertsPos_numpy, R"pbdoc( Local vertice positions. Returns (N*3, ) numpy array for N vertices. )pbdoc")
-    .def_property("MVertsDamgdNorms", &Mesh::GetDamgdVertsNorms, &Mesh::SetDamgdVertsNorms, R"pbdoc( Returns (N*3, ) array for N vertices. )pbdoc")
-    .def_property("MVertsDamgdNorms_numpy", &Mesh::GetDamgdVertsNorms_numpy, &Mesh::SetDamgdVertsNorms_numpy, R"pbdoc( Returns (N*3, ) numpy array for N vertices. )pbdoc")
-    .def_property("MVertsAnimation", &Mesh::GetVertsAnimation, &Mesh::SetVertsAnimation, R"pbdoc( Returns (N, ) array for N vertices. )pbdoc")
-    .def_property("MVertsAnimation_numpy", &Mesh::GetVertsAnimation_numpy, &Mesh::SetVertsAnimation_numpy, R"pbdoc( Returns (N, ) numpy array for N vertices. )pbdoc")
+    .def_property_readonly("MVertsGetMap_idx2order", &Mesh::MVertsGetMap_idx2order, R"pbdoc( Maps from global vert indexes (contained in triangles) to global vertex order. )pbdoc")
+    .def_property_readonly("MVertsGetMap_idx2order_numpy", &Mesh::MVertsGetMap_idx2order_numpy, R"pbdoc( Maps from global vert indexes (contained in triangles) to global vertex order. )pbdoc")
+    .def_property("MVertsPos", &Mesh::MGetVertsPos, &Mesh::MSetVertsPos, R"pbdoc( Local vertice positions. Returns (N*3, ) array for N vertices. )pbdoc")
+    .def_property("MVertsPos_numpy", &Mesh::MGetVertsPos_numpy, &Mesh::MSetVertsPos_numpy, R"pbdoc( Local vertice positions. Returns (N*3, ) numpy array for N vertices. )pbdoc")
+    .def_property("MVertsNorms", &Mesh::MGetVertsNorms, &Mesh::MSetVertsNorms, R"pbdoc( Returns (N*3, ) array for N vertices. )pbdoc")
+    .def_property("MVertsNorms_numpy", &Mesh::MGetVertsNorms_numpy, &Mesh::MSetVertsNorms_numpy, R"pbdoc( Returns (N*3, ) numpy array for N vertices. )pbdoc")
+    .def_property("MVertsDamgdPos", &Mesh::MGetDamgdVertsPos, &Mesh::MSetDamgdVertsPos, R"pbdoc( Local vertice positions. Returns (N*3, ) array for N vertices. )pbdoc")
+    .def_property("MVertsDamgdPos_numpy", &Mesh::MGetDamgdVertsPos_numpy, &Mesh::MSetDamgdVertsPos_numpy, R"pbdoc( Local vertice positions. Returns (N*3, ) numpy array for N vertices. )pbdoc")
+    .def_property("MVertsDamgdNorms", &Mesh::MGetDamgdVertsNorms, &Mesh::MSetDamgdVertsNorms, R"pbdoc( Returns (N*3, ) array for N vertices. )pbdoc")
+    .def_property("MVertsDamgdNorms_numpy", &Mesh::MGetDamgdVertsNorms_numpy, &Mesh::MSetDamgdVertsNorms_numpy, R"pbdoc( Returns (N*3, ) numpy array for N vertices. )pbdoc")
+    .def_property("MVertsAnimation", &Mesh::MGetVertsAnimation, &Mesh::MSetVertsAnimation, R"pbdoc( Returns (N, ) array for N vertices. )pbdoc")
+    .def_property("MVertsAnimation_numpy", &Mesh::MGetVertsAnimation_numpy, &Mesh::MSetVertsAnimation_numpy, R"pbdoc( Returns (N, ) numpy array for N vertices. )pbdoc")
 
     .def("OpCenterPart", &Mesh::OpCenterPart, py::arg("pid"), R"pbdoc( Center specified part to local centroid. Does not move part w.r.t. to global coordinates. )pbdoc")
     .def("OpSetPartCenter", &Mesh::OpSetPartCenter, py::arg("pid"), py::arg("new_center"), R"pbdoc( Center specified part to given position. Does not move part w.r.t. to global coordinates. )pbdoc")

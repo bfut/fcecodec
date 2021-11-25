@@ -12,7 +12,7 @@ LICENSE:
   arising from the use of this software.
 """
 CONFIG = {
-    "fce_version"  : 'keep version',  # output format version; expects 'keep version' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M output, respectively
+    "fce_version"  : 'keep',  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
     "center_parts" : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
 }
 import argparse
@@ -47,7 +47,7 @@ from bfut_mywrappers import *
 
 
 # -------------------------------------- workload
-if CONFIG["fce_version"] == 'keep_version':
+if CONFIG["fce_version"] == 'keep':
     fce_outversion = str(GetFceVersion(filepath_fce_input))
     if fce_outversion == '5':
         fce_outversion = '4M'

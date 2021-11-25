@@ -37,6 +37,7 @@ extern "C" {
 enum { kFceLibBufferSize = 1024 };
 enum { kFceLibFilenameMaxLen = 200 };
 enum { kFceLibImplementedFce3Parts = 13 };
+enum { kFceLibNumFce4HiBodyParts = 18 };
 #else
 static const int kFceLibBufferSize = 1024;
 static const int kFceLibFilenameMaxLen = 200;
@@ -82,6 +83,14 @@ int FCELIB_MISC_CompareInts(const void *a, const void *b)
   return (arg1 > arg2) - (arg1 < arg2);
 }
 
+float FCELIB_MISC_Abs(const float a)
+{
+  if (a < 0)
+    return -a;
+  else
+    return a;
+}
+
 int FCELIB_MISC_Min(const int a, const int b)
 {
   if (a < b)
@@ -115,7 +124,8 @@ int FCELIB_MISC_ArrMax(const int *arr, const int arr_len)
 int FCELIB_MISC_StrIsInArray(char *str, const char **arr)
 {
   int retv = 0;
-  for (int i = 0; i < kFceLibNumFce4HiBodyParts; ++i)
+  int i;
+  for (i = 0; i < kFceLibNumFce4HiBodyParts; ++i)
   {
     if (strncmp(str, arr[i], 64) == 0)
     {
