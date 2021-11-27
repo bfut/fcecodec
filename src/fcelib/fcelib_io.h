@@ -2293,7 +2293,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       break;
     }
 
-    if (FCELIB_MISC_ArrMax(vert_idxs, vert_idxs_len) >= int(vert_pos_len / 3))  /* allow adding vertices not referenced by triangles */
+    if (FCELIB_MISC_ArrMax(vert_idxs, vert_idxs_len) >= (int)(vert_pos_len / 3))  /* allow adding vertices not referenced by triangles */
     {
       fprintf(stderr, "GeomDataToNewPart: Triangle vertice index(es) out of range (assumes zero-indexed)\n");
       break;
@@ -2357,8 +2357,8 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     part->PartPos.y = 0.0f;
     part->PartPos.z = 0.0f;
 
-    part->PNumVertices = int(vert_pos_len / 3);
-    part->PNumTriangles = int(vert_idxs_len / 3);
+    part->PNumVertices = (int)(vert_pos_len / 3);
+    part->PNumTriangles = (int)(vert_idxs_len / 3);
 
     ++mesh->hdr.NumParts;
 
