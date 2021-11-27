@@ -361,6 +361,57 @@ def PartsToDummies(mesh):
     mesh.MSetDummyPos_numpy(dms_pos)
     return mesh
 
+def SetAnimatedVerts(mesh):
+    """
+    Set <partname> verts movable iff contained in ANIMATED_##_<partname> cuboid
+    hull, where # is digit
+    """
+    print("SetAnimatedVerts(mesh):")
+    vpos = mesh.MVertsPos_numpy.reshape((-1, 3))
+    animation_flags = mesh.MVertsAnimation_numpy
+    anim_pids = []
+    part_names = GetPartNames(mesh)
+    r = re.compile("ANIMATED_[0-9][0-9]_", re.IGNORECASE)
+    for i, part_name in zip(range(mesh.MNumParts), part_names):
+        part_anim_pids = []
+        if r.match(part_name[:12]) is None:
+            print(i, part_name)
+            for j, anim_name in zip(range(mesh.MNumParts), part_names):
+                if anim_name[12:] == part_name and r.match(anim_name[:12]) is not None:
+                    anim_pids += [j]
+                    part_anim_pids += [j]
+                    print("  ", j, anim_name)
+            print("animation flag maps:", part_anim_pids)
+            if len(part_anim_pids) > 0:
+                part_vidxs = GetPartGlobalOrderVidxs(mesh, i)
+                # cannot use np.unique(), as shape may have unreferenced verts
+                # example: mcf1/car.viv->car.fce :HB
+                # requires that OBJ parts verts are ordered in non-overlapping
+                # ranges and that verts 0 and last, resp., are referenced
+                part_vidxs = np.arange(np.amin(part_vidxs), np.amax(part_vidxs) + 1)
+                part_animation_flags = animation_flags[part_vidxs]
+                part_vpos = vpos[part_vidxs]
+                part_animation_flags[:] = 0x4
+                print(part_vidxs.shape, part_animation_flags.shape)
+                for j in part_anim_pids:
+                    part_anim_vidxs = GetPartGlobalOrderVidxs(mesh, j)
+                    part_anim_vidxs = np.arange(np.amin(part_anim_vidxs), np.amax(part_anim_vidxs) + 1)
+                    anim_vpos = vpos[part_anim_vidxs]
+                    print(anim_vpos.shape, np.amin(anim_vpos, axis=0), np.amax(anim_vpos, axis=0))
+                    cuboid_min = np.amin(anim_vpos, axis=0)
+                    cuboid_max = np.amax(anim_vpos, axis=0)
+                    for n in range(part_vpos.shape[0]):
+                        if False not in (part_vpos[n] > cuboid_min)                         and False not in (part_vpos[n] < cuboid_max):
+                            part_animation_flags[n] = 0x0
+                            print(n, part_vpos[n], part_animation_flags[n])
+                    animation_flags[part_vidxs] = part_animation_flags
+                print(np.unique(animation_flags[part_vidxs]))
+    print(anim_pids, np.unique(animation_flags))
+    mesh.MVertsAnimation_numpy = animation_flags
+    for i in sorted(anim_pids, reverse=True):
+        mesh.OpDeletePart(i)
+    return mesh
+
 def CenterParts(mesh):
     """
     Center part <partname> either to centroid, or if present to centroid of part POSITION_<partname>
@@ -422,6 +473,7 @@ for i in range(len(shapenames)):
                        CONFIG["material2texpage"], CONFIG["material2triagflag"])
 mesh = CopyDamagePartsVertsToPartsVerts(mesh)
 mesh = PartsToDummies(mesh)
+mesh = SetAnimatedVerts(mesh)
 if CONFIG["center_parts"] == 1:
     mesh = CenterParts(mesh)
 
