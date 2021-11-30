@@ -1,5 +1,6 @@
-# Obj2Fce with _fcecodec_
+# Obj2Fce with fcecodec
 
+The latest version of this tutorial can be found [here](https://github.com/bfut/fcecodec/tree/main/scripts/doc_Obj2Fce.MD).
 The following files can be found in [_/scripts_](https://github.com/bfut/fcecodec/tree/main/scripts)
 
 ```
@@ -19,8 +20,8 @@ bfut_Obj2Fce4M (material to triagflag).py
 
 ## Prerequisites
 
-Install _fcecodec_ from https://github.com/bfut/fcecodec <br>
-Install _tinyobjloader_ from https://github.com/tinyobjloader/tinyobjloader/tree/master/python <br>
+Install _fcecodec_ from https://github.com/bfut/fcecodec<br>
+Install _tinyobjloader_ from https://github.com/tinyobjloader/tinyobjloader/tree/master/python
 
 ## How to use
 
@@ -64,9 +65,9 @@ for `:OS` spoiler animation.
 To define a custom part center, create a helper part `POSITION_<partname>`. The
 helper part's centroid will be used as center in `<partname>`.
 
-Default behavior is highly desirable for the following: wheels, front brakes,
-driver head. If no helper part is present, for each part its centroid will be
-used as part center.
+As default if no helper part is found, for each part its centroid will be used
+as part center. Default behavior is highly desirable for the following: wheels,
+front brakes, driver head.
 
 The `do not center parts` scripts will leave the coordinate origin as center for
 all parts (not recommended).
@@ -80,7 +81,7 @@ For `:OD` driver animation, vertices are either movable or immovable. To set
 movable verts, they have to be enclosed within at least one cuboid helper part
 `ANIMATED_##_<partname>`, where # is a digit 0-9. See screenshot below.
 
-Partnames must not be identical, hence the digits.
+Helper part names must not be identical, hence the digits.
 
 Default behavior if no helper part is found: all vertices for this part are
 movable.
@@ -98,7 +99,8 @@ To create dummy `<dummyname>`, create a helper part called
 `DUMMY_##_<dummyname>`, where # is a digit 0-9. The part centroid will be the
 dummy position. Only the part name and its centroid are significant.
 
-Partnames must not be identical, hence the digits. Dummynames can be identical.
+Helper part names must not be identical, hence the digits. Dummynames can be
+identical.
 
 For dummynames and their effects, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
 
@@ -107,9 +109,9 @@ For dummynames and their effects, see [_/src/fcelib/fcelib_fcetypes.h_](https://
 This functionality is offered in the `material to triagflag` scripts.
 
 Internally, FCE triangle flags are positive integer values. Triangle flags
-values and their effects are identical across FCE3, FCE, and FCE4M, in sofar
-they are implemented. FCE generally allows to set any integer value, even if it
-has no effect in-game.
+values and their effects are identical across FCE3, FCE4, and FCE4M, in sofar
+they are implemented in-game. It is generally possible to set any integer
+value, even if it has no effect in-game.
 
 The `Obj2Fce` converter scripts set triangle flags from tags in material names.
 
@@ -137,15 +139,14 @@ flag `0x0AE`. This can be set by assigning the triangle to a material name that
 includes `_FHIC_FNOC_FSET_FALW_FLEW_` (i.e., high chrome, no cull,
 semi-transparent, all windows, left window).
 
-## Texture page
+## Texture page (FCE3/FCE4 officer models)
 
 This functionality is offered in the `material to texpage` scripts.
 
 Like triangle flags, the triangles texture page is a positive integer
 value. The `Obj2Fce` converter scripts looks for one tag in a material name.
 
-The texture page and triangle flag tags can be combined each other.
-
+The texture page and triangle flag tags can both be present in a material name.
 A material name can include additional elements that are not tags.
 
 | Texture page |  Tag       |   Hex value |
