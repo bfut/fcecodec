@@ -61,7 +61,6 @@ CONFIG = {
 
 # -------------------------------------- wrappers
 def LoadFce(mesh, path):
-    # print("LoadFce(", mesh, ",", path, ")")
     with open(path, "rb") as f:
         fce_buf = f.read()
     assert(fcecodec.ValidateFce(fce_buf) == 1)
@@ -86,6 +85,5 @@ print(flush=True)
 ExportObj(mesh,
           filepath_obj_output.name, filepath_mtl_output.name, CONFIG["objtexname"],
           CONFIG["print_damage"], CONFIG["print_dummies"])
-print(flush=True)
 print(filepath_obj_output)
 print(filepath_mtl_output)

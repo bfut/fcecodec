@@ -1,132 +1,159 @@
-# Obj2Fce scripts for _fcecodec_
+# Obj2Fce with _fcecodec_
 
-Convenience converter scripts.
+The following files can be found in [_/scripts_](https://github.com/bfut/fcecodec/tree/main/scripts)
 
 ```
-bfut_Obj2Fce3.py
-bfut_Obj2Fce3 (do not center parts).py
 bfut_Obj2Fce3 (do not center parts, material to texpage).py
 bfut_Obj2Fce3 (do not center parts, material to triagflag).py
 bfut_Obj2Fce3 (material to texpage).py
 bfut_Obj2Fce3 (material to triagflag).py
-bfut_Obj2Fce4.py
-bfut_Obj2Fce4 (do not center parts).py
 bfut_Obj2Fce4 (do not center parts, material to texpage).py
 bfut_Obj2Fce4 (do not center parts, material to triagflag).py
 bfut_Obj2Fce4 (material to texpage).py
 bfut_Obj2Fce4 (material to triagflag).py
-bfut_Obj2Fce4M.py
-bfut_Obj2Fce4M (do not center parts).py
 bfut_Obj2Fce4M (do not center parts, material to texpage).py
 bfut_Obj2Fce4M (do not center parts, material to triagflag).py
 bfut_Obj2Fce4M (material to texpage).py
 bfut_Obj2Fce4M (material to triagflag).py
 ```
 
-## Installation
+## Prerequisites
 
-Install _fcecodec_ from https://github.com/bfut/fcecodec. The scripts can be found in the [_/scripts_](https://github.com/bfut/fcecodec/tree/main/scripts) folder.
+Install _fcecodec_ from https://github.com/bfut/fcecodec <br>
+Install _tinyobjloader_ from https://github.com/tinyobjloader/tinyobjloader/tree/master/python <br>
 
 ## How to use
 
-Execute in terminal with
+Run one of the script versions in a terminal
 
     python <bfut_Obj2Fce*.py> /path/to/input.obj
 
-There are variants that output FCE3, FCE4, FCE4M, respectively.
+## Part name vs. part order
+
+    <partname>
+
+In FCE4 and FCE4M, only the part name defines a part's role (e.g., FCE4 high
+body must be called `:HB`). Contrarily in FCE3, only the part order defines a
+part's role and its name can be arbitrary (e.g., part index 0 is FCE3 high
+body).
+
+Of note in FCE3 is the optional hidden lights part, which always has index 12
+(0-based index).
+
+For a complete overview, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
 
 ## Damage model (FCE4, FCE4M)
 
     <partname>
     DAMAGE_<partname>
 
-The damage model of a part in FCE4 and FCE4M is a second vertice position and
-normal per vertice. Wavefront OBJ does not understand this concept of damage
-models. However, it is still easily possible to handle this scenario with
-_fcecodec_ and create damage models.
+Example: Once `:HB` high body is finished, create a copy named `DAMAGE_:HB` <br>
+In this new part, only change vertice positions or vertice normals.
 
-In your project in your 3D application of choice, once a part/shape is finished
-(e.g. `:HB`), create a copy of that shape/part and name it `DAMAGE_:HB`
+For a list of parts that use damage models, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
 
-In this new part, it is important that nothing except vertice positions and
-vertice normals are changed.
+## Part center
 
-The Obj2Fce scripts will automatically copy vertice positions and vertice
-normals from the `DAMAGE_:HB` part to the damage vertice positions and damage
-vertice normals of the `:HB` part.
+    <partname>
+    POSITION_<partname>
+
+A custom part center is highly desirable for `:OD` driver animation, where the
+part center should typically be at the center of the steering wheel. Also useful
+for `:OS` spoiler animation.
+
+To define a custom part center, create a helper part `POSITION_<partname>`. The
+helper part's centroid will be used as center in `<partname>`.
+
+Default behavior is highly desirable for the following: wheels, front brakes,
+driver head. If no helper part is present, for each part its centroid will be
+used as part center.
+
+The `do not center parts` scripts will leave the coordinate origin as center for
+all parts (not recommended).
+
+## Vertice animation flag (FCE4, FCE4M)
+
+    <partname>
+    ANIMATED_##_<partname>
+
+For `:OD` driver animation, vertices are either movable or immovable. To set
+movable verts, they have to be enclosed within at least one cuboid helper part
+`ANIMATED_##_<partname>`, where # is a digit 0-9. See screenshot below.
+
+Partnames must not be identical, hence the digits.
+
+Default behavior if no helper part is found: all vertices for this part are
+movable.
+
+(FCE4) Vertice animation flags do not seem to have any effect on wheels, front
+brakes, driver head, and movable spoiler.
+
+![vert animation flag](../assets/fcecodec_handle_vertices_animation_flags.png)
 
 ## Dummies (Light / FX objects)
 
     DUMMY_##_<dummyname>
 
-To create an FCE dummy, in your project in your 3D application of choice, create
-a part called `DUMMY_##_<dummyname>`, where each # is a digit 0-9.
+To create dummy `<dummyname>`, create a helper part called
+`DUMMY_##_<dummyname>`, where # is a digit 0-9. The part centroid will be the
+dummy position. Only the part name and its centroid are significant.
 
-The only requirement is that partnames are not identical.
+Partnames must not be identical, hence the digits. Dummynames can be identical.
 
-Dummynames are documented in [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
-
-_Obj2Fce_ will from that part create a dummy called `<dummyname>`. The dummy
-position is computed from the part's centroid.
-
-Only the part name and its centroid are significant, not what the part is (e.g.,
-typically it can be a cube, a ball or a diamond).
+For dummynames and their effects, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
 
 ## Triangle flags
 
-This functionality is executed in the _material to triagflag_ scripts.
+This functionality is offered in the `material to triagflag` scripts.
 
-FCE triangle flags are positive integer values. The values are identical across
-FCE3, FCE, and FCE4M, in sofar they are implemented. FCE generally allows
-to set any value, even if it serves no purpose.
+Internally, FCE triangle flags are positive integer values. Triangle flags
+values and their effects are identical across FCE3, FCE, and FCE4M, in sofar
+they are implemented. FCE generally allows to set any integer value, even if it
+has no effect in-game.
 
-The _Obj2Fce_ converter scripts set triangle flags from tags in material names.
+The `Obj2Fce` converter scripts set triangle flags from tags in material names.
 
-| Triangle flag         |           Tag |   Hex value |
-|:----------------------|:--------------|------------:|
-| default               |          FDEF |       0x000 |
-| matte (no reflection) |          FMAT |       0x001 |
-| high chrome           |          FHIC |       0x002 |
-| no cull               |          FNOC |       0x004 |
-| semi-transparent      |          FSET |       0x008 |
-| ? (unknown 1)         |          FUN1 |       0x010 |
-| all windows           |          FALW |       0x020 |
-| front window          |          FFRW |       0x040 |
-| left window           |          FLEW |       0x080 |
-| back window           |          FBAW |       0x100 |
-| right window          |          FRIW |       0x200 |
-| broken window         |          FBRW |       0x400 |
-| ? (unknown 2)         |          FUN2 |       0x800 |
+The order of the tags is not significant. A material name can include additional
+elements that are not tags.
 
-Example: In FCE4, a non-broken window on the left side may have the triangle
-flag `0x0AE`. With _Obj2Fce_ this flag can be set by assigning the triangle to a
-material with a name that includes `_FHIC_FNOC_FSET_FALW_FLEW_` (i.e., high
-chrome, no cull, semi-transparent, all windows, left window).
+| Triangle flag         |           Tag |   Hex value | fce version |
+|:----------------------|:--------------|------------:|:-----------:|
+| default               |      \_FDEF\_ |       0x000 |         all |
+| matte (no reflection) |      \_FMAT\_ |       0x001 |         all |
+| high chrome           |      \_FHIC\_ |       0x002 |         all |
+| no cull               |      \_FNOC\_ |       0x004 |         all |
+| semi-transparent      |      \_FSET\_ |       0x008 |         all |
+| ? (unknown 1)         |      \_FUN1\_ |       0x010 |           ? |
+| all windows           |      \_FALW\_ |       0x020 | FCE4, FCE4M |
+| front window          |      \_FFRW\_ |       0x040 | FCE4, FCE4M |
+| left window           |      \_FLEW\_ |       0x080 | FCE4, FCE4M |
+| back window           |      \_FBAW\_ |       0x100 | FCE4, FCE4M |
+| right window          |      \_FRIW\_ |       0x200 | FCE4, FCE4M |
+| broken window         |      \_FBRW\_ |       0x400 | FCE4, FCE4M |
+| ? (unknown 2)         |      \_FUN2\_ |       0x800 |           ? |
 
-It is ok when the material name includes additional elements that are not tags.
-The order of the tags is not significant.
+Example: A non-broken window on the left side in FCE4/FCE4M may have triangle
+flag `0x0AE`. This can be set by assigning the triangle to a material name that
+includes `_FHIC_FNOC_FSET_FALW_FLEW_` (i.e., high chrome, no cull,
+semi-transparent, all windows, left window).
 
 ## Texture page
 
-This functionality is executed in the _material to texpage_ scripts.
+This functionality is offered in the `material to texpage` scripts.
 
-Similar to the triangle flag, the triangles texture pages are positive integer
-values. Similarly, the _Obj2Fce_ converter scripts looks for one tag in the
-material names.
+Like triangle flags, the triangles texture page is a positive integer
+value. The `Obj2Fce` converter scripts looks for one tag in a material name.
 
-The texture page and triangle flag tags can be used alongside each other.
+The texture page and triangle flag tags can be combined each other.
 
-| Texture page |  Tag      |   Hex value |
-|:-------------|:--------- |------------:|
-|            0 |  (no tag) |       0x000 |
-|            1 |  T1       |       0x001 |
-|            2 |  T2       |       0x002 |
-|            i |  Ti       |      hex(i) |
+A material name can include additional elements that are not tags.
 
-etc.
+| Texture page |  Tag       |   Hex value |
+|:-------------|:---------- |------------:|
+|            0 | (no tag)   |       0x000 |
+|            1 | \_T1\_     |       0x001 |
+|            2 | \_T2\_     |       0x002 |
+|         <i\> | \_T\<i\>\_ |  hex(\<i\>) |
 
-Example: To set texture page `0`, no tag needs to be added. Texture page `2`
-is set by assigning the triangle to a material name that includes the tag `_T2_`
-
-It is ok when the material name includes additional elements that are not tags.
-The order of the tags is not significant.
+Example: To set texture page `0`, no tag is needed. For texture page `4`, add
+tag `_T4_` to the material name.

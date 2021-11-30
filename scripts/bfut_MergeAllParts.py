@@ -1,15 +1,12 @@
 """
-  bfut_MergeAll.py - merge all parts, keep FCE version
+  bfut_MergeAllParts.py - merge all parts, keep FCE version
 
 REQUIRES: installing <https://github.com/bfut/fcecodec>
 
 LICENSE:
-  This file is distributed under: CC BY-SA 4.0
+  Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
+  This file is distributed under: CC BY-NC 4.0
       <https://creativecommons.org/licenses/by-sa/4.0/>
-
-  This software is provided 'as-is', without any express or implied
-  warranty.  In no event will the authors be held liable for any damages
-  arising from the use of this software.
 """
 CONFIG = {
     "fce_version"  : 'keep',  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
@@ -42,8 +39,37 @@ filepath_fce_output = filepath_fce_input.with_stem(filepath_fce_input.stem + "_o
 
 
 # -------------------------------------- wrappers
-sys.path.append(str( pathlib.Path(pathlib.Path(__file__).parent / "../python/").resolve()))
-from bfut_mywrappers import *
+def GetFceVersion(path):
+    with open(path, "rb") as f:
+        buf = f.read(0x2038)
+        version = fcecodec.GetFceVersion(buf)
+        assert(version > 0)
+        return version
+
+def PrintFceInfo(path):
+    with open(path, "rb") as f:
+        buf = f.read()
+        fcecodec.PrintFceInfo(buf)
+        assert(fcecodec.ValidateFce(buf) == 1)
+
+def LoadFce(mesh, path):
+    with open(path, "rb") as f:
+        fce_buf = f.read()
+    assert(fcecodec.ValidateFce(fce_buf) == 1)
+    mesh.IoDecode(fce_buf)
+    assert(mesh.MValid() == True)
+    return mesh
+
+def WriteFce(version, mesh, path, center_parts = 1):
+    with open(path, "wb") as f:
+        # print(version == '3', version == '4', version)
+        if version == '3':
+            buf = mesh.IoEncode_Fce3(center_parts)
+        elif version == '4':
+            buf = mesh.IoEncode_Fce4(center_parts)
+        else:
+            buf = mesh.IoEncode_Fce4M(center_parts)
+        assert(fcecodec.ValidateFce(buf) == 1)
 
 
 # -------------------------------------- workload

@@ -3,16 +3,9 @@
 
   This file is distributed under: CC BY-SA 4.0
       <https://creativecommons.org/licenses/by-sa/4.0/>
-
-  This software is provided 'as-is', without any express or implied
-  warranty.  In no event will the authors be held liable for any damages
-  arising from the use of this software.
 """
-
-import argparse
 import os
 import pathlib
-import platform
 import sys
 
 # Look for local build, if not installed
@@ -55,9 +48,9 @@ from bfut_mywrappers import *
 mesh = fcecodec.Mesh()
 mesh = LoadFce(mesh, filepath_fce_input)
 
-WriteFce(3, mesh, filepath_fce3_output, center_parts=0)
-WriteFce(4, mesh, filepath_fce4_output, center_parts=0)
-WriteFce("4m", mesh, filepath_fce4m_output, center_parts=0)
+WriteFce('3', mesh, filepath_fce3_output, center_parts=0)
+WriteFce('4', mesh, filepath_fce4_output, center_parts=0)
+WriteFce("4M", mesh, filepath_fce4m_output, center_parts=0)
 # ExportObj(mesh,
 #           filepath_obj_output, filepath_mtl_output, objtexname,
 #           print_damage=0, print_dummies=0)
@@ -66,15 +59,15 @@ center_parts = 0
 
 # -------------------------------------- compare src->X with src->X->X
 mesh = LoadFce(mesh, filepath_fce3_output)
-WriteFce(3, mesh, str(filepath_fce3_output) + "diff33", center_parts)
+WriteFce('3', mesh, str(filepath_fce3_output) + "diff33", center_parts)
 
 mesh = LoadFce(mesh, filepath_fce4_output)
-WriteFce(4, mesh, str(filepath_fce4_output) + "diff44", center_parts)
+WriteFce('4', mesh, str(filepath_fce4_output) + "diff44", center_parts)
 
 mesh = LoadFce(mesh, filepath_fce4m_output)
-WriteFce("4m", mesh, str(filepath_fce4m_output) + "diff4m4m", center_parts)
+WriteFce("4M", mesh, str(filepath_fce4m_output) + "diff4m4m", center_parts)
 
 
 # -------------------------------------- compare src->4 with src->4m->4
 mesh = LoadFce(mesh, str(filepath_fce4m_output))
-WriteFce(4, mesh, str(filepath_fce4_output) + "diff4m4", center_parts)
+WriteFce('4', mesh, str(filepath_fce4_output) + "diff4m4", center_parts)

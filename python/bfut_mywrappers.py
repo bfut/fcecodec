@@ -33,7 +33,7 @@ def PrintFceInfo(path):
     with open(path, "rb") as f:
         buf = f.read()
         fcecodec.PrintFceInfo(buf)
-        assert(fcecodec.ValidateFce( buf ) == 1)
+        assert(fcecodec.ValidateFce(buf) == 1)
 
 def LoadFce(mesh, path):
     with open(path, "rb") as f:
@@ -45,6 +45,7 @@ def LoadFce(mesh, path):
 
 def WriteFce(version, mesh, path, center_parts = 1):
     with open(path, "wb") as f:
+        # print(version == '3', version == '4', version)
         if version == '3':
             buf = mesh.IoEncode_Fce3(center_parts)
         elif version == '4':

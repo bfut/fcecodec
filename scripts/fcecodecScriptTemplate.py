@@ -1,5 +1,8 @@
 """
   fcecodecScriptTemplate.py - description
+
+  This file is distributed under: CC BY-NC 4.0
+      <https://creativecommons.org/licenses/by-nc/4.0>
 """
 CONFIG = {
     "fce_version"  : 'keep',  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
@@ -33,7 +36,8 @@ filepath_fce_output = filepath_fce_input.with_stem(filepath_fce_input.stem + "_o
 
 
 # -------------------------------------- wrappers
-sys.path.append(str( pathlib.Path(pathlib.Path(__file__).parent / "../python/").resolve()))
+sys.path.append(str(pathlib.Path(pathlib.Path(__file__)).resolve()))
+sys.path.append(str(pathlib.Path(pathlib.Path(__file__).parent / "../python/").resolve()))
 from bfut_mywrappers import *
 if 0:
     import bfut_mywrappers
