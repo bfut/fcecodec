@@ -2,14 +2,10 @@
 This file describes installation, and usage of `fcecodec` as Python extension
 module.
 
-## Examples
-See [/scripts](/scripts) and
-[/python/bfut_mywrappers.py](/python/bfut_mywrappers.py)
-
 ## Installation
 Requires Python 3.7+ and the following dependencies
 
-        python -m pip install --upgrade wheel setuptools pybind11
+        python -m pip install --upgrade pip wheel setuptools pybind11
 
 Install `fcecodec`
 
@@ -26,7 +22,65 @@ Installing the `Anaconda` distribution, `bash`, and `git` is recommended.
 Once these prerequisites have been met, installation generally works as
 described above.
 
-## Usage
+## Examples
+For a script template and handy function wrappers, see
+[/scripts/fcecodecScriptTemplate.py](/scripts/fcecodecScriptTemplate.py) and
+[/python/bfut_mywrappers.py](/python/bfut_mywrappers.py)<br>
+The template is written such that it can be run from the
+scripts folder. If it is moved into another folder and uses the
+wrappers, the wrapper script has to be copied into that same folder.
+
+```py
+import fcecodec
+
+filepath_fce_input = 'path/to/car_src.fce'
+filepath_fce_input2 = 'path/to/car_src2.fce'
+filepath_fce_output = 'path/to/car.fce'
+
+with open(filepath_fce_input, "rb") as f:
+    fce_buf = f.read()
+
+# Print FCE stats
+fcecodec.PrintFceInfo(fce_buf)
+
+# Create Mesh object
+mesh = fcecodec.Mesh()
+
+# Load FCE data to Mesh object
+mesh.IoDecode(fce_buf)
+
+# Print Mesh object stats
+mesh.PrintInfo()
+print(mesh.MNumParts)
+print(mesh.MNumTriags)
+print(mesh.MNumVerts)
+
+# Validate Mesh object
+assert(mesh.MValid() == 1)
+
+# Merge parts 0, 3 to new part
+new_pid = mesh.OpMergeParts(0, 3)
+assert(new_pid != -1)
+
+# Copy part 1
+new_pid = mesh.OpCopyPart(1)
+assert(new_pid != -1)
+
+# Insert/copy part 1 from mesh_src to mesh
+with open(filepath_fce_input2, "rb") as f:
+    fce_buf2 = f.read()
+mesh_src = fcecodec.Mesh()
+mesh_src.IoDecode(fce_buf2)
+new_pid = mesh.OpInsertPart(mesh_src, 1)
+assert(new_pid != -1)
+
+# Encode to FCE4
+out_buf = mesh.IoEncode_Fce4()
+with open(path, "wb") as f:
+    f.write(out_buf)
+```
+
+## Documentation
 ```
 Help on module fcecodec:
 
@@ -268,6 +322,9 @@ CLASSES
      |  
      |  MNumArts
      |      Usually equal to 1. Larger values enable multi-texture access for cop#.fce
+     |  
+     |  MUnknown3
+     |      Unknown purpose in FCE4M. Only exists in FCE4M.
      |  
      |  MVertsAnimation
      |      Returns (N, ) array for N vertices.

@@ -1,6 +1,8 @@
 # Obj2Fce with fcecodec
+This tutorial describes how to prepare OBJ/MTL files for the Obj2Fce converter
+scripts.
 
-The latest version of this tutorial can be found [here](https://github.com/bfut/fcecodec/tree/main/scripts/doc_Obj2Fce.MD).
+The latest version of this tutorial can be found [here](https://github.com/bfut/fcecodec/tree/main/scripts/doc_Obj2Fce.MD).<br/>
 The following files can be found in [_/scripts_](https://github.com/bfut/fcecodec/tree/main/scripts)
 
 ```
@@ -8,23 +10,24 @@ bfut_Obj2Fce3 (do not center parts, material to texpage).py
 bfut_Obj2Fce3 (do not center parts, material to triagflag).py
 bfut_Obj2Fce3 (material to texpage).py
 bfut_Obj2Fce3 (material to triagflag).py
+bfut_Obj2Fce3 (material to triagflag, material to texpage).py
 bfut_Obj2Fce4 (do not center parts, material to texpage).py
 bfut_Obj2Fce4 (do not center parts, material to triagflag).py
 bfut_Obj2Fce4 (material to texpage).py
 bfut_Obj2Fce4 (material to triagflag).py
+bfut_Obj2Fce4 (material to triagflag, material to texpage).py
 bfut_Obj2Fce4M (do not center parts, material to texpage).py
 bfut_Obj2Fce4M (do not center parts, material to triagflag).py
 bfut_Obj2Fce4M (material to texpage).py
 bfut_Obj2Fce4M (material to triagflag).py
+bfut_Obj2Fce4M (material to triagflag, material to texpage).py
 ```
 
 ## Prerequisites
-
-Install _fcecodec_ from https://github.com/bfut/fcecodec<br>
+Install _fcecodec_ from https://github.com/bfut/fcecodec<br/>
 Install _tinyobjloader_ from https://github.com/tinyobjloader/tinyobjloader/tree/master/python
 
 ## How to use
-
 Run one of the script versions in a terminal
 
     python <bfut_Obj2Fce*.py> /path/to/input.obj
@@ -34,24 +37,24 @@ Run one of the script versions in a terminal
     <partname>
 
 In FCE4 and FCE4M, only the part name defines a part's role (e.g., FCE4 high
-body must be called `:HB`). Contrarily in FCE3, only the part order defines a
-part's role and its name can be arbitrary (e.g., part index 0 is FCE3 high
-body).
+body must be called `:HB`).
 
+In FCE3, only the part order defines a part's role and its name can
+be arbitrary (e.g., part index 0 is FCE3 high body).<br/>
 Of note in FCE3 is the optional hidden lights part, which always has index 12
 (0-based index).
 
-For a complete overview, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
+For complete part name and part order listings, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
 
 ## Damage model (FCE4, FCE4M)
 
     <partname>
     DAMAGE_<partname>
 
-Example: Once `:HB` high body is finished, create a copy named `DAMAGE_:HB` <br>
+Example: Once `:HB` high body is finished, create a copy named `DAMAGE_:HB` <br/>
 In this new part, only change vertice positions or vertice normals.
 
-For a list of parts that use damage models, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
+For a list of parts that use damage models in-game, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
 
 ## Part center
 
@@ -59,18 +62,17 @@ For a list of parts that use damage models, see [_/src/fcelib/fcelib_fcetypes.h_
     POSITION_<partname>
 
 A custom part center is highly desirable for `:OD` driver animation, where the
-part center should typically be at the center of the steering wheel. Also useful
+part center should typically be in the middle of the steering wheel. Also useful
 for `:OS` spoiler animation.
 
 To define a custom part center, create a helper part `POSITION_<partname>`. The
-helper part's centroid will be used as center in `<partname>`.
-
+helper part's centroid will be used as center in `<partname>`.<br/>
 As default if no helper part is found, for each part its centroid will be used
 as part center. Default behavior is highly desirable for the following: wheels,
 front brakes, driver head.
 
 The `do not center parts` scripts will leave the coordinate origin as center for
-all parts (not recommended).
+all parts (not recommended for FCE3, FCE4).
 
 ## Vertice animation flag (FCE4, FCE4M)
 
@@ -86,8 +88,8 @@ Helper part names must not be identical, hence the digits.
 Default behavior if no helper part is found: all vertices for this part are
 movable.
 
-(FCE4) Vertice animation flags do not seem to have any effect on wheels, front
-brakes, driver head, and movable spoiler.
+(FCE4) Vertice animation flags do not seem to have any visible effect on wheels,
+front brakes, driver head, and movable spoiler.
 
 ![vert animation flag](../assets/fcecodec_handle_vertices_animation_flags.png)
 
@@ -105,7 +107,6 @@ identical.
 For dummynames and their effects, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
 
 ## Triangle flags
-
 This functionality is offered in the `material to triagflag` scripts.
 
 Internally, FCE triangle flags are positive integer values. Triangle flags
@@ -139,11 +140,23 @@ flag `0x0AE`. This can be set by assigning the triangle to a material name that
 includes `_FHIC_FNOC_FSET_FALW_FLEW_` (i.e., high chrome, no cull,
 semi-transparent, all windows, left window).
 
-## Texture page (FCE3/FCE4 officer models)
+This paragraph can be skipped:
+With the Obj2Fce scripts, it is also possible to use the raw hex value as
+material name, i.e., `0x0AE`. However, the advantage of using triangle flag tags
+is, that they can be combined with a texture page tag, see next section below.
+Also, it avoids constantly dealing with mathematics.
+Briefly, on the meaning behind the final hex value.
+`0x0AE` is equal to `0x002 + 0x004 + 0x008 + 0x020 + 0x080` (use a calculator).
+The visible in-game effect is the same when an integer that is greater or
+equal than `0x1000` is added. For example, `0x0AE + 0xB3000` is equal to
+`0xB30AE`, which again ticks the high chrome, no cull,
+semi-transparent, all windows, left window triangle flags.
+Hex value `0xB3000` has the same visible in-game effect as `0x000`.
 
+## Texture page (FCE3/FCE4 officer models, FCE4M damage textures)
 This functionality is offered in the `material to texpage` scripts.
 
-Like triangle flags, the triangles texture page is a positive integer
+Similar to triangle flags, the triangle texture page is a positive integer
 value. The `Obj2Fce` converter scripts looks for one tag in a material name.
 
 The texture page and triangle flag tags can both be present in a material name.
@@ -158,3 +171,8 @@ A material name can include additional elements that are not tags.
 
 Example: To set texture page `0`, no tag is needed. For texture page `4`, add
 tag `_T4_` to the material name.
+
+## Information
+__Obj2Fce License:__ zlib License<br/>
+__fcecodec License:__ GNU General Public License v3.0+<br/>
+__Website:__ <https://github.com/bfut/fcecodec>
