@@ -29,9 +29,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef _WIN32
-#endif
-
 #include "fcelib_fcetypes.h"
 #include "fcelib_misc.h"
 #include "fcelib_types.h"
@@ -87,7 +84,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
         FceHeader4 header;
         const int kHdrSize = 0x2038;
 
-        if (buf_size < 0x2038)
+        if (buf_size < kHdrSize)
         {
           fprintf(stderr, "DecodeFce: Format error: header too small\n");
           break;
@@ -103,6 +100,8 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           /* NumTriangles - counted below */
           /* NumVertices - counted below */
         mesh->hdr.NumArts = header.NumArts;
+        if (fce_version == 0x00101015)
+          mesh->hdr.Unknown3 = header.Unknown3;  /* FCE4M experimental */
         mesh->hdr.NumParts = header.NumParts;
         mesh->parts_len = mesh->hdr.NumParts;
 
@@ -624,8 +623,8 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
     /* Print mtl (used triangle 12-bit flags as materials) ------------------ */
     {
       char mtls[4096];
-      memset(mtls, '0', sizeof(mtls));
       int count_mtls = 0;
+      memset(mtls, '0', sizeof(mtls));
 
       for (i = 0; i < mesh->triangles_len; ++i)
       {
@@ -2057,13 +2056,8 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       memcpy(*outbuf + 0x08e4 + i * 4 + 3, &mesh->hdr.DriColors[i].transparency, (size_t)1);
     }
 
-#if 0
     if (fce_version == 0x00101015)
-    {
-      tmp = 123;
-      memcpy(*outbuf + 0x0924, &tmp, (size_t)4);  /* Unknown3 (FCE4M: ?) */
-    }
-#endif
+      memcpy(*outbuf + 0x0924, &mesh->hdr.Unknown3, (size_t)4);  /* FCE4M experimental */
 
     /* DummyNames */
     memcpy(*outbuf + 0x0a28, &mesh->hdr.DummyNames, (size_t)(64 * 16));
@@ -2264,6 +2258,8 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       fprintf(stderr, "GeomDataToNewPart: mesh is NULL\n");
       break;
     }
+
+    mesh->freed = 0;
 
     if (!FCELIB_TYPES_ValidateMesh(*mesh))
     {

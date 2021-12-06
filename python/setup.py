@@ -1,6 +1,5 @@
 """
 setup.py - adapted from https://github.com/pybind/python_example/blob/master/setup.py
-
 fcecodec Copyright (C) 2021 Benjamin Futasz <https://github.com/bfut>
 
 You may not redistribute this program without its source code.
@@ -18,13 +17,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-
 import os
 import platform
 import pathlib
-import subprocess
-import sys
-from setuptools import setup
+import setuptools
 
 # Available at setup time due to pyproject.toml
 from pybind11.setup_helpers import Pybind11Extension, build_ext
@@ -39,16 +35,19 @@ os.chdir(script_path)
 with open(script_path / "../src/fcelib/fcelib.h", 'r') as f:
     for i in range(33):
         next(f)
-    __version__ = f.readline().rstrip()[-5:-1]
+    __version__ = f.readline().rstrip().split('\"')[-2]
     print("fcelib version:", __version__)
 long_description = (script_path / "../README.md").read_text(encoding="utf-8")
 
+extra_compile_args = [
+    ("-DPYMEM_MALLOC"),
+]
 if platform.system() == "Windows":
-    extra_compile_args = [
+    extra_compile_args += [
         ("/wd4267")  # prevents warnings on conversion from size_t to int
     ]
 else:
-    extra_compile_args = [
+    extra_compile_args += [
         # debug
         # ("-g"),
         ("-pedantic-errors"),
@@ -104,13 +103,13 @@ ext_modules = [
         # Example: passing in the version to the compiled code
         define_macros=[
             ('VERSION_INFO', __version__),
-            ('FCECVERBOSE', 0),
+            ('FCECVERBOSE', 0),  # set 1 for some additional console output
         ],
         extra_compile_args=extra_compile_args
     ),
 ]
 
-setup(
+setuptools.setup(
     name="fcecodec",
     version=__version__,
     author="Benjamin Futasz",

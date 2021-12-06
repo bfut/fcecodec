@@ -73,10 +73,12 @@ typedef struct {
   int    *PTriangles;      /* ordered list of global triag idxs, -1 for unused */
 } FcelibPart;
 
-typedef struct FcelibHeader {
+typedef struct {
   int      NumTriangles;
   int      NumVertices;
-  int      NumArts = 1;
+  int      NumArts;
+
+  int      Unknown3;       /* FCE4M experimental */
 
   int      NumParts;       /* true count */
   int      *Parts;         /* ordered list of part indexes, -1 for unused */
@@ -93,10 +95,15 @@ typedef struct FcelibHeader {
   tColor4  DriColors[16];  /* FCE4 only */
 } FcelibHeader;
 
+#ifdef __cplusplus
 /* Wnon-c-typedef-for-linkage, http://wg21.link/p1766r1 */
 /* potential issue with C++03 https://github.com/tinyobjloader/tinyobjloader/issues/259#issuecomment-590675708 */
 typedef struct FcelibMesh {
   int              freed = 1;      /* has instance been destroyed before? */
+#else
+typedef struct {
+  int              freed;          /* has instance been destroyed before? */
+#endif
 
   FcelibHeader     hdr;
 
@@ -117,12 +124,17 @@ void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
 {
   int i;
 
+#ifdef __cplusplus
   if (mesh->freed != 1)
     fprintf(stderr, "Warning: InitMesh: mesh is not free'd (requires FCELIB_FreeMesh)\n");
+#endif
   mesh->freed = 1;
 
   mesh->hdr.NumTriangles = 0;
   mesh->hdr.NumVertices = 0;
+  mesh->hdr.NumArts = 1;
+
+  mesh->hdr.Unknown3 = 0;  /* FCE4M experimental */
 
   mesh->hdr.NumParts = 0;
   mesh->hdr.Parts = NULL;
@@ -230,8 +242,11 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
   mesh->vertices_len = 0;
 
   mesh->hdr.NumParts = 0;
-  mesh->hdr.NumTriangles = 0;
+
+  mesh->hdr.Unknown3 = 0;
+  mesh->hdr.NumArts = 1;
   mesh->hdr.NumVertices = 0;
+  mesh->hdr.NumTriangles = 0;
 
   mesh->hdr.NumDummies = 0;
   for (i = 0; i < 16; ++i)

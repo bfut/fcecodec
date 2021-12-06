@@ -31,9 +31,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FCECVERS "0.60"
+#define FCECVERS "0.63"
 #ifndef FCECVERBOSE
-#define FCECVERBOSE 0
+#define FCECVERBOSE 0  /* set 1 for some additional console output */
 #endif
 
 #include "fcelib_io.h"
@@ -47,41 +47,6 @@ namespace fcelib {
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* source: fshtool.c, D. Auroux */
-int FCELIB_SanityTest(void)
-{
-  int retv = 1;
-  int x = 0;
-
-  *((char *)(&x)) = 1;
-  if (x != 1)
-  {
-    fprintf(stderr, "expects little-endian architecture\n");
-    retv = 0;
-  }
-
-  if (sizeof(int) != 4)
-  {
-    fprintf(stderr, "expects 32-bit int\n");
-    retv = 0;
-  }
-
-  if (sizeof(short) != 2)
-  {
-    fprintf(stderr, "expects 16-bit short\n");
-    retv = 0;
-  }
-
-  if (sizeof(char) != 1)
-  {
-    fprintf(stderr, "expects 8-bit char\n");
-    retv = 0;
-  }
-
-  return retv;
-}
-
 
 /* mesh --------------------------------------------------------------------- */
 

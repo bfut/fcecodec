@@ -37,9 +37,11 @@
 #include <utility>  // std::move
 #include <vector>
 
+#ifdef PYMEM_MALLOC
 #define malloc PyMem_Malloc
 #define realloc PyMem_Realloc
 #define free PyMem_Free
+#endif  /* PYMEM_MALLOC */
 
 #include "../src/fcelib/fcelib.h"
 #include "../src/fcelib/fcelib_types.h"
@@ -85,6 +87,8 @@ class Mesh : public fcelib::FcelibMesh {
     /* Mesh / Header */
     int MGetNumArts() const { return mesh_.hdr.NumArts; };
     void MSetNumArts(const int NumArts) { mesh_.hdr.NumArts = NumArts; };
+    int MGetUnknown3() const { return mesh_.hdr.Unknown3; };
+    void MSetUnknown3(const int Unknown3) { mesh_.hdr.Unknown3 = Unknown3; };
     py::buffer MGetColors_numpy(void) const;
     void MSetColors_numpy(py::array_t<unsigned char, py::array::c_style | py::array::forcecast> arr);
     std::vector<std::string> GetDummyNames() const;
@@ -1657,6 +1661,7 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
       R"pbdoc( vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz... )pbdoc")
 
     .def_property("MNumArts", &Mesh::MGetNumArts, &Mesh::MSetNumArts, R"pbdoc( Usually equal to 1. Larger values enable multi-texture access for cop#.fce )pbdoc")
+    .def_property("MUnknown3", &Mesh::MGetUnknown3, &Mesh::MSetUnknown3, R"pbdoc( Unknown purpose in FCE4M. Only exists in FCE4M. )pbdoc")
     .def("MGetColors", &Mesh::MGetColors_numpy)
     .def("MGetColors_numpy", &Mesh::MGetColors_numpy)
     .def("MSetColors", &Mesh::MSetColors_numpy, py::arg("colors"), R"pbdoc( Expects shape=(N, 4, 4) )pbdoc")
