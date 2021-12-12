@@ -1833,9 +1833,6 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
   int sum_verts = 0;
   int sum_triags = 0;
 
-  if (fce_version == 0x00101015)
-    fprintf(stdout, "Warning: EncodeFce4: Fce4M output is experimental, untested, unsupported\n");
-
   for (;;)
   {
     if (!FCELIB_TYPES_ValidateMesh(*mesh))

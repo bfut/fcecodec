@@ -21,8 +21,8 @@
 /**
   library interface
 
-  structs are defined in fcelib_types.h
-  FCE-specific documentation can be found in fcelib_fcetypes.h
+  library structs are defined in fcelib_types.h
+  FCE structs and format documentation can be found in fcelib_fcetypes.h
  **/
 
 #ifndef FCELIB_H
@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FCECVERS "0.63"
+#define FCECVERS "0.64"
 #ifndef FCECVERBOSE
 #define FCECVERBOSE 0  /* set 1 for some additional console output */
 #endif

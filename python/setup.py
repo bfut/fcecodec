@@ -24,7 +24,6 @@ import setuptools
 
 # Available at setup time due to pyproject.toml
 from pybind11.setup_helpers import Pybind11Extension, build_ext
-from pybind11 import get_cmake_dir
 
 
 # ------------------------------------------------------------------------------
@@ -103,7 +102,7 @@ ext_modules = [
         # Example: passing in the version to the compiled code
         define_macros=[
             ('VERSION_INFO', __version__),
-            ('FCECVERBOSE', 0),  # set 1 for some additional console output
+            ('FCECVERBOSE', 0),
         ],
         extra_compile_args=extra_compile_args
     ),
