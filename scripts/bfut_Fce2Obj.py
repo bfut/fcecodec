@@ -1,9 +1,9 @@
 """
   bfut_Fce2Obj.py - export given FCE file to OBJ/MTL files in FCE file directory, with triangles flag hex value as materials name
 
-REQUIRES: installing <https://github.com/bfut/fcecodec>
+REQUIRES    installing <https://github.com/bfut/fcecodec>
 
-LICENSE:
+LICENSE
     Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
 
     This software is provided 'as-is', without any express or implied
@@ -27,25 +27,18 @@ import os
 import pathlib
 import sys
 
-script_path = pathlib.Path(__file__).parent
-
-# Look for local build, if not installed
-try:
-    import fcecodec
-except ModuleNotFoundError:
-    import sys
-    p = pathlib.Path(script_path / "../python/build")
-    # print(p)
-    for x in p.glob("**"):
-        sys.path.append(str(x.resolve()))
-    import fcecodec
+import fcecodec
 
 # Parse command (or print module help)
 parser = argparse.ArgumentParser()
-parser.add_argument("cmd", nargs=1, help="path")
+parser.add_argument("cmd", nargs='+', help="path")
 args = parser.parse_args()
 
-filepath_fce_input = pathlib.Path(args.cmd[0])
+if os.name == "nt":
+    filepath_fce_input = ' '.join(args.cmd)[:]
+    filepath_fce_input = pathlib.Path(filepath_fce_input)
+else:
+    filepath_fce_input = pathlib.Path(args.cmd[0])
 output_path_stem = pathlib.Path(filepath_fce_input.parent / filepath_fce_input.stem)
 filepath_obj_output = output_path_stem.with_suffix(".obj")
 filepath_mtl_output = output_path_stem.with_suffix(".mtl")

@@ -13,28 +13,22 @@ CONFIG = {
     "center_parts" : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
 }
 import argparse
+import os
 import pathlib
 import sys
 
-script_path = pathlib.Path(__file__).parent
-
-# Look for local build, if not installed
-try:
-    import fcecodec
-except ModuleNotFoundError:
-    import sys
-    p = pathlib.Path(script_path / "../python/build")
-    # print(p)
-    for x in p.glob("**"):
-        sys.path.append(str(x.resolve()))
-    import fcecodec
+import fcecodec
 
 # Parse command (or print module help)
 parser = argparse.ArgumentParser()
-parser.add_argument("cmd", nargs=1, help="path")
+parser.add_argument("cmd", nargs='+', help="path")
 args = parser.parse_args()
 
-filepath_fce_input = pathlib.Path(args.cmd[0])
+if os.name == "nt":
+    filepath_fce_input = ' '.join(args.cmd)[:]
+    filepath_fce_input = pathlib.Path(filepath_fce_input)
+else:
+    filepath_fce_input = pathlib.Path(args.cmd[0])
 filepath_fce_output = filepath_fce_input.with_stem(filepath_fce_input.stem + "_out")
 
 

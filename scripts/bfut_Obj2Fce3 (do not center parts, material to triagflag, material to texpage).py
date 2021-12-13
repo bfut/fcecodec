@@ -1,5 +1,5 @@
 """
-    bfut_Obj2Fce4M (material to texpage).py
+    bfut_Obj2Fce3 (do not center parts, material to triagflag, material to texpage).py
 
 DESCRIPTION
     import OBJ file using tinyobjloader, export as FCE file using fcecodec
@@ -30,37 +30,31 @@ LICENSE
     3. This notice may not be removed or altered from any source distribution.
 """
 CONFIG = {
-    "fce_version"        : '4M',  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
-    "center_parts"       : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
+    "fce_version"        : '3',  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
+    "center_parts"       : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
     "material2texpage"   : 1,  # maps OBJ face materials to FCE texpages (expects 0|1)
-    "material2triagflag" : 0,  # maps OBJ face materials to FCE triangles flag (expects 0|1)
+    "material2triagflag" : 1,  # maps OBJ face materials to FCE triangles flag (expects 0|1)
 }
 import argparse
+import os
 import pathlib
 import re
 import sys
-import tinyobjloader
 import numpy as np
 
-script_path = pathlib.Path(__file__).parent
-
-# Look for local build, if not installed
-try:
-    import fcecodec
-except ModuleNotFoundError:
-    import sys
-    p = pathlib.Path(script_path / "../python/build")
-    # print(p)
-    for x in p.glob("**"):
-        sys.path.append(str(x.resolve()))
-    import fcecodec
+import fcecodec
+import tinyobjloader
 
 # Parse command (or print module help)
 parser = argparse.ArgumentParser()
-parser.add_argument("cmd", nargs=1, help="path")
+parser.add_argument("cmd", nargs="+", help="path")
 args = parser.parse_args()
 
-filepath_obj_input = pathlib.Path(args.cmd[0])
+if os.name == "nt":
+    filepath_fce_input = ' '.join(args.cmd)[:]
+    filepath_fce_input = pathlib.Path(filepath_fce_input)
+else:
+    filepath_obj_input = pathlib.Path(args.cmd[0])
 output_path_stem = pathlib.Path(filepath_obj_input.parent / filepath_obj_input.stem)
 filepath_fce_output = output_path_stem.with_suffix(".fce")
 
@@ -235,8 +229,9 @@ def GetFlagFromTags(tags):
 
 def GetTexPageFromTags(tags):
     txp = 0x0
+    r = re.compile("T[0-9]", re.IGNORECASE)
     for t in tags:
-        if t[:1] == "T":
+        if r.match(t) is not None:
             try:
                 txp = int(t[1:])
             except ValueError:
