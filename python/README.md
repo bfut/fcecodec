@@ -3,14 +3,12 @@ This file describes installation, and usage of `fcecodec` as Python extension
 module.
 
 ## Installation
-Requires Python 3.7+ and the following dependencies
+Requires Python 3.7+
 
+        cd ~
         python -m pip install --upgrade pip wheel setuptools pybind11
-
-Install `fcecodec`
-
         git clone https://github.com/bfut/fcecodec.git
-        python -m pip install -e fcecodec/python
+        python -m pip install --verbose fcecodec/python
 
 #### Windows
 `Microsoft Visual Studio` has to be installed. For a detailed description,
@@ -66,17 +64,17 @@ assert(new_pid != -1)
 new_pid = mesh.OpCopyPart(1)
 assert(new_pid != -1)
 
-# Insert/copy part 1 from mesh_src to mesh
+# Insert/copy part 1 from mesh2 to mesh
 with open(filepath_fce_input2, "rb") as f:
     fce_buf2 = f.read()
-mesh_src = fcecodec.Mesh()
-mesh_src.IoDecode(fce_buf2)
-new_pid = mesh.OpInsertPart(mesh_src, 1)
+mesh2 = fcecodec.Mesh()
+mesh2.IoDecode(fce_buf2)
+new_pid = mesh.OpInsertPart(mesh2, 1)
 assert(new_pid != -1)
 
 # Encode to FCE4
 out_buf = mesh.IoEncode_Fce4()
-with open(path, "wb") as f:
+with open(filepath_fce_output, "wb") as f:
     f.write(out_buf)
 ```
 

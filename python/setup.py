@@ -22,6 +22,7 @@ import platform
 import pathlib
 import setuptools
 
+# from pybind11 import get_cmake_dir
 # Available at setup time due to pyproject.toml
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 
@@ -47,7 +48,7 @@ if platform.system() == "Windows":
     ]
 else:
     extra_compile_args += [
-        # debug
+        # # debug
         # ("-g"),
         ("-pedantic-errors"),
     ]
