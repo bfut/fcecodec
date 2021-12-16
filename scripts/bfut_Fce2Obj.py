@@ -34,11 +34,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("cmd", nargs='+', help="path")
 args = parser.parse_args()
 
-if os.name == "nt":
-    filepath_fce_input = ' '.join(args.cmd)[:]
-    filepath_fce_input = pathlib.Path(filepath_fce_input)
-else:
-    filepath_fce_input = pathlib.Path(args.cmd[0])
+filepath_fce_input = pathlib.Path(args.cmd[0])
 output_path_stem = pathlib.Path(filepath_fce_input.parent / filepath_fce_input.stem)
 filepath_obj_output = output_path_stem.with_suffix(".obj")
 filepath_mtl_output = output_path_stem.with_suffix(".mtl")

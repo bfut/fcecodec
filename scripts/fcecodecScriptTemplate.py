@@ -1,8 +1,8 @@
 """
   fcecodecScriptTemplate.py - description
 
-  This file is distributed under: CC BY-NC 4.0
-      <https://creativecommons.org/licenses/by-nc/4.0>
+  This file is distributed under: CC BY 4.0
+      <https://creativecommons.org/licenses/by/4.0>
 """
 CONFIG = {
     "fce_version"  : 'keep',  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
@@ -32,12 +32,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("cmd", nargs='+', help="path")
 args = parser.parse_args()
 
-if os.name == "nt":
-    filepath_fce_input = ' '.join(args.cmd)[:]
-    filepath_fce_input = pathlib.Path(filepath_fce_input)
-else:
-    filepath_fce_input = pathlib.Path(args.cmd[0])
-filepath_fce_output = filepath_fce_input.with_stem(filepath_fce_input.stem + "_o")
+filepath_fce_input = pathlib.Path(args.cmd[0])
+filepath_fce_output = pathlib.Path(
+                  filepath_fce_input.parent,
+                  (filepath_fce_input.stem + "_out" + filepath_fce_input.suffix)
+              )
 
 
 # -------------------------------------- wrappers

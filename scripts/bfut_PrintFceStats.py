@@ -20,11 +20,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("cmd", nargs='+', help="path")
 args = parser.parse_args()
 
-if os.name == "nt":
-    filepath_fce_input = ' '.join(args.cmd)[:]
-    filepath_fce_input = pathlib.Path(filepath_fce_input)
-else:
-    filepath_fce_input = args.cmd[0]
+filepath_fce_input = args.cmd[0]
 
 
 # -------------------------------------- wrappers

@@ -50,11 +50,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("cmd", nargs="+", help="path")
 args = parser.parse_args()
 
-if os.name == "nt":
-    filepath_fce_input = ' '.join(args.cmd)[:]
-    filepath_fce_input = pathlib.Path(filepath_fce_input)
-else:
-    filepath_obj_input = pathlib.Path(args.cmd[0])
+filepath_obj_input = pathlib.Path(args.cmd[0])
 output_path_stem = pathlib.Path(filepath_obj_input.parent / filepath_obj_input.stem)
 filepath_fce_output = output_path_stem.with_suffix(".fce")
 
@@ -259,10 +255,19 @@ def ShapeToPart(reader,
 
     # map faces material IDs to triangles texpages
     if material2texpage == 1:
+        num_arts_warning = False
         texps = mesh.PGetTriagsTexpages_numpy(mesh.MNumParts - 1)
         for i in range(texps.shape[0]):
-            texps[i] = s_matls[i]
+            if materials[s_matls[i]].name[:2] == '0x':
+                texps[i] = int(materials[s_matls[i]].name[2:], base=16)
+            else:
+                tags = materials[s_matls[i]].name.split('_')
+                texps[i] = GetTexPageFromTags(tags)
+            if texps[i] > 0:
+                num_arts_warning = True
         # print(type(texps), texps.dtype, texps.shape)
+        if num_arts_warning:
+            print("Warning: texpage greater than zero is present. FCE3/FCE4 require amending Mesh.NumArts value")
         mesh.PSetTriagsTexpages_numpy(mesh.MNumParts - 1, texps)
 
     # map faces material names to triangles flags iff

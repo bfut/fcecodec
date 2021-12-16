@@ -164,7 +164,7 @@ Hex value `0xB3000` has the same visible in-game effect as `0x000`.
 
 (FCE4M) The above values are identical. Additionally, FCE4M introduced damage
 textures that are assigned using triangle flags, using new values and also using
-multiple texture pages. This concept is out of the scope of this tutorial at
+multiple texture pages. The specifics are out of the scope of this tutorial at
 this time.
 
 For more details, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
