@@ -19,10 +19,7 @@ Python bindings are written in C++ (pybind11).
 * Get/Set: exposes raw geometry data (vertices, normals, triangles, texcoords)
 * Get/Set: exposes attributes (vertex animation flags, triangle flags, colors, dummies (fx/light objects), etc.)
 * Operation: inserts part from another mesh
-* Operation: copies part
-* Operation: merges parts
-* Operation: deletes part
-* Operation: changes part order
+* Operations: changes part order, copies part, merges parts, deletes part
 * Operation: deletes triangles, vertices
 * Stats: prints Mesh info (e.g., number of triangles & vertices, colors, part positions, etc.)
 * Stats: prints FCE binary data info (e.g., format version, half sizes, number of triangles & vertices, colors, part positions, etc.)
@@ -30,7 +27,8 @@ Python bindings are written in C++ (pybind11).
 * Python: numpy integration for most functions
 
 ## Usage
-Convenience scripts can be found in [/scripts](/scripts)
+The main purpose of this software is ease of use.
+Ready-to-use scripts can be found in [/scripts](/scripts)
 
 There is a tutorial for converting OBJ/MTL files to FCE at
 [/scripts/doc_Obj2Fce.MD](/scripts/doc_Obj2Fce.MD)
