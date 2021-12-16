@@ -666,6 +666,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                         i, texture_name);
         }
       }
+      fflush(outf);
 
       if (fclose(outf) != 0)
       {
@@ -688,6 +689,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
     fprintf(outf, "# fcecodec OBJ File: '%s'\n"
                   "# github.com/bfut/fcecodec\n"
                   "mtllib %s\n", (char *)objpath, (char *)mtlpath);
+    fflush(outf);
 
     for (i = 0; i < mesh->parts_len; ++i)
     {
@@ -723,6 +725,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                     mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
                     mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z);
       fprintf(outf, "\n");
+      fflush(outf);
 
       /* Verts */
       fprintf(outf, "#%d verts\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
@@ -746,6 +749,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                );
       }
       fprintf(outf, "\n");
+      fflush(outf);
 
       /* Texture coordinates */
       fprintf(outf, "#%d vt\n", 3 * mesh->parts[ mesh->hdr.Parts[i] ]->PNumTriangles);
@@ -767,6 +771,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
         }  /* for n */
       }
       fprintf(outf, "\n");
+      fflush(outf);
 
       /* Normals */
       fprintf(outf, "#%d normals\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
@@ -790,6 +795,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                );
       }
       fprintf(outf, "\n");
+      fflush(outf);
 
       /* Triangles */
       fprintf(outf, "#%d faces (verts: %d..%d)\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumTriangles, sum_verts + 1, sum_verts + mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
@@ -844,6 +850,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                 );
       }  /* for j triangles */
       fprintf(outf, "\n");
+      fflush(outf);
 
       sum_verts  += mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices;
       sum_triags += mesh->parts[ mesh->hdr.Parts[i] ]->PNumTriangles;
@@ -873,6 +880,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                       mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
                       mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z);
         fprintf(outf, "\n");
+        fflush(outf);
 
         /* Verts */
         fprintf(outf, "#%d verts\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
@@ -896,6 +904,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                 );
         }
         fprintf(outf, "\n");
+        fflush(outf);
 
         /* Texture coordinates */
         fprintf(outf, "#%d vt\n", 3 * mesh->parts[ mesh->hdr.Parts[i] ]->PNumTriangles);
@@ -917,6 +926,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
           }  /* for n */
         }
         fprintf(outf, "\n");
+        fflush(outf);
 
         /* Normals */
         fprintf(outf, "#%d normals\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
@@ -940,6 +950,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                 );
         }
         fprintf(outf, "\n");
+        fflush(outf);
 
         /* Triangles */
         fprintf(outf, "#%d faces (verts: %d..%d)\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumTriangles, sum_verts + 1, sum_verts + mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
@@ -994,6 +1005,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                   );
         }  /* for j triangles */
         fprintf(outf, "\n");
+        fflush(outf);
 
         sum_verts  += mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices;
         sum_triags += mesh->parts[ mesh->hdr.Parts[i] ]->PNumTriangles;
@@ -1037,6 +1049,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                         kTrianglesDiamond[3 * j + 2] + sum_verts
                  );
         }
+        fflush(outf);
 
         sum_verts  += 6;
         sum_triags += 8;
@@ -2459,6 +2472,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
 
 #if FCECVERBOSE == 1
     fprintf(stdout, "return (new part order = %d)\n", new_pid);
+    fflush(stdout);
 #endif
   return new_pid;
 }

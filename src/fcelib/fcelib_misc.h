@@ -45,7 +45,6 @@ static const int kFceLibImplementedFce3Parts = 13;
 static const int kFceLibNumFce4HiBodyParts = 18;
 #endif
 
-
 /* Represent dummies */
 static
 const float kVertDiamond[6 * 3] = {
@@ -85,10 +84,22 @@ int FCELIB_MISC_CompareInts(const void *a, const void *b)
 
 float FCELIB_MISC_Abs(const float a)
 {
+#if 0
   if (a < 0)
     return -a;
   else
     return a;
+#else
+#ifdef __cplusplus
+#include <cmath>
+  return std::abs(a);
+#else
+  if (a < 0)
+    return -a;
+  else
+    return a;
+#endif  /* __cplusplus */
+#endif
 }
 
 int FCELIB_MISC_Min(const int a, const int b)
@@ -99,16 +110,16 @@ int FCELIB_MISC_Min(const int a, const int b)
     return b;
 }
 
-/* Returns -10 on failure. */
+/* Returns -100 on failure. */
 int FCELIB_MISC_ArrMax(const int *arr, const int arr_len)
 {
-  int retv = -10;
+  int retv = -100;
   for (;;)
   {
     int *sortedarr = (int *)malloc((size_t)arr_len * sizeof(*sortedarr));
     if (!sortedarr)
     {
-      fprintf(stderr, "Warning: FCELIB_MISC_ArrMax: Cannot allocate memory, return default -10");
+      fprintf(stderr, "Warning: FCELIB_MISC_ArrMax: Cannot allocate memory, return default -100");
       break;
     }
     memcpy(sortedarr, arr, (size_t)arr_len * sizeof(*sortedarr));

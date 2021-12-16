@@ -41,11 +41,11 @@ extern "C" {
 
 
 /* FCE3   tTriangle->flag   4 bit
-      0x0   default           body parts: reflection
-0:    0x1   no reflection
+      0x0   default             body parts: reflection
+0:    0x1   matte (no chrome)
 1:    0x2   high chrome
-2:    0x4   no cull           two-faced triangle
-3:    0x8   semi-transparent  all parts
+2:    0x4   no cull             two-faced triangle
+3:    0x8   semi-transparent    all parts
 
 5 = 1 + 4
 6 = 2 + 4
@@ -121,8 +121,7 @@ Name    Application example                     Application example
 
 /* Length = 56. Vertex indices are local. Values from 'P1stVertices' make them global. */
 typedef struct {
-/* 0x00 */  int   tex_page;     /* Texture page number. FCE3, FCE4: == 0,
-                                                        FCE4M:      >= 0 */
+/* 0x00 */  int   tex_page;     /* Texture page number; > 0 in FCE3/FCE4 officer models, FCE4 pursuit road objects, FCE4M damage textures. Requires NumArts=max(tex_pages)-1 apart from the last */
 /* 0x04 */  int   vidx1;        /* Vertex #1 local index */
 /* 0x08 */  int   vidx2;
 /* 0x0C */  int   vidx3;
@@ -145,7 +144,7 @@ typedef struct {
 /* Valid values for all four components: 0..255
   hue<degrees>  / 360 * 255
   saturation<%> / 100 * 255
-  brightness<%> / 100 * 255               */
+  brightness<%> / 100 * 255 (comment source: OpenNFS/NFS4Loader.h) */
 typedef struct {
   int hue;
   int saturation;
@@ -165,7 +164,7 @@ typedef struct {
 /* 0x0000 */  int      Unknown1           ;  /* != 0x14101000 && != 0x15101000, nullable, sometimes 0x13101000 (ex. render/pc/cone.fce) */
 /* 0x0004 */  int      NumTriangles       ;  /* Number of triangles in model */
 /* 0x0008 */  int      NumVertices        ;  /* Number of vertices in model */
-/* 0x000C */  int      NumArts            ;  /* Number of arts, used with cop#.fce and cop#.art, texpages instead of textures */
+/* 0x000C */  int      NumArts            ;  /* Number of arts, == 1 unless non-zero tex_pages are used */
                     /* offsets from 0x1F04 */
 /* 0x0010 */  int      VertTblOffset      ;  /* usually 0x00. len() = 12 * NumVertices */
 /* 0x0014 */  int      NormTblOffset      ;  /* len() = len(VertTbl) */
@@ -263,7 +262,7 @@ typedef struct {
 /* 0x0004 */  int      Unknown1            ;  /* nullable */
 /* 0x0008 */  int      NumTriangles        ;  /* Number of triangles in model */
 /* 0x000c */  int      NumVertices         ;  /* Number of vertices in model */
-/* 0x0010 */  int      NumArts             ;  /* Number of arts */
+/* 0x0010 */  int      NumArts             ;  /* Number of arts, == 1 (FCE4: unless non-zero tex_pages are used) */
                     /* offsets from 0x2038 */
 /* 0x0014 */  int      VertTblOffset       ;  /* usually 0x0000. len() = 12 * NumVertices */
 /* 0x0018 */  int      NormTblOffset       ;  /* len() = len(VertTbl) */
@@ -393,13 +392,13 @@ Name              Description                   Damage  FallOf  UsesFlag  Light 
 :Hinterior        interior
 :Hlbrake          left brake front
 :Hrbrake          right brake front
-:Hlmirror         left mirror
-:Hrmirror         right mirror
+:Hlmirror         left mirror                   N       Y       Y         N      N          N
+:Hrmirror         right mirror                  N       Y       Y         N      N          N
 :Hscoopsmall      hood scoop small
 :Hscooplarge      hood scoop large
 :Hskirt
 :Hskirtwell
-:Hsteer           steering wheel
+:Hsteer           steering wheel                N       N       N         N      Y          N
 :Htrans           transmission (underbody)
 :Hwheelwell       wheel wells (HB)
 :Mwheelwell       wheel wells (MB)
@@ -413,7 +412,7 @@ Name              Description                   Damage  FallOf  UsesFlag  Light 
 :Htop             roof
 :Htopchop         chopped roof
 
-  FCE4M places meshes for wheels, drivers, and enhanced parts in central files.
+  FCE4M loads meshes for wheels, drivers, and enhanced parts from central files.
   They are positioned via the following dummy-parts:
 Name              Description                                         FoundIn         LinksTo
 :PPdriver                                                             *.viv/part.fce  DRIVER##.viv/part.fce
@@ -445,8 +444,9 @@ Name              Description                                         FoundIn   
 :PPwheelie        wheelie bar                                         *.viv/part.fce
 
 DRIVER##.viv/part.fce (FCE4M) - driver (## = 1-33)
-:PHdriverhead
-:PHdriver
+Name              Description     Animated
+:PHdriverhead     driver head     Y
+:PHdriver         driver          special   except flagged verts
 
 engine.viv/part.fce (FCE4M) - engine
 :PHengine
@@ -509,36 +509,36 @@ valvev8.viv/part.fce (FCE4M) -
 wheelie.viv/part.fce (FCE4M) - wheelie bar
 
 names are collections of :tags - not necessarily unique
-dash.fce                                        FallOf  UsesFlag  Light  Animated
-:F L_DM               left driver mirror        Y       Y
-:F R_DM               right driver mirror       Y       Y
-:L_PM                 left passenger mirror     Y       Y
-:R_PM                 right passenger mirror    Y       Y
-:F                    visible in front view
-:L                    visible in left  view
-:R                    visible in right view
-:B                    visible in back  view
-:B_TOP                roof
-:S                    (used on roof)
-:F_W                  steering wheel                                     Y
-:F_RPM (0.0 to 0.55)  dial                                        N      Y
-:F_MPH (0.0 to 0.55)  dial                                        N      Y
+dash.fce                                            FallOf  UsesFlag  Light  Animated
+:F L_DM                   left driver mirror        Y       Y
+:F R_DM                   right driver mirror       Y       Y
+:L_PM                     left passenger mirror     Y       Y
+:R_PM                     right passenger mirror    Y       Y
+:F                        visible in front view
+:L                        visible in left  view
+:R                        visible in right view
+:B                        visible in back  view
+:B_TOP                    roof
+:S                        (used on roof)
+:F_W                      steering wheel                                     Y
+:F_RPM (0.0 to 0.55)      dial                                        N      Y
+:F_MPH (0.0 to 0.55)      dial                                        N      Y
 
 FCE4 only:
-:R_DASH               unlit dash                                  N
-:R_LDASH              lit dash                                    Y
+:R_DASH                   unlit dash                                  N
+:R_LDASH                  lit dash                                    Y
 
 FCE4M only:
-:S_DM                 side driver mirror
-:S_PM                 side passenger mirror
-:L_W                  steering wheel
-:S_W                  steering wheel
-:F_DASH               unlit dash                                  N
-:L_DASH               unlit dash                                  N
-:F_LDASH              lit dash                                    Y
-:L_LDASH              lit dash                                    Y
-:R_MPH (0.0 to 0.55)  dial                                        N      Y
-:F_SHIFT              shifter
+:S_DM                     side driver mirror
+:S_PM                     side passenger mirror
+:L_W                      steering wheel                                     Y
+:S_W                      steering wheel                                     Y
+:F_DASH                   unlit dash                                  N
+:L_DASH                   unlit dash                                  N
+:F_LDASH                  lit dash                                    Y
+:L_LDASH                  lit dash                                    Y
+:R_MPH (0.0 to 0.55/110)  dial                                               Y
+:F_SHIFT                  shifter
 
 */
 
@@ -551,10 +551,10 @@ Valid values:
   F : "O" (Flashing at moment 1); "E" (Flashing at moment 2); "N" (No flashing)
   U : "N"  ex. corv/car.viv->car.fce, has "TRLN" and "TRLNN"
 Colors:
-HR__ : headlights, visible from rear, red
 HF__ : headlights, visible from front, white
 TR__ : taillights, visible from rear, red
-TF__ : taillights, visible from front, white
+HR__ : headlights, visible from rear, red (broken behavior)
+TF__ : taillights, visible from front, white (broken behavior)
 S_L_ : siren, red
 S_R_ : siren, blue
 Taillights and Sirens never flash. Dummies may appear differently between the

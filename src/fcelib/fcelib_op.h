@@ -22,7 +22,6 @@
   implements mesh operations
  **/
 
-
 #ifndef FCELIB_OP_H
 #define FCELIB_OP_H
 
@@ -749,6 +748,7 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
 
 #if FCECVERBOSE == 1
     fprintf(stdout, "return (new part order = %d)\n", new_pid);
+    fflush(stdout);
 #endif
   return new_pid;
 }

@@ -26,7 +26,6 @@
   added at the end.
  **/
 
-
 #ifndef FCELIB_TYPES_H
 #define FCELIB_TYPES_H
 
@@ -474,6 +473,7 @@ int FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(const FcelibMesh *mesh)
   }
 #if FCECVERBOSE == 1
     fprintf(stdout, "\n");
+    fflush(stdout);
 #endif
 
   return tidx + 1;
@@ -509,6 +509,7 @@ int FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(const FcelibMesh *mesh)
   }
 #if FCECVERBOSE == 1
     fprintf(stdout, "\n");
+    fflush(stdout);
 #endif
 
   return vidx + 1;
@@ -909,6 +910,7 @@ void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh mesh)
           mesh.hdr.DriColors[i].hue, mesh.hdr.DriColors[i].saturation,
           mesh.hdr.DriColors[i].brightness, mesh.hdr.DriColors[i].transparency);
   }
+  fflush(stdout);
 }
 
 /* Prints ref'ed global part indexes. */
@@ -929,6 +931,7 @@ void FCELIB_TYPES_PrintMeshParts(const FcelibMesh mesh)
     printf("%d, ", mesh.hdr.Parts[j]);
 
   printf("\n]\n");
+  fflush(stdout);
 }
 
 /* Prints ref'ed global triag indexes for each part. */
@@ -957,6 +960,7 @@ void FCELIB_TYPES_PrintMeshTriangles(const FcelibMesh mesh)
 
     printf("\n]\n");
   }
+  fflush(stdout);
 }
 
 /* Prints ref'ed global vert indexes for each part. */
@@ -985,6 +989,7 @@ void FCELIB_TYPES_PrintMeshVertices(const FcelibMesh mesh)
 
     printf("\n]\n");
   }
+  fflush(stdout);
 }
 
 #ifdef __cplusplus
