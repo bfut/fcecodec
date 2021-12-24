@@ -84,22 +84,10 @@ int FCELIB_MISC_CompareInts(const void *a, const void *b)
 
 float FCELIB_MISC_Abs(const float a)
 {
-#if 0
   if (a < 0)
     return -a;
   else
     return a;
-#else
-#ifdef __cplusplus
-#include <cmath>
-  return std::abs(a);
-#else
-  if (a < 0)
-    return -a;
-  else
-    return a;
-#endif  /* __cplusplus */
-#endif
 }
 
 int FCELIB_MISC_Min(const int a, const int b)
