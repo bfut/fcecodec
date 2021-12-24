@@ -1,8 +1,5 @@
 """
-  ci-smoketest.py - smoke-testing extension module
-
-  This file is distributed under: CC BY-SA 4.0
-      <https://creativecommons.org/licenses/by-sa/4.0/>
+  ci-smoketest.py - smoke-testing fcecodec Python extension module
 """
 import os
 import pathlib

@@ -1,27 +1,31 @@
 """
-    fcecodecScriptTemplate.py - description
+  fcecodecDebugScriptTemplate.py - description
 
-HOW TO USE
-    python fcecodecScriptTemplate.py /path/to/model.fce
-
-REQUIRES
-    installing <https://github.com/bfut/fcecodec>
-
-LICENSE
-    This file is in the PUBLIC DOMAIN.
+  This file is distributed under: CC BY 4.0
+      <https://creativecommons.org/licenses/by/4.0>
 """
 CONFIG = {
     "fce_version"  : 'keep',  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
     "center_parts" : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
 }
 import argparse
+import os
 import pathlib
 import sys
 import numpy as np
 
 script_path = pathlib.Path(__file__).parent
 
-import fcecodec
+# Look for local build, if not installed
+try:
+    import fcecodec
+except ModuleNotFoundError:
+    import sys
+    p = pathlib.Path(script_path / "../python/build")
+    print(p)
+    for x in p.glob("**"):
+        sys.path.append(str(x.resolve()))
+    import fcecodec
 
 # Parse command (or print module help)
 parser = argparse.ArgumentParser()

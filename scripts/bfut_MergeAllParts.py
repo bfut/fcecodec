@@ -1,10 +1,14 @@
 """
   bfut_MergeAllParts.py - merge all parts, keep FCE version
 
-REQUIRES: installing <https://github.com/bfut/fcecodec>
+HOW TO USE
+    python bfut_MergeAllParts.py /path/to/model.fce
 
-LICENSE:
-  Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
+REQUIRES
+    installing <https://github.com/bfut/fcecodec>
+
+LICENSE
+  Copyright (C) 2021 Benjamin Futasz <https://github.com/bfut>
   This file is distributed under: CC BY-NC 4.0
       <https://creativecommons.org/licenses/by-sa/4.0/>
 """
@@ -13,9 +17,7 @@ CONFIG = {
     "center_parts" : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
 }
 import argparse
-import os
 import pathlib
-import sys
 
 import fcecodec
 

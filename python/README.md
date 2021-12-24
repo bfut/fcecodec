@@ -20,6 +20,8 @@ Installing the `Anaconda` distribution, `bash`, and `git` is recommended.
 Once these prerequisites have been met, installation generally works as
 described above.
 
+`Note: Instead of installing on Windows itself, you can run fcecodec in the Windows Subsystem for Linux.`
+
 ## Examples
 For a script template and handy function wrappers, see
 [/scripts/fcecodecScriptTemplate.py](/scripts/fcecodecScriptTemplate.py) and
@@ -162,6 +164,16 @@ CLASSES
      |  
      |  MValid(...)
      |      MValid(self: fcecodec.Mesh) -> bool
+     |  
+     |  OpAddHelperPart(...)
+     |      OpAddHelperPart(self: fcecodec.Mesh, name: str, new_center: List[float[3]] = [0.0, 0.0, 0.0]) -> int
+     |      
+     |      Add diamond-shaped part at coordinate origin or at optionally given position.
+     |  
+     |  OpAddHelperPart_numpy(...)
+     |      OpAddHelperPart_numpy(self: fcecodec.Mesh, name: str, new_center: numpy.ndarray[numpy.float32] = [0.0, 0.0, 0.0]) -> int
+     |      
+     |      Add diamond-shaped part at coordinate origin or at optionally given position.
      |  
      |  OpCenterPart(...)
      |      OpCenterPart(self: fcecodec.Mesh, pid: int) -> bool

@@ -2,36 +2,35 @@
 `fcecodec` is a Python extension module that decodes, encodes, and operates on
 (modifies) FCE data. FCE is a geometry definition file format.
 
-With Python, this allows importing / exporting raw geometry data using modern
-methods.
+[/scripts](/scripts) contains some ready-to-use scripts (Obj2Fce, Fce2Obj,
+PrintFceInfo, etc.).<br/>
+[/scripts/doc_Obj2Fce.MD](/scripts/doc_Obj2Fce.MD) is a tutorial for preparing
+OBJ/MTL files for conversion to finished FCE.
+
+Try a basic example:
+[fcecodec-example.ipynb](https://colab.research.google.com/github/bfut/notebooks/blob/main/fcecodec/fcecodec-example.ipynb)
+[![fcecodec-example.ipynb](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bfut/notebooks/blob/main/fcecodec/fcecodec-example.ipynb)
 
 The Python extension module is based on a header-only library written in C89.
-Python bindings are written in C++ (pybind11).
+Python bindings are written in C++ (pybind11). Supported on Windows and Linux.
+Tested on macOS.
 
 ## Features
 * full FCE implementation
 * Io: supported format versions: FCE3, FCE4, FCE4M
 * Io: transparently decodes/encodes
-* Io: cleanly encodes FCE binary data from the ground up
 * Io: imports raw geometry data
 * Io: exports to Wavefront OBJ
 * Io: optionally center parts on FCE encoding
 * Get/Set: exposes raw geometry data (vertices, normals, triangles, texcoords)
-* Get/Set: exposes attributes (vertex animation flags, triangle flags, colors, dummies (fx/light objects), etc.)
+* Get/Set: exposes attributes (triangle flags, texpages, vert animation flags, colors, dummies, etc.)
 * Operation: inserts part from another mesh
 * Operations: changes part order, copies part, merges parts, deletes part
 * Operation: deletes triangles, vertices
-* Stats: prints Mesh info (e.g., number of triangles & vertices, colors, part positions, etc.)
-* Stats: prints FCE binary data info (e.g., format version, half sizes, number of triangles & vertices, colors, part positions, etc.)
+* Stats: prints Mesh info
+* Stats: prints FCE binary data info
 * Validate: validates FCE binary data
 * Python: numpy integration for most functions
-
-## Usage
-The main purpose of this software is ease of use.
-Ready-to-use scripts can be found in [/scripts](/scripts)
-
-There is a tutorial for converting OBJ/MTL files to FCE at
-[/scripts/doc_Obj2Fce.MD](/scripts/doc_Obj2Fce.MD)
 
 ## Installation / Documentation
 Python extension module: [_/python/README.md_](/python/README.md)<br/>

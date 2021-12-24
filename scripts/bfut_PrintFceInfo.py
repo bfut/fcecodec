@@ -1,17 +1,18 @@
 """
-  bfut_PrintFceStats.py - print given FCE file stats to console
+    bfut_PrintFceInfo.py - print given FCE file stats to console
 
-REQUIRES: installing <https://github.com/bfut/fcecodec>
+HOW TO USE
+    python bfut_PrintFceInfo.py /path/to/model.fce
 
-LICENSE:
-  Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
-  This file is distributed under: CC BY-NC 4.0
-      <https://creativecommons.org/licenses/by-sa/4.0/>
+REQUIRES
+    installing <https://github.com/bfut/fcecodec>
+
+LICENSE
+    Copyright (C) 2021 Benjamin Futasz <https://github.com/bfut>
+    This file is distributed under: CC BY-NC 4.0
+        <https://creativecommons.org/licenses/by-sa/4.0/>
 """
 import argparse
-import os
-import pathlib
-import sys
 
 import fcecodec
 

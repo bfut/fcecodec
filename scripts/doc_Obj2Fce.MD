@@ -6,6 +6,7 @@ The latest version of this tutorial can be found [here](https://github.com/bfut/
 The following files can be found in [_/scripts_](https://github.com/bfut/fcecodec/tree/main/scripts)
 
 ```
+bfut_Fce2Obj.py
 bfut_Obj2Fce3 (material to triagflag).py
 bfut_Obj2Fce3 (material to triagflag, material to texpage).py
 bfut_Obj2Fce4 (material to triagflag).py
@@ -23,20 +24,20 @@ bfut_Obj2Fce4M (do not center parts, material to triagflag, material to texpage)
 ## How to use
 Run one of the script versions in a terminal
 
-    python <bfut_Obj2Fce*.py> /path/to/input.obj
+    python <bfut_Obj2Fce*.py> /path/to/model.obj
 
 ## Prerequisites
 Install _fcecodec_ from https://github.com/bfut/fcecodec<br/>
+Install _numpy_ from https://numpy.org/install<br/>
 Install _tinyobjloader_ from https://github.com/tinyobjloader/tinyobjloader/tree/master/python
 
 ## Introduction
-You can create an on-the-hands OBJ example that showcases some of the herein
-discussed concepts, with (see [_/scripts_](https://github.com/bfut/fcecodec/tree/main/scripts))
+Create an OBJ example that showcases some of the herein discussed concepts, with
 
-    python bfut_Fce2Obj.py /path/to/input.fce
+    python bfut_Fce2Obj.py /path/to/model.fce
 
-FCE4 and FCE4M are very similar, although there are some important differences.
-Not all of these differences are addressed at this time.
+FCE4 and FCE4M are very similar to each other, although there are some important
+differences. Not all of these differences are addressed at this time.
 
 Hint for coders: Once imported, it is possible to change all of the discussed
 properties (in fact almost all FCE properties) using `fcecodec` functions.
@@ -45,7 +46,7 @@ properties (in fact almost all FCE properties) using `fcecodec` functions.
 
     <partname>
 
-In FCE4, only the part name defines a part's role (e.g., FCE4 high
+In FCE4 and FCE4M, only the part name defines a part's role (e.g., FCE4 high
 body must be called `:HB`).
 
 In FCE3, only the part order defines a part's role and its name can
@@ -88,17 +89,21 @@ all parts (not recommended).
     <partname>
     ANIMATED_##_<partname>
 
-For `:OD` driver animation, vertices are either movable or immovable. To set
-movable verts, they have to be enclosed within at least one cuboid helper part
-`ANIMATED_##_<partname>`, where # is a digit 0-9. See screenshot below.
+(FCE4) `:OD`<br/>
+(FCE4M) `:PHdriver`
+
+For driver animation, vertices are either movable or immovable.
+To set movable verts, they have to be enclosed within at least one cuboid helper
+part `ANIMATED_##_<partname>`, where # is a digit 0-9. See screenshot below.
 
 Helper part names must not be identical, hence the digits.
 
 Default behavior if no helper part is found: all vertices for this part are
 movable.
 
-(FCE4) Vertice animation flags do not seem to have any visible effect on wheels,
-front brakes, driver head, and movable spoiler.
+Vertice animation flags do not seem to have any visible effect on any of the
+other animated parts (wheels, front brakes, driver head, movable spoiler,
+and everything dash.fce).
 
 ![vert animation flag](../assets/fcecodec_handle_vertices_animation_flags.png)
 
@@ -110,7 +115,7 @@ To create dummy `<dummyname>`, create a helper part called
 `DUMMY_##_<dummyname>`, where # is a digit 0-9. The part centroid will be the
 dummy position. Only the part name and its centroid are significant.
 
-Helper part names must not be identical, hence the digits. Dummynames can be
+Helper part names must not be identical, hence the digits. `<Dummynames>` can be
 identical.
 
 For dummynames and their effects, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
@@ -136,12 +141,12 @@ elements that are not tags.
 | no cull               | \_FNOC\_ |     0x004 |         all |
 | semi-transparent      | \_FSET\_ |     0x008 |         all |
 | ? (unknown 1)         | \_FUN1\_ |     0x010 |           ? |
-| all windows           | \_FALW\_ |     0x020 |        FCE4 |
-| front window          | \_FFRW\_ |     0x040 |        FCE4 |
-| left window           | \_FLEW\_ |     0x080 |        FCE4 |
-| back window           | \_FBAW\_ |     0x100 |        FCE4 |
-| right window          | \_FRIW\_ |     0x200 |        FCE4 |
-| broken window         | \_FBRW\_ |     0x400 |        FCE4 |
+| all windows           | \_FALW\_ |     0x020 |  FCE4/FCE4M |
+| front window          | \_FFRW\_ |     0x040 |  FCE4/FCE4M |
+| left window           | \_FLEW\_ |     0x080 |  FCE4/FCE4M |
+| back window           | \_FBAW\_ |     0x100 |  FCE4/FCE4M |
+| right window          | \_FRIW\_ |     0x200 |  FCE4/FCE4M |
+| broken window         | \_FBRW\_ |     0x400 |  FCE4/FCE4M |
 | ? (unknown 2)         | \_FUN2\_ |     0x800 |           ? |
 
 Example: A non-broken window on the left side in FCE4 may have triangle
@@ -160,12 +165,12 @@ The visible in-game effect is the same when an integer that is greater or
 equal than `0x1000` is added. For example, `0x0AE + 0xB3000` is equal to
 `0xB30AE`, which again ticks the high chrome, no cull,
 semi-transparent, all windows, left window triangle flags.
-Hex value `0xB3000` has the same visible in-game effect as `0x000`.
+Hex value `0xB3000` should have the same visible in-game effect as `0x000`.
 
 (FCE4M) The above values are identical. Additionally, FCE4M introduced damage
-textures that are assigned using triangle flags, using new values and also using
-multiple texture pages. The specifics are out of the scope of this tutorial at
-this time.
+textures that are assigned using triangle flags, using new values combined with
+using multiple texture pages.
+The specifics are out of the scope of this tutorial at this time.
 
 For more details, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
 
@@ -174,7 +179,7 @@ This functionality is offered in the `material to texpage` scripts.
 
 Similarly to triangle flags, in FCE, each triangle is assigned a texture page,
 which is a positive integer value.
-The `Obj2Fce` converter scripts looks for and uses the first tag in a material
+The `Obj2Fce` converter scripts look for and use the first tag in a material
 name that fits the below scheme.
 
 A texture page tag and triangle flag tags can both be present in a material
@@ -193,5 +198,6 @@ tag `_T4_` to the material name.
 
 ## Information
 __Obj2Fce License:__ zlib License<br/>
+__Fce2Obj License:__ zlib License<br/>
 __fcecodec License:__ GNU General Public License v3.0+<br/>
 __Website:__ <https://github.com/bfut/fcecodec>

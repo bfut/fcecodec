@@ -1,10 +1,19 @@
 """
-  bfut_Fce2Obj.py - export given FCE file to OBJ/MTL files in FCE file directory, with triangles flag hex value as materials name
+    bfut_Fce2Obj.py
 
-REQUIRES    installing <https://github.com/bfut/fcecodec>
+DESCRIPTION
+    export given FCE file to OBJ/MTL files in FCE file directory,
+    with triangles flag hex values as materials names
+
+HOW TO USE
+    python bfut_Fce2Obj.py /path/to/model.obj
+
+REQUIRES
+    installing <https://github.com/bfut/fcecodec>
 
 LICENSE
     Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
+    This file is distributed under: zlib License
 
     This software is provided 'as-is', without any express or implied
     warranty.  In no event will the authors be held liable for any damages
@@ -25,7 +34,6 @@ LICENSE
 import argparse
 import os
 import pathlib
-import sys
 
 import fcecodec
 

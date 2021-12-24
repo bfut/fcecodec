@@ -3,7 +3,15 @@
 
 DESCRIPTION
     import OBJ file using tinyobjloader, export as FCE file using fcecodec
+
+    make sure the OBJ has valid links to its MTL materials file
     all faces must be triangles
+
+HOW TO USE
+    python 'bfut_Obj2Fce3 (do not center parts, material to triagflag).py' /path/to/model.obj
+
+TUTORIAL
+    check <doc_Obj2Fce.MD> in fcecodec/scripts/
 
 REQUIRES
     installing fcecodec <https://github.com/bfut/fcecodec>
@@ -12,6 +20,7 @@ REQUIRES
 
 LICENSE
     Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
+    This file is distributed under: zlib License
 
     This software is provided 'as-is', without any express or implied
     warranty.  In no event will the authors be held liable for any damages
