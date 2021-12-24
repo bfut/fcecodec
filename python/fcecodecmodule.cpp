@@ -147,6 +147,8 @@ class Mesh : public fcelib::FcelibMesh {
     void MSetVertsAnimation_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> arr);
 
     /* Operations */
+    int OpAddHelperPart(const std::string &s, std::array<float, 3> &new_center);
+    int OpAddHelperPart_numpy(const std::string &s, py::array_t<float, py::array::c_style | py::array::forcecast> new_center);
     bool OpCenterPart(const int pid);
     bool OpSetPartCenter(const int pid, std::array<float, 3> &new_center);
     bool OpSetPartCenter_numpy(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> new_center);
@@ -1520,6 +1522,41 @@ void Mesh::MSetVertsAnimation_numpy(py::array_t<int, py::array::c_style | py::ar
 
 /* mesh: operations ----------------- */
 
+int Mesh::OpAddHelperPart(const std::string &s, std::array<float, 3> &new_center)
+{
+  const int pid_new = FCELIB_AddHelperPart(&mesh_);
+  if (pid_new < 0)
+    throw std::runtime_error("OpAddHelperPart: Cannot add helper part");
+  if (fcelib::FCELIB_SetPartCenter(&mesh_, pid_new, new_center.data()) == 0)
+    throw std::runtime_error("OpAddHelperPart:");
+  const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid_new);
+  if (idx < 0)
+    throw std::out_of_range("OpAddHelperPart: part index (pid) out of range");
+  std::strncpy(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName, s.c_str(),
+               sizeof(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName) - 1);  // max 63 chars
+  return pid_new;
+}
+
+int Mesh::OpAddHelperPart_numpy(const std::string &s, py::array_t<float, py::array::c_style | py::array::forcecast> new_center)
+{
+  const int pid_new = FCELIB_AddHelperPart(&mesh_);
+  if (pid_new < 0)
+    throw std::runtime_error("OpAddHelperPart: Cannot add helper part");
+  py::buffer_info buf = new_center.request();
+  if (buf.ndim != 1)
+    throw std::runtime_error("OpAddHelperPart: Number of dimensions must be 1");
+  if (buf.shape[0] != 3)
+    throw std::runtime_error("OpAddHelperPart: Shape must be (3, )");
+  if (fcelib::FCELIB_SetPartCenter(&mesh_, pid_new, static_cast<float *>(buf.ptr)) == 0)
+    throw std::runtime_error("OpAddHelperPart:");
+  const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid_new);
+  if (idx < 0)
+    throw std::out_of_range("OpAddHelperPart: part index (pid) out of range");
+  std::strncpy(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName, s.c_str(),
+               sizeof(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName) - 1);  // max 63 chars
+  return pid_new;
+}
+
 bool Mesh::OpCenterPart(const int pid)
 {
   if (pid > mesh_.hdr.NumParts || pid < 0)
@@ -1540,9 +1577,9 @@ bool Mesh::OpSetPartCenter_numpy(const int pid, py::array_t<float, py::array::c_
     throw std::out_of_range("OpSetPartCenter: part index (pid) out of range");
   py::buffer_info buf = new_center.request();
   if (buf.ndim != 1)
-    throw std::runtime_error("Number of dimensions must be 1");
+    throw std::runtime_error("OpSetPartCenter: Number of dimensions must be 1");
   if (buf.shape[0] != 3)
-    throw std::runtime_error("Shape must be (3, )");
+    throw std::runtime_error("OpSetPartCenter: Shape must be (3, )");
   return fcelib::FCELIB_SetPartCenter(&mesh_, pid, static_cast<float *>(buf.ptr));
 }
 
@@ -1710,6 +1747,8 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def_property("MVertsAnimation", &Mesh::MGetVertsAnimation, &Mesh::MSetVertsAnimation, R"pbdoc( Returns (N, ) array for N vertices. )pbdoc")
     .def_property("MVertsAnimation_numpy", &Mesh::MGetVertsAnimation_numpy, &Mesh::MSetVertsAnimation_numpy, R"pbdoc( Returns (N, ) numpy array for N vertices. )pbdoc")
 
+    .def("OpAddHelperPart", &Mesh::OpAddHelperPart, py::arg("name"), py::arg("new_center") = std::array<float, 3>({0.0f, 0.0f, 0.0f}), R"pbdoc( Add diamond-shaped part at coordinate origin or at optionally given position. )pbdoc")
+    .def("OpAddHelperPart_numpy", &Mesh::OpAddHelperPart_numpy, py::arg("name"), py::arg("new_center") = std::array<float, 3>({0.0f, 0.0f, 0.0f}), R"pbdoc( Add diamond-shaped part at coordinate origin or at optionally given position. )pbdoc")
     .def("OpCenterPart", &Mesh::OpCenterPart, py::arg("pid"), R"pbdoc( Center specified part to local centroid. Does not move part w.r.t. to global coordinates. )pbdoc")
     .def("OpSetPartCenter", &Mesh::OpSetPartCenter, py::arg("pid"), py::arg("new_center"), R"pbdoc( Center specified part to given position. Does not move part w.r.t. to global coordinates. )pbdoc")
     .def("OpSetPartCenter_numpy", &Mesh::OpSetPartCenter_numpy, py::arg("pid"), py::arg("new_center"), R"pbdoc( Center specified part to given position. Does not move part w.r.t. to global coordinates. )pbdoc")

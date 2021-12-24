@@ -88,6 +88,11 @@ int FCELIB_ValidateMesh(FcelibMesh mesh)
 
 /* mesh: operations --------------------------------------------------------- */
 
+int FCELIB_AddHelperPart(FcelibMesh *mesh)
+{
+  return FCELIB_OP_AddHelperPart(mesh);
+}
+
 int FCELIB_CenterPart(FcelibMesh *mesh, const int idx)
 {
   return FCELIB_OP_CenterPart(mesh, idx);

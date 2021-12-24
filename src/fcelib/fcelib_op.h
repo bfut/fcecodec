@@ -30,6 +30,8 @@
 #include <string.h>
 
 #include "fcelib_fcetypes.h"
+#include "fcelib_io.h"  /* FCELIB_IO_GeomDataToNewPart */
+#include "fcelib_misc.h"  /* kTrianglesDiamond, kVertDiamond */
 #include "fcelib_types.h"
 
 #ifdef __cplusplus
@@ -41,6 +43,24 @@ extern "C" {
 #endif
 
 /* mesh --------------------------------------------------------------------- */
+
+/* Auxiliary operation.
+   Returns new part index (order) on success, -1 on failure. */
+int FCELIB_OP_AddHelperPart(FcelibMesh *mesh)
+{
+  int i;
+  int vert_idxs[8 * 3];
+  float vert_texcoords[2 * 8 * 3];
+  memcpy(vert_idxs, kTrianglesDiamond, sizeof(kTrianglesDiamond));
+  for(i = 0; i < 8 * 3; ++i)
+    --vert_idxs[i];
+  memset(vert_texcoords, 0, sizeof(vert_texcoords));
+  return FCELIB_IO_GeomDataToNewPart(mesh,
+                                     vert_idxs, 8 * 3,
+                                     vert_texcoords, 2 * 8 * 3,
+                                     (float *)kVertDiamond, 6 * 3,
+                                     (float *)kVertDiamond, 6 * 3);
+}
 
 /* Center specified part around local centroid.
    Does not move part w.r.t. to global coordinates */

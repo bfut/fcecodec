@@ -82,20 +82,20 @@ int FCELIB_MISC_CompareInts(const void *a, const void *b)
   return (arg1 > arg2) - (arg1 < arg2);
 }
 
-float FCELIB_MISC_Abs(const float a)
-{
-  if (a < 0)
-    return -a;
-  else
-    return a;
-}
-
 int FCELIB_MISC_Min(const int a, const int b)
 {
   if (a < b)
     return a;
   else
     return b;
+}
+
+float FCELIB_MISC_Abs(const float a)
+{
+  if (a < 0)
+    return -a;
+  else
+    return a;
 }
 
 /* Returns -100 on failure. */
