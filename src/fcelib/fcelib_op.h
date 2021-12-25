@@ -51,15 +51,21 @@ int FCELIB_OP_AddHelperPart(FcelibMesh *mesh)
   int i;
   int vert_idxs[8 * 3];
   float vert_texcoords[2 * 8 * 3];
+  float vert_pos[6 * 3];
+
   memcpy(vert_idxs, kTrianglesDiamond, sizeof(kTrianglesDiamond));
   for(i = 0; i < 8 * 3; ++i)
     --vert_idxs[i];
   memset(vert_texcoords, 0, sizeof(vert_texcoords));
+  memcpy(vert_pos, kVertDiamond, sizeof(kVertDiamond));
+  for(i = 0; i < 6 * 3; ++i)
+    vert_pos[i] *= 0.1f;
+
   return FCELIB_IO_GeomDataToNewPart(mesh,
                                      vert_idxs, 8 * 3,
                                      vert_texcoords, 2 * 8 * 3,
-                                     (float *)kVertDiamond, 6 * 3,
-                                     (float *)kVertDiamond, 6 * 3);
+                                     vert_pos, 6 * 3,
+                                     vert_pos, 6 * 3);
 }
 
 /* Center specified part around local centroid.
@@ -84,7 +90,7 @@ int FCELIB_OP_CenterPart(FcelibMesh *mesh, const int idx)
     }
 
     part = mesh->parts[ mesh->hdr.Parts[internal_idx] ];
-    FCELIB_TYPES_GetPartLocalCentroid(mesh, part, &centroid);
+    FCELIB_TYPES_GetPartCentroid(mesh, part, &centroid);
     FCELIB_TYPES_ResetPartCenter(mesh, part, centroid);
 
     retv = 1;

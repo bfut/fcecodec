@@ -1527,8 +1527,7 @@ int Mesh::OpAddHelperPart(const std::string &s, std::array<float, 3> &new_center
   const int pid_new = FCELIB_AddHelperPart(&mesh_);
   if (pid_new < 0)
     throw std::runtime_error("OpAddHelperPart: Cannot add helper part");
-  if (fcelib::FCELIB_SetPartCenter(&mesh_, pid_new, new_center.data()) == 0)
-    throw std::runtime_error("OpAddHelperPart:");
+  Mesh::PSetPos(pid_new, new_center);
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid_new);
   if (idx < 0)
     throw std::out_of_range("OpAddHelperPart: part index (pid) out of range");
@@ -1542,13 +1541,7 @@ int Mesh::OpAddHelperPart_numpy(const std::string &s, py::array_t<float, py::arr
   const int pid_new = FCELIB_AddHelperPart(&mesh_);
   if (pid_new < 0)
     throw std::runtime_error("OpAddHelperPart: Cannot add helper part");
-  py::buffer_info buf = new_center.request();
-  if (buf.ndim != 1)
-    throw std::runtime_error("OpAddHelperPart: Number of dimensions must be 1");
-  if (buf.shape[0] != 3)
-    throw std::runtime_error("OpAddHelperPart: Shape must be (3, )");
-  if (fcelib::FCELIB_SetPartCenter(&mesh_, pid_new, static_cast<float *>(buf.ptr)) == 0)
-    throw std::runtime_error("OpAddHelperPart:");
+  Mesh::PSetPos_numpy(pid_new, new_center);
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid_new);
   if (idx < 0)
     throw std::out_of_range("OpAddHelperPart: part index (pid) out of range");

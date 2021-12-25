@@ -3,9 +3,9 @@
 (modifies) FCE data. FCE is a geometry definition file format.
 
 [/scripts](/scripts) contains some ready-to-use scripts (Obj2Fce, Fce2Obj,
-PrintFceInfo, etc.).<br/>
+PrintFceInfo, etc.)<br/>
 [/scripts/doc_Obj2Fce.MD](/scripts/doc_Obj2Fce.MD) is a tutorial for preparing
-OBJ/MTL files for conversion to finished FCE.
+OBJ/MTL files for conversion to finished FCE
 
 Try a basic example:
 [fcecodec-example.ipynb](https://colab.research.google.com/github/bfut/notebooks/blob/main/fcecodec/fcecodec-example.ipynb)
@@ -19,9 +19,10 @@ Tested on macOS.
 * full FCE implementation
 * Io: supported format versions: FCE3, FCE4, FCE4M
 * Io: transparently decodes/encodes
+* Io: optionally center parts on FCE encoding
 * Io: imports raw geometry data
 * Io: exports to Wavefront OBJ
-* Io: optionally center parts on FCE encoding
+* Scripts: converts Wavefront OBJ to finished FCE
 * Get/Set: exposes raw geometry data (vertices, normals, triangles, texcoords)
 * Get/Set: exposes attributes (triangle flags, texpages, vert animation flags, colors, dummies, etc.)
 * Operation: inserts part from another mesh

@@ -450,13 +450,13 @@ int FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(const FcelibMesh *mesh)
   int i;
   FcelibPart *part;
 
-#if FCECVERBOSE == 1
+#if FCECVERBOSE >= 1
     fprintf(stdout, "GetFirstUnusedGlobalTriangleIdx: ");
 #endif
 
   /* Get internally last part (has internally last verts) */
   i = FCELIB_MISC_ArrMax(mesh->hdr.Parts, mesh->parts_len);
-#if FCECVERBOSE == 1
+#if FCECVERBOSE >= 1
     fprintf(stdout, "first unused triag index in part... %d", i);
 #endif
 
@@ -464,14 +464,14 @@ int FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(const FcelibMesh *mesh)
   if (i >= 0)
   {
     part = mesh->parts[i];
-#if FCECVERBOSE == 1
+#if FCECVERBOSE >= 1
     fprintf(stdout, " %s (%d)", part->PartName, part->ptriangles_len);
 #endif
 
     if (part->ptriangles_len > 0)
       tidx = FCELIB_MISC_ArrMax(part->PTriangles, part->ptriangles_len);
   }
-#if FCECVERBOSE == 1
+#if FCECVERBOSE >= 1
     fprintf(stdout, "\n");
     fflush(stdout);
 #endif
@@ -486,13 +486,13 @@ int FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(const FcelibMesh *mesh)
   int i;
   FcelibPart *part;
 
-#if FCECVERBOSE == 1
+#if FCECVERBOSE >= 1
     fprintf(stdout, "GetFirstUnusedGlobalVertexIdx: ");
 #endif
 
   /* Get internally last part (has internally last verts) */
   i = FCELIB_MISC_ArrMax(mesh->hdr.Parts, mesh->parts_len);
-#if FCECVERBOSE == 1
+#if FCECVERBOSE >= 1
     fprintf(stdout, "first unused vert index in part... %d", i);
 #endif
 
@@ -500,14 +500,14 @@ int FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(const FcelibMesh *mesh)
   if (i >= 0)
   {
     part = mesh->parts[i];
-#if FCECVERBOSE == 1
+#if FCECVERBOSE >= 1
     fprintf(stdout, " %s (%d)", part->PartName, part->pvertices_len);
 #endif
 
     if (part->pvertices_len > 0)
       vidx = FCELIB_MISC_ArrMax(part->PVertices, part->pvertices_len);
   }
-#if FCECVERBOSE == 1
+#if FCECVERBOSE >= 1
     fprintf(stdout, "\n");
     fflush(stdout);
 #endif
@@ -730,7 +730,7 @@ void FCELIB_TYPES_VertAddPosition(FcelibVertex *vert, const tVector *pos)
   vert->DamgdNormPos.z += pos->z;
 }
 
-int FCELIB_TYPES_GetPartLocalCentroid(FcelibMesh *mesh, FcelibPart *part, tVector *centroid)
+int FCELIB_TYPES_GetPartCentroid(FcelibMesh *mesh, FcelibPart *part, tVector *centroid)
 {
   int retv = 0;
   int i;
@@ -741,6 +741,12 @@ int FCELIB_TYPES_GetPartLocalCentroid(FcelibMesh *mesh, FcelibPart *part, tVecto
   const int PNumVertices = part->PNumVertices;
   FcelibVertex *vert;
   int count_verts = 0;
+
+#if FCECVERBOSE >= 1
+  fprintf(stdout, "FCELIB_TYPES_GetPartCentroid:\n");
+  fprintf(stdout, "<%s> partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
+  fprintf(stdout, "PNumVertices: %d\n", PNumVertices);
+#endif
 
   for (;;)
   {
@@ -775,30 +781,48 @@ int FCELIB_TYPES_GetPartLocalCentroid(FcelibMesh *mesh, FcelibPart *part, tVecto
       x_arr[count_verts] = vert->VertPos.x + part->PartPos.x;
       y_arr[count_verts] = vert->VertPos.y + part->PartPos.y;
       z_arr[count_verts] = vert->VertPos.z + part->PartPos.z;
+#if FCECVERBOSE >= 2
+      fprintf(stdout, "%d: %f = %f + %f\n", count_verts, x_arr[count_verts], vert->VertPos.x, part->PartPos.x);
+      fprintf(stdout, "%d: %f = %f + %f\n", count_verts, y_arr[count_verts], vert->VertPos.y, part->PartPos.y);
+      fprintf(stdout, "%d: %f = %f + %f\n", count_verts, z_arr[count_verts], vert->VertPos.z, part->PartPos.z);
+      fprintf(stdout, "\n");
+#endif
 
       ++count_verts;
     }
+#if FCECVERBOSE >= 1
+    fprintf(stdout, "count_verts: %d\n", count_verts);
+#endif
 
     qsort(x_arr, (size_t)count_verts, sizeof(*x_arr), FCELIB_MISC_CompareFloats);
     qsort(y_arr, (size_t)count_verts, sizeof(*y_arr), FCELIB_MISC_CompareFloats);
     qsort(z_arr, (size_t)count_verts, sizeof(*z_arr), FCELIB_MISC_CompareFloats);
-
+#if FCECVERBOSE >= 1
+    fprintf(stdout, "<%s> min: (%f, %f, %f) max: (%f, %f, %f)\n", part->PartName, x_arr[0], y_arr[0], z_arr[0], x_arr[count_verts - 1], y_arr[count_verts - 1], z_arr[count_verts - 1]);
+#endif
     centroid->x = 0.5f * FCELIB_MISC_Abs(x_arr[count_verts - 1] - x_arr[0]) + x_arr[0];
     centroid->y = 0.5f * FCELIB_MISC_Abs(y_arr[count_verts - 1] - y_arr[0]) + y_arr[0];
     centroid->z = 0.5f * FCELIB_MISC_Abs(z_arr[count_verts - 1] - z_arr[0]) + z_arr[0];
+#if FCECVERBOSE >= 1
+    fprintf(stdout, "centroid->x: %f (%f, %f)\n", centroid->x, x_arr[count_verts - 1], x_arr[0]);
+    fprintf(stdout, "centroid->y: %f (%f, %f)\n", centroid->y, y_arr[count_verts - 1], y_arr[0]);
+    fprintf(stdout, "centroid->z: %f (%f, %f)\n", centroid->z, z_arr[count_verts - 1], z_arr[0]);
+#endif
+
+    free(xyz_arr);
+    x_arr = NULL;
+    y_arr = NULL;
+    z_arr = NULL;
 
     retv = 1;
     break;
   }
 
-  if (xyz_arr)
-  {
-    free(xyz_arr);
-    x_arr = NULL;
-    y_arr = NULL;
-    z_arr = NULL;
-  }
-
+#if FCECVERBOSE >= 1
+  fprintf(stdout, "centroid: (%f, %f, %f)\n", centroid->x, centroid->y, centroid->z);
+  fprintf(stdout, "return %d\n", retv);
+  fflush(stdout);
+#endif
   return retv;
 }
 
