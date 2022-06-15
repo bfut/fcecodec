@@ -39,7 +39,7 @@ import fcecodec
 
 # Parse command (or print module help)
 parser = argparse.ArgumentParser()
-parser.add_argument("cmd", nargs='+', help="path")
+parser.add_argument("cmd", nargs="+", help="path")
 args = parser.parse_args()
 
 filepath_fce_input = pathlib.Path(args.cmd[0])
@@ -47,12 +47,11 @@ output_path_stem = pathlib.Path(filepath_fce_input.parent / filepath_fce_input.s
 filepath_obj_output = output_path_stem.with_suffix(".obj")
 filepath_mtl_output = output_path_stem.with_suffix(".mtl")
 
-
-# --------------------------------------
 CONFIG = {
-    "objtexname"    : filepath_fce_input.stem + "00.png",  # texture file path in MTL file
-    "print_damage"  : 1,  # prints parts damage model to extra shapes named DAMAGE_<partname> (only relevant for FCE4, FCE4M)
-    "print_dummies" : 1,  # prints extra shapes named DUMMY_##_<dummyname> for each dummy, centered around dummy position
+    "objtexname"         : filepath_fce_input.stem + "00.png",  # texture file path in MTL file
+    "print_damage"       : 1,  # prints parts damage model to shapes named DAMAGE_<partname> (relevant for FCE4, FCE4M)
+    "print_dummies"      : 1,  # prints shapes named DUMMY_##_<dummyname> for each dummy, centered on dummy position
+    "use_part_positions" : 1,
 }
 
 
@@ -60,27 +59,35 @@ CONFIG = {
 def LoadFce(mesh, path):
     with open(path, "rb") as f:
         fce_buf = f.read()
-    assert(fcecodec.ValidateFce(fce_buf) == 1)
+    assert fcecodec.ValidateFce(fce_buf) == 1
     mesh.IoDecode(fce_buf)
-    assert(mesh.MValid() == True)
+    assert mesh.MValid() is True
     return mesh
 
-def ExportObj(mesh, objpath, mtlpath, texname, print_damage, print_dummies):
-    # print("IoExportObj(", mesh, objpath, mtlpath, texname, print_damage, print_dummies, ")")
-    mesh.IoExportObj(str(objpath), str(mtlpath), str(texname), print_damage, print_dummies)
+def ExportObj(mesh, objpath, mtlpath, texname, print_damage, print_dummies,
+              use_part_positions):
+    mesh.IoExportObj(str(objpath), str(mtlpath), str(texname), print_damage,
+                     print_dummies, use_part_positions)
 
 
-# -------------------------------------- workload
-if CONFIG["print_damage"] == 1:
-    print("printing parts damage model to extra shapes")
-if CONFIG["print_dummies"] == 1:
-    print("printing extra shapes for each dummy")
-mesh = fcecodec.Mesh()
-mesh = LoadFce(mesh, filepath_fce_input)
-os.chdir(filepath_obj_output.parent)
-print(flush=True)
-ExportObj(mesh,
-          filepath_obj_output.name, filepath_mtl_output.name, CONFIG["objtexname"],
-          CONFIG["print_damage"], CONFIG["print_dummies"])
-print(filepath_obj_output)
-print(filepath_mtl_output)
+#
+def main():
+    if CONFIG["print_damage"] == 1:
+        print("printing parts damage model to extra shapes")
+    if CONFIG["print_dummies"] == 1:
+        print("printing extra shapes for each dummy")
+    if CONFIG["use_part_positions"] == 0:
+        print("ignoring part positions")
+    mesh = fcecodec.Mesh()
+    mesh = LoadFce(mesh, filepath_fce_input)
+    os.chdir(filepath_obj_output.parent)
+    print(flush=True)
+    ExportObj(mesh,
+            filepath_obj_output.name, filepath_mtl_output.name, CONFIG["objtexname"],
+            CONFIG["print_damage"], CONFIG["print_dummies"],
+            CONFIG["use_part_positions"])
+    print(filepath_obj_output)
+    print(filepath_mtl_output)
+
+if __name__ == "__main__":
+    main()

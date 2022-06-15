@@ -38,14 +38,7 @@ LICENSE
         misrepresented as being the original software.
     3. This notice may not be removed or altered from any source distribution.
 """
-CONFIG = {
-    "fce_version"        : '3',  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
-    "center_parts"       : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
-    "material2texpage"   : 0,  # maps OBJ face materials to FCE texpages (expects 0|1)
-    "material2triagflag" : 1,  # maps OBJ face materials to FCE triangles flag (expects 0|1)
-}
 import argparse
-import os
 import pathlib
 import re
 import sys
@@ -53,6 +46,13 @@ import numpy as np
 
 import fcecodec
 import tinyobjloader
+
+CONFIG = {
+    "fce_version"        : "3",  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
+    "center_parts"       : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
+    "material2texpage"   : 0,  # maps OBJ face materials to FCE texpages (expects 0|1)
+    "material2triagflag" : 1,  # maps OBJ face materials to FCE triangles flag (expects 0|1)
+}
 
 # Parse command (or print module help)
 parser = argparse.ArgumentParser()
@@ -69,36 +69,33 @@ def PrintFceInfo(path):
     with open(path, "rb") as f:
         buf = f.read()
         fcecodec.PrintFceInfo(buf)
-        assert(fcecodec.ValidateFce( buf ) == 1)
+        assert fcecodec.ValidateFce(buf) == 1
 
 def WriteFce(version, mesh, path, center_parts = 1):
     with open(path, "wb") as f:
-        print(version == '3', version == '4', version)
-        if version == '3':
+        # print(version == "3", version == "4", version)
+        if version == "3":
             buf = mesh.IoEncode_Fce3(center_parts)
-        elif version == '4':
+        elif version == "4":
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)
-        assert(fcecodec.ValidateFce(buf) == 1)
+        assert fcecodec.ValidateFce(buf) == 1
         f.write(buf)
 
 def GetPartNames(mesh):
-    # part_names = []
-    # for i in range(mesh.MNumParts):
-    #     part_names += mesh.PGetName(i)
-    part_names = np.empty(shape=(mesh.MNumParts, ), dtype='U64')
+    part_names = np.empty(shape=(mesh.MNumParts,), dtype="U64")
     for i in range(mesh.MNumParts):
         part_names[i] = mesh.PGetName(i)
         i += 1
     return part_names
 
 def GetPartGlobalOrderVidxs(mesh, pid):
-    map = mesh.MVertsGetMap_idx2order_numpy
+    map_verts = mesh.MVertsGetMap_idx2order_numpy
     part_vidxs = mesh.PGetTriagsVidx_numpy(pid)
     for i in range(part_vidxs.shape[0]):
-        # print(part_vidxs[i], map[part_vidxs[i]])
-        part_vidxs[i] = map[part_vidxs[i]]
+        # print(part_vidxs[i], map_verts[part_vidxs[i]])
+        part_vidxs[i] = map_verts[part_vidxs[i]]
     return part_vidxs
 
 
@@ -109,7 +106,7 @@ def LoadObj(filename):
     config = tinyobjloader.ObjReaderConfig()
     config.triangulate = False
     ret = reader.ParseFromFile(str(filename), config)
-    if ret == False:
+    if ret is False:
         print("Failed to load : ", filename)
         print("Warn:", reader.Warning())
         print("Err:", reader.Error())
@@ -142,7 +139,7 @@ def PrintShapes(reader):
     print("Num shapes: ", len(shapes))
     for shape in shapes:
         print(shape.name,
-              "faces={}".format(int(shape.mesh.numpy_indices().shape[0] / 3)))
+              f"faces={int(shape.mesh.numpy_indices().shape[0] / 3)}")
 
 def GetShapeNames(reader):
     shapenames = []
@@ -151,7 +148,7 @@ def GetShapeNames(reader):
         shapenames += [shapes[i].name]
     return shapenames
 
-def GetShapeFaces(reader, vertices, normals, texcoords, shapename, material2texpage, material2triagflag):
+def GetShapeFaces(reader, vertices, normals, texcoords, shapename):
     shape = None
     shapes = reader.GetShapes()
     for s in shapes:
@@ -167,9 +164,9 @@ def GetShapeFaces(reader, vertices, normals, texcoords, shapename, material2texp
     normals_idxs = shape.mesh.numpy_indices()[1::3]
     texcoord_idxs = shape.mesh.numpy_indices()[2::3]
 
-    print(shape.name, "faces={}".format(int(s_faces.shape[0] / 3)))
-    print(shape.name, "normals={}".format(int(normals_idxs.shape[0])))
-    print(shape.name, "texcoords={}".format(int(texcoord_idxs.shape[0])))
+    print(shape.name, f"faces={int(s_faces.shape[0] / 3)}")
+    print(shape.name, f"normals={int(normals_idxs.shape[0])}")
+    print(shape.name, f"texcoords={int(texcoord_idxs.shape[0])}")
 
     # cannot use np.unique(), as shape may have unreferenced verts
     # example: mcf1/car.viv->car.fce :HB
@@ -200,10 +197,10 @@ def GetShapeFaces(reader, vertices, normals, texcoords, shapename, material2texp
 
     # uvuvuv... -> uuuvvv...
     s_texcs = np.empty(s_NumFaces * 6)
-    for i in range( s_NumFaces ):
+    for i in range(s_NumFaces):
         for j in range(3):
-            s_texcs[i * 6 + 0 * 3 + j] = texcoords[texcoord_idxs[i * 3 + j] * 2 + 0]
-            s_texcs[i * 6 + 1 * 3 + j] = texcoords[texcoord_idxs[i * 3 + j] * 2 + 1]
+            s_texcs[i*6 + 0*3 + j] = texcoords[texcoord_idxs[i*3 + j] * 2 + 0]
+            s_texcs[i*6 + 1*3 + j] = texcoords[texcoord_idxs[i*3 + j] * 2 + 1]
 
     s_matls = shape.mesh.numpy_material_ids()
 
@@ -212,24 +209,37 @@ def GetShapeFaces(reader, vertices, normals, texcoords, shapename, material2texp
 
 # -------------------------------------- more wrappers
 def LocalizeVertIdxs(faces):
-  return faces - np.amin(faces)
+    return faces - np.amin(faces)
 
 def GetFlagFromTags(tags):
     flag = 0x0
     for t in tags:
-        # if t == "FDEF" : flag += 0x000
-        if t == "FMAT" : flag += 0x001
-        elif t == "FHIC" : flag += 0x002
-        elif t == "FNOC" : flag += 0x004
-        elif t == "FSET" : flag += 0x008
-        elif t == "FUN1" : flag += 0x010
-        elif t == "FALW" : flag += 0x020
-        elif t == "FFRW" : flag += 0x040
-        elif t == "FLEW" : flag += 0x080
-        elif t == "FBAW" : flag += 0x100
-        elif t == "FRIW" : flag += 0x200
-        elif t == "FBRW" : flag += 0x400
-        elif t == "FUN2" : flag += 0x800
+        # if t == "FDEF":
+        #     flag += 0x000
+        if t == "FMAT":
+            flag += 0x001
+        elif t == "FHIC":
+            flag += 0x002
+        elif t == "FNOC":
+            flag += 0x004
+        elif t == "FSET":
+            flag += 0x008
+        elif t == "FUN1":
+            flag += 0x010
+        elif t == "FALW":
+            flag += 0x020
+        elif t == "FFRW":
+            flag += 0x040
+        elif t == "FLEW":
+            flag += 0x080
+        elif t == "FBAW":
+            flag += 0x100
+        elif t == "FRIW":
+            flag += 0x200
+        elif t == "FBRW":
+            flag += 0x400
+        elif t == "FUN2":
+            flag += 0x800
     return flag
 
 def GetTexPageFromTags(tags):
@@ -240,37 +250,39 @@ def GetTexPageFromTags(tags):
             try:
                 txp = int(t[1:])
             except ValueError:
-                print("Cannot convert tag {} to texpage".format(t))
+                print(f"Cannot convert tag {t} to texpage")
     return txp
 
 def ShapeToPart(reader,
                 mesh, objverts, objnorms, objtexcoords, request_shapename,
                 material2texpage, material2triagflag):
     s_faces, s_verts, s_norms, s_texcs, s_matls = GetShapeFaces(reader,
-        objverts, objnorms, objtexcoords, request_shapename, material2texpage, material2triagflag)
-    print("faces:", int(s_faces.shape[0] / 3))
-    print("vert idx range: [", np.amin(s_faces), ",", np.amax(s_faces), "]")
-    print("vertices:", int(s_verts.shape[0] / 3))
-    print("normals:", s_norms.shape[0])
-    print("texcoords:", s_texcs.shape[0], "->", int(s_texcs.shape[0] / 6))
+        objverts, objnorms, objtexcoords, request_shapename)
+    print(f"faces:{int(s_faces.shape[0] / 3)}")
+    print(f"vert idx range: [{np.amin(s_faces)},{np.amax(s_faces)}]")
+    print(f"vertices:{int(s_verts.shape[0] / 3)}")
+    print(f"normals:{s_norms.shape[0]}")
+    print(f"texcoords:{s_texcs.shape[0]}->{int(s_texcs.shape[0] / 6)}")
 
     # print(s_faces)
     s_faces = LocalizeVertIdxs(s_faces)
 
-    s_verts[2::3] = - s_verts[2::3]  # flip sign in Z-coordinate
-    s_norms[2::3] = - s_norms[2::3]  # flip sign in Z-coordinate
+    s_verts[2::3] = -s_verts[2::3]  # flip sign in Z-coordinate
+    s_norms[2::3] = -s_norms[2::3]  # flip sign in Z-coordinate
     mesh.IoGeomDataToNewPart(s_faces, s_texcs, s_verts, s_norms)
     mesh.PSetName(mesh.MNumParts - 1, request_shapename)  # shapename to partname
 
     # map faces material IDs to triangles texpages
     if material2texpage == 1:
+        print("mapping faces material names to triangles texpages...")
         num_arts_warning = False
+        materials = reader.GetMaterials()
         texps = mesh.PGetTriagsTexpages_numpy(mesh.MNumParts - 1)
         for i in range(texps.shape[0]):
-            if materials[s_matls[i]].name[:2] == '0x':
+            if materials[s_matls[i]].name[:2] == "0x":
                 texps[i] = int(materials[s_matls[i]].name[2:], base=16)
             else:
-                tags = materials[s_matls[i]].name.split('_')
+                tags = materials[s_matls[i]].name.split("_")
                 texps[i] = GetTexPageFromTags(tags)
             if texps[i] > 0:
                 num_arts_warning = True
@@ -293,20 +305,19 @@ def ShapeToPart(reader,
                 # print(materials[s_matls[i]].name, int(materials[s_matls[i]].name[2:], base=16))
                 tflags[i] = int(materials[s_matls[i]].name[2:], base=16)
             except ValueError:
-                tags = materials[s_matls[i]].name.split('_')
+                tags = materials[s_matls[i]].name.split("_")
                 tflags[i] = GetFlagFromTags(tags)
         mesh.PSetTriagsFlags_numpy(mesh.MNumParts - 1, tflags)
 
         for i in range(len(materials)):
             tmp = materials[i].name
             # print(tmp)
-            if tmp[:2] == '0x':
+            if tmp[:2] == "0x":
                 try:
-                    # print(tmp, "->", int(tmp[2:], base=16), "0x{}".format(hex(int(tmp[2:], base=16))))
+                    # print(tmp, "->", int(tmp[2:], base=16), f"0x{hex(int(tmp[2:], base=16))}")
                     val = int(tmp[2:], base=16)
                 except ValueError:
-                    print("Cannot map faces material name to triangles flags ('{0}' is not hex value) 1".format(materials[i].name))
-                    map = False
+                    print(f"Cannot map faces material name to triangles flags ('{materials[i].name}' is not hex value) 1")
                     break
 
     return mesh
@@ -321,11 +332,11 @@ def CopyDamagePartsVertsToPartsVerts(mesh):
     for damgd_pid in range(mesh.MNumParts):
         if part_names[damgd_pid][:7] == "DAMAGE_":
             pid = np.argwhere(part_names == part_names[damgd_pid][7:])
-            # print(damgd_pid, part_names[damgd_pid], pid, pid.__len__())
-            if pid.__len__() < 1:
+            # print(damgd_pid, part_names[damgd_pid], pid, len(pid))
+            if len(pid) < 1:
                 continue
             pid = pid[0][0]
-            print("copy verts/norms of {0} to damaged verts/norms of {1}".format(part_names[damgd_pid], part_names[pid]))
+            print(f"copy verts/norms of {part_names[damgd_pid]} to damaged verts/norms of {part_names[pid]}")
             damgd_part_vidxs = GetPartGlobalOrderVidxs(mesh, damgd_pid)
             part_vidxs = GetPartGlobalOrderVidxs(mesh, pid)
 
@@ -358,7 +369,7 @@ def PartsToDummies(mesh):
     r = re.compile("DUMMY_[0-9][0-9]_", re.IGNORECASE)
     for i in range(mesh.MNumParts):
         if r.match(mesh.PGetName(i)[:9]) is not None:
-            print("convert part {0} '{1}' to dummy {2}".format(i, mesh.PGetName(i), mesh.PGetName(i)[9:]))
+            print(f"convert part {i} '{mesh.PGetName(i)}' to dummy {mesh.PGetName(i)[9:]}")
             pids += [i]
             dms += [mesh.PGetName(i)[9:]]
             mesh.OpCenterPart(i)
@@ -428,7 +439,7 @@ def CenterParts(mesh):
     """
     pos_pids = []
     part_names = GetPartNames(mesh)
-    pos_parts = dict()
+    pos_parts = {}
     for name, i in zip(part_names, range(mesh.MNumParts)):
         if name[:9] == "POSITION_":
             pos_parts[name[9:]] = i
@@ -436,11 +447,11 @@ def CenterParts(mesh):
     for pid in range(mesh.MNumParts):
         if part_names[pid][:9] != "POSITION_":
             if part_names[pid] not in pos_parts:  # POSITION_<partname> not available
-                print("center {0} to local centroid".format(part_names[pid]))
+                print(f"center {part_names[pid]} to local centroid")
                 mesh.OpCenterPart(pid)
             else:                                 # POSITION_<partname> is available
                 pos_pid = pos_parts[part_names[pid]]
-                print("center {0} to centroid of {1}".format(part_names[pid], part_names[pos_pid]))
+                print(f"center {part_names[pid]} to centroid of {part_names[pos_pid]}")
                 pos_pids += [pos_pid]
                 mesh.OpCenterPart(pos_pid)
                 mesh.OpSetPartCenter_numpy(pid, mesh.PGetPos_numpy(pos_pid))
@@ -448,47 +459,51 @@ def CenterParts(mesh):
         mesh.OpDeletePart(i)
     return mesh
 
-# -------------------------------------- workload
-if CONFIG["fce_version"] not in ['3', '4', '4m', '4M']:
-    print("requires fce_version = '3'|'4'|'4M' (received {})".format(CONFIG["fce_version"]))
-    quit()
-if CONFIG["center_parts"] not in [0, 1]:
-    print("requires center_parts = 0|1 (received", CONFIG["center_parts"], ")")
-    quit()
-if CONFIG["material2texpage"] not in [0, 1]:
-    print("requires material2texpage = 0|1 (received", CONFIG["material2texpage"], ")")
-    quit()
-if CONFIG["material2triagflag"] not in [0, 1]:
-    print("requires material2triagflag = 0|1 (received", CONFIG["material2triagflag"], ")")
-    quit()
+#
+def main():
+    if CONFIG["fce_version"] not in ["3", "4", "4m", "4M"]:
+        print(f"requires fce_version = '3'|'4'|'4M' (received {CONFIG['fce_version']})")
+        sys.exit()
+    if CONFIG["center_parts"] not in [0, 1]:
+        print(f"requires center_parts = 0|1 (received {CONFIG['center_parts']})")
+        sys.exit()
+    if CONFIG["material2texpage"] not in [0, 1]:
+        print(f"requires material2texpage = 0|1 (received {CONFIG['material2texpage']})")
+        sys.exit()
+    if CONFIG["material2triagflag"] not in [0, 1]:
+        print(f"requires material2triagflag = 0|1 (received {CONFIG['material2triagflag']})")
+        sys.exit()
 
-# Import OBJ
-reader = LoadObj(filepath_obj_input)
-attrib = reader.GetAttrib()
-print("attrib.vertices = ", len(attrib.vertices), int(len(attrib.vertices) / 3))
-print("attrib.normals = ", len(attrib.normals))
-print("attrib.texcoords = ", len(attrib.texcoords))
-objverts = GetVerts(reader)
-objnorms = GetNormals(reader)
-objtexcoords = GetTexcoords(reader)
-PrintShapes(reader)
-shapenames = GetShapeNames(reader)
+    # Import OBJ
+    reader = LoadObj(filepath_obj_input)
+    attrib = reader.GetAttrib()
+    print(f"attrib.vertices = {len(attrib.vertices)}, {int(len(attrib.vertices) / 3)}")
+    print(f"attrib.normals = {len(attrib.normals)}")
+    print(f"attrib.texcoords = {len(attrib.texcoords)}")
+    objverts = GetVerts(reader)
+    objnorms = GetNormals(reader)
+    objtexcoords = GetTexcoords(reader)
+    PrintShapes(reader)
+    shapenames = GetShapeNames(reader)
 
-# Transform geometric data, load as fcecodec.Mesh
-mesh = fcecodec.Mesh()
-for i in range(len(shapenames)):
-    print("s_name", shapenames[i])
-    mesh = ShapeToPart(reader,
-                       mesh, objverts, objnorms, objtexcoords, shapenames[i],
-                       CONFIG["material2texpage"], CONFIG["material2triagflag"])
-mesh = CopyDamagePartsVertsToPartsVerts(mesh)
-mesh = PartsToDummies(mesh)
-mesh = SetAnimatedVerts(mesh)
-if CONFIG["center_parts"] == 1:
-    mesh = CenterParts(mesh)
+    # Transform geometric data, load as fcecodec.Mesh
+    mesh = fcecodec.Mesh()
+    for i in range(len(shapenames)):
+        print("s_name", shapenames[i])
+        mesh = ShapeToPart(reader,
+                        mesh, objverts, objnorms, objtexcoords, shapenames[i],
+                        CONFIG["material2texpage"], CONFIG["material2triagflag"])
+    mesh = CopyDamagePartsVertsToPartsVerts(mesh)
+    mesh = PartsToDummies(mesh)
+    mesh = SetAnimatedVerts(mesh)
+    if CONFIG["center_parts"] == 1:
+        mesh = CenterParts(mesh)
 
-# Write FCE
-# mesh.PrintInfo()
-WriteFce(CONFIG["fce_version"], mesh, filepath_fce_output, center_parts=0)
-print(flush=True)
-PrintFceInfo(filepath_fce_output)
+    # Write FCE
+    # mesh.PrintInfo()
+    WriteFce(CONFIG["fce_version"], mesh, filepath_fce_output, center_parts=0)
+    print(flush=True)
+    PrintFceInfo(filepath_fce_output)
+
+if __name__ == "__main__":
+    main()

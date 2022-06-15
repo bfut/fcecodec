@@ -18,7 +18,7 @@ import fcecodec
 
 # Parse command (or print module help)
 parser = argparse.ArgumentParser()
-parser.add_argument("cmd", nargs='+', help="path")
+parser.add_argument("cmd", nargs="+", help="path")
 args = parser.parse_args()
 
 filepath_fce_input = args.cmd[0]
@@ -29,8 +29,12 @@ def PrintFceInfo(path):
     with open(path, "rb") as f:
         buf = f.read()
         fcecodec.PrintFceInfo(buf)
-        assert(fcecodec.ValidateFce(buf) == 1)
+        assert fcecodec.ValidateFce(buf) == 1
 
 
-# -------------------------------------- workload
-PrintFceInfo(filepath_fce_input)
+#
+def main():
+    PrintFceInfo(filepath_fce_input)
+
+if __name__ == "__main__":
+    main()
