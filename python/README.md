@@ -3,7 +3,7 @@ This file describes installation, and usage of `fcecodec` as Python extension
 module.
 
 ## Installation
-Requires Python 3.7+
+Requires Python 3.8+
 
         cd ~
         python -m pip install --upgrade pip wheel setuptools pybind11
@@ -11,31 +11,28 @@ Requires Python 3.7+
         python -m pip install --verbose fcecodec/python
 
 #### Windows
-`Microsoft Visual Studio` has to be installed. For a detailed description,
-see the _Prerequisites_ section on
+Install `Visual Studio` with the Python Development workload. For a detailed
+description, see the _Prerequisites_ section on
 [microsoft.com: C++ extensions for Python](https://docs.microsoft.com/en-us/visualstudio/python/working-with-c-cpp-python-in-visual-studio?view=vs-2019#prerequisites)
 
-Installing the `Anaconda` distribution, `bash`, and `git` is recommended.
+Installing the `Anaconda` distribution and `git` is recommended.
 
 Once these prerequisites have been met, installation generally works as
 described above.
 
-`Note: Instead of installing on Windows itself, you can run fcecodec in the Windows Subsystem for Linux.`
+`Note: Consider running fcecodec under WSL.`
 
 ## Examples
 For a script template and handy function wrappers, see
 [/scripts/fcecodecScriptTemplate.py](/scripts/fcecodecScriptTemplate.py) and
-[/python/bfut_mywrappers.py](/python/bfut_mywrappers.py)<br>
-The template is written such that it can be run from the
-scripts folder. If it is moved into another folder and uses the
-wrappers, the wrapper script has to be copied into that same folder.
+[/python/bfut_mywrappers.py](/python/bfut_mywrappers.py)
 
 ```py
 import fcecodec
 
-filepath_fce_input = 'path/to/car_src.fce'
-filepath_fce_input2 = 'path/to/car_src2.fce'
-filepath_fce_output = 'path/to/car.fce'
+filepath_fce_input = "path/to/car_src.fce"
+filepath_fce_input2 = "path/to/car_src2.fce"
+filepath_fce_output = "path/to/car.fce"
 
 with open(filepath_fce_input, "rb") as f:
     fce_buf = f.read()
@@ -56,15 +53,15 @@ print(mesh.MNumTriags)
 print(mesh.MNumVerts)
 
 # Validate Mesh object
-assert(mesh.MValid() == 1)
+assert mesh.MValid() == 1
 
 # Merge parts 0, 3 to new part
 new_pid = mesh.OpMergeParts(0, 3)
-assert(new_pid != -1)
+assert new_pid != -1
 
 # Copy part 1
 new_pid = mesh.OpCopyPart(1)
-assert(new_pid != -1)
+assert new_pid != -1
 
 # Insert/copy part 1 from mesh2 to mesh
 with open(filepath_fce_input2, "rb") as f:
@@ -72,7 +69,7 @@ with open(filepath_fce_input2, "rb") as f:
 mesh2 = fcecodec.Mesh()
 mesh2.IoDecode(fce_buf2)
 new_pid = mesh.OpInsertPart(mesh2, 1)
-assert(new_pid != -1)
+assert new_pid != -1
 
 # Encode to FCE4
 out_buf = mesh.IoEncode_Fce4()
@@ -112,7 +109,7 @@ CLASSES
      |      IoEncode_Fce4M(self: fcecodec.Mesh, center_parts: bool = True) -> bytes
      |  
      |  IoExportObj(...)
-     |      IoExportObj(self: fcecodec.Mesh, objpath: str, mtlpath: str, texname: str, print_damage: int = 0, print_dummies: int = 0) -> None
+     |      IoExportObj(self: fcecodec.Mesh, objpath: str, mtlpath: str, texname: str, print_damage: int = 0, print_dummies: int = 0, use_part_positions: int = 1) -> None
      |  
      |  IoGeomDataToNewPart(...)
      |      IoGeomDataToNewPart(self: fcecodec.Mesh, vert_idxs: numpy.ndarray[numpy.int32], vert_texcoords: numpy.ndarray[numpy.float32], vert_pos: numpy.ndarray[numpy.float32], normals: numpy.ndarray[numpy.float32]) -> int

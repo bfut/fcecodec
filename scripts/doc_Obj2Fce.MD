@@ -1,6 +1,6 @@
 # Obj2Fce with fcecodec
 This tutorial describes how to prepare OBJ/MTL files for the Obj2Fce converter
-scripts. This tutorial covers FCE3, FC4, and FCE4M.
+scripts. This tutorial covers FCE3, FCE4, and FCE4M.
 
 The latest version of this tutorial can be found [here](https://github.com/bfut/fcecodec/tree/main/scripts/doc_Obj2Fce.MD).<br/>
 The following files can be found in [_/scripts_](https://github.com/bfut/fcecodec/tree/main/scripts)
@@ -36,23 +36,21 @@ Create an OBJ example that showcases some of the herein discussed concepts, with
 
     python bfut_Fce2Obj.py /path/to/model.fce
 
-FCE4 and FCE4M are very similar to each other, although there are some important
-differences. Not all of these differences are addressed at this time.
+FCE4 and FCE4M are very similar to each other. Certain differences are discussed
+in this tutorial at this time.
 
-Hint for coders: Once imported, it is possible to change all of the discussed
-properties (in fact almost all FCE properties) using `fcecodec` functions.
+`fcecodec` functions allow changing most FCE properties.
 
 ## Part name vs. part order
 
     <partname>
 
-In FCE4 and FCE4M, only the part name defines a part's role (e.g., FCE4 high
-body must be called `:HB`).
+In FCE4 and FCE4M, only the part name defines a part's role (e.g., `:HB` is FCE4
+high body).
 
 In FCE3, only the part order defines a part's role and its name can
 be arbitrary (e.g., part index 0 is FCE3 high body).<br/>
-Of note in FCE3 is the optional hidden lights part, which always has part index
-12 (0-based index).
+The optional hidden lights part in FCE always has part index 12.
 
 For complete part name and part order listings, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
 
@@ -61,7 +59,7 @@ For complete part name and part order listings, see [_/src/fcelib/fcelib_fcetype
     <partname>
     DAMAGE_<partname>
 
-Example: Once `:HB` high body is finished, create a copy named `DAMAGE_:HB` <br/>
+Example: Once `:HB` high body is finished, create a copy named `DAMAGE_:HB`.<br/>
 In this new part, only change vertice positions or vertice normals.
 
 For a list of parts that use damage models in-game, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
@@ -71,18 +69,20 @@ For a list of parts that use damage models in-game, see [_/src/fcelib/fcelib_fce
     <partname>
     POSITION_<partname>
 
-A custom part center is highly desirable for `:OD` driver animation, where the
-part center should typically be in the middle of the steering wheel. Also useful
-for `:OS` spoiler animation.
+A custom part center is highly desirable for driver animation
+(`:OD`, `:PHdriver`), where the part center should be in the middle of the
+steering wheel.
+Also useful for `:OS` spoiler animation.
 
 To define a custom part center, create a helper part `POSITION_<partname>`. The
-helper part's centroid will be used as center in `<partname>`.<br/>
+helper part's centroid will be used as center in `<partname>`.
+
 As default if no helper part is found, for each part its centroid will be used
 as part center. Default behavior is highly desirable for the following: wheels,
 front brakes, driver head.
 
 The `do not center parts` scripts will leave the coordinate origin as center for
-all parts (not recommended).
+all parts (not recommended for FCE3, FCE4M).
 
 ## Vertice animation flag (FCE4, FCE4M)
 
@@ -96,14 +96,14 @@ For driver animation, vertices are either movable or immovable.
 To set movable verts, they have to be enclosed within at least one cuboid helper
 part `ANIMATED_##_<partname>`, where # is a digit 0-9. See screenshot below.
 
-Helper part names must not be identical, hence the digits.
+Helper part names must not be duplicated, hence the digits.
 
 Default behavior if no helper part is found: all vertices for this part are
 movable.
 
 Vertice animation flags do not seem to have any visible effect on any of the
 other animated parts (wheels, front brakes, driver head, movable spoiler,
-and everything dash.fce).
+and everything `dash.fce`).
 
 ![vert animation flag](../assets/fcecodec_handle_vertices_animation_flags.png)
 
@@ -115,13 +115,13 @@ To create dummy `<dummyname>`, create a helper part called
 `DUMMY_##_<dummyname>`, where # is a digit 0-9. The part centroid will be the
 dummy position. Only the part name and its centroid are significant.
 
-Helper part names must not be identical, hence the digits. `<Dummynames>` can be
-identical.
+Helper part names must not be duplicated, hence the digits. `<Dummynames>` can
+be duplicated at will.
 
 For dummynames and their effects, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
 
 ## Triangle flags
-This functionality is offered in the `material to triagflag` scripts.
+Triangle flags can be assigned with the `material to triagflag` scripts.
 
 In FCE, each triangle has a triangle flag, which is a positive integer value.
 Triangle flags values and their effects are identical across FCE3, and FCE4, in
@@ -175,7 +175,7 @@ The specifics are out of the scope of this tutorial at this time.
 For more details, see [_/src/fcelib/fcelib_fcetypes.h_](https://github.com/bfut/fcecodec/blob/main/src/fcelib/fcelib_fcetypes.h)
 
 ## Texture page (FCE3/FCE4 officer models, FCE4 pursuit road objects, FCE4M damage textures)
-This functionality is offered in the `material to texpage` scripts.
+Texture pages can be assigned with the `material to texpage` scripts.
 
 Similarly to triangle flags, in FCE, each triangle is assigned a texture page,
 which is a positive integer value.
@@ -186,6 +186,12 @@ A texture page tag and triangle flag tags can both be present in a material
 name.
 A material name can include additional elements that are not tags.
 
+For officer models and pursuit road objects, the `NumArts` value must equal
+the greatest used texture page minus 1. In all other cases, `NumArts = 1`.
+
+Texture pages are not relevant for, `car.fce` (FCE3, FCE4) and `dash.fce`
+(FCE4, FCE4M).
+
 | Texture page |  Tag       |   Hex value |
 |:-------------|:---------- |------------:|
 |            0 | (no tag)   |       0x000 |
@@ -193,7 +199,7 @@ A material name can include additional elements that are not tags.
 |            2 | \_T2\_     |       0x002 |
 |         <i\> | \_T\<i\>\_ |  hex(\<i\>) |
 
-Example: To set texture page `0`, no tag is needed. For texture page `4`, add
+Example: For texture page `0`, no tag is needed. For texture page `4`, add
 tag `_T4_` to the material name.
 
 ## Information

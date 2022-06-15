@@ -7,13 +7,13 @@ PrintFceInfo, etc.)<br/>
 [/scripts/doc_Obj2Fce.MD](/scripts/doc_Obj2Fce.MD) is a tutorial for preparing
 OBJ/MTL files for conversion to finished FCE
 
-Try a basic example:
-[fcecodec-example.ipynb](https://colab.research.google.com/github/bfut/notebooks/blob/main/fcecodec/fcecodec-example.ipynb)
-[![fcecodec-example.ipynb](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bfut/notebooks/blob/main/fcecodec/fcecodec-example.ipynb)
-
 The Python extension module is based on a header-only library written in C89.
 Python bindings are written in C++ (pybind11). Supported on Windows and Linux.
 Tested on macOS.
+
+## Example
+[fcecodec-example.ipynb](https://colab.research.google.com/github/bfut/notebooks/blob/main/fcecodec/fcecodec-example.ipynb)
+[![fcecodec-example.ipynb](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bfut/notebooks/blob/main/fcecodec/fcecodec-example.ipynb)
 
 ## Features
 * full FCE implementation
