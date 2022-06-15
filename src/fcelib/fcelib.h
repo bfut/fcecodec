@@ -1,6 +1,6 @@
 /*
   fcelib.h
-  fcecodec Copyright (C) 2021 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -31,9 +31,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FCECVERS "1.0"
+#define FCECVERS "1.1"
 #ifndef FCECVERBOSE
-#define FCECVERBOSE 0  /* set 1 for some additional console output */
+#define FCECVERBOSE 0  /* set 1 for additional console output */
 #endif
 
 #include "fcelib_io.h"
@@ -183,19 +183,13 @@ int FCELIB_DecodeFce(const void *buf, int buf_size, FcelibMesh *mesh)
 int FCELIB_ExportObj(FcelibMesh *mesh,
                      const char *objpath, const char *mtlpath,
                      const char *texture_name,
-                     const int print_damage, const int print_dummies)
+                     const int print_damage, const int print_dummies,
+                     const int use_part_positions)
 {
   return FCELIB_IO_ExportObj(mesh, objpath, mtlpath, texture_name,
-                             print_damage, print_dummies);
+                             print_damage, print_dummies,
+                             use_part_positions);
 }
-
-#if 0
-int FCELIB_EncodeFce3_Fopen(FcelibMesh *mesh, const char *fcepath,
-                            const int center_parts)
-{
-  return FCELIB_IO_EncodeFce3_Fopen(mesh, fcepath, center_parts);
-}
-#endif
 
 int FCELIB_EncodeFce3(unsigned char **buf, const int buf_size,
                       FcelibMesh *mesh, const int center_parts)

@@ -1,6 +1,6 @@
 /*
   fcelib_io.h
-  fcecodec Copyright (C) 2021 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -589,14 +589,14 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
   return retv;
 }
 
-
 /* encode ------------------------------------------------------------------- */
 
 /* The FCE triangle flag is output as material name. Returns boolean. */
 int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                         const void *objpath, const void *mtlpath,
                         const char *texture_name,
-                        const int print_damage, const int print_dummies)
+                        const int print_damage, const int print_dummies,
+                        const int use_part_positions)
 {
   int retv = 1;
   int i;
@@ -705,7 +705,6 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
       }
 
       /* BEGIN printing undamaged part */
-
       /* Create map: global vert index to local part idx (of used-in-this-part verts) */
       memset(global_mesh_to_global_obj_idxs, -1, (size_t)mesh->vertices_len * sizeof(int));
       for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
@@ -729,25 +728,50 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
 
       /* Verts */
       fprintf(outf, "#%d verts\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
-      for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+      if (use_part_positions)
       {
-        if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
-          continue;
+        for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+        {
+          if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+            continue;
 
-        fprintf(outf, "v %f %f %f\n",
-                      mesh->vertices[
-                        mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                      ]->VertPos.x + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.x,
-                      mesh->vertices[
-                        mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                      ]->VertPos.y + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
-                      - (
+          fprintf(outf, "v %f %f %f\n",
                         mesh->vertices[
                           mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->VertPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                      )  /* flip sign in Z-coordinate */
-               );
+                        ]->VertPos.x + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.x,
+                        mesh->vertices[
+                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                        ]->VertPos.y + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
+                        - (
+                          mesh->vertices[
+                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                          ]->VertPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
+                        )  /* flip sign in Z-coordinate */
+                );
+        }
       }
+      else
+      {
+        for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+        {
+          if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+            continue;
+
+          fprintf(outf, "v %f %f %f\n",
+                        mesh->vertices[
+                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                        ]->VertPos.x,
+                        mesh->vertices[
+                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                        ]->VertPos.y,
+                        - (
+                          mesh->vertices[
+                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                          ]->VertPos.z
+                        )  /* flip sign in Z-coordinate */
+                );
+        }
+      }  /* if (use_part_positions) */
       fprintf(outf, "\n");
       fflush(outf);
 
@@ -775,25 +799,50 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
 
       /* Normals */
       fprintf(outf, "#%d normals\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
-      for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+      if (use_part_positions)
       {
-        if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
-          continue;
+        for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+        {
+          if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+            continue;
 
-        fprintf(outf, "vn %f %f %f\n",
-                      mesh->vertices[
-                        mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                      ]->NormPos.x + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.x,
-                      mesh->vertices[
-                        mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                      ]->NormPos.y + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
-                      - (
+          fprintf(outf, "vn %f %f %f\n",
                         mesh->vertices[
                           mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->NormPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                      )  /* flip sign in Z-coordinate */
-               );
+                        ]->NormPos.x + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.x,
+                        mesh->vertices[
+                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                        ]->NormPos.y + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
+                        - (
+                          mesh->vertices[
+                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                          ]->NormPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
+                        )  /* flip sign in Z-coordinate */
+                );
+        }
       }
+      else
+      {
+        for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+        {
+          if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+            continue;
+
+          fprintf(outf, "vn %f %f %f\n",
+                        mesh->vertices[
+                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                        ]->NormPos.x,
+                        mesh->vertices[
+                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                        ]->NormPos.y,
+                        - (
+                          mesh->vertices[
+                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                          ]->NormPos.z
+                        )  /* flip sign in Z-coordinate */
+                );
+        }
+      }  /* if (use_part_positions) */
       fprintf(outf, "\n");
       fflush(outf);
 
@@ -854,7 +903,6 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
 
       sum_verts  += mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices;
       sum_triags += mesh->parts[ mesh->hdr.Parts[i] ]->PNumTriangles;
-
       /* END printing undamaged part */
 
 
@@ -884,25 +932,50 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
 
         /* Verts */
         fprintf(outf, "#%d verts\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
-        for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+        if (use_part_positions)
         {
-          if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
-            continue;
+          for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+          {
+            if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+              continue;
 
-          fprintf(outf, "v %f %f %f\n",
-                        mesh->vertices[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->DamgdVertPos.x + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.x,
-                        mesh->vertices[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->DamgdVertPos.y + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
-                        - (
+            fprintf(outf, "v %f %f %f\n",
                           mesh->vertices[
                             mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                          ]->DamgdVertPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                        )  /* flip sign in Z-coordinate */
-                );
+                          ]->DamgdVertPos.x + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.x,
+                          mesh->vertices[
+                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                          ]->DamgdVertPos.y + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
+                          - (
+                            mesh->vertices[
+                              mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                            ]->DamgdVertPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
+                          )  /* flip sign in Z-coordinate */
+                  );
+          }
         }
+        else
+        {
+          for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+          {
+            if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+              continue;
+
+            fprintf(outf, "v %f %f %f\n",
+                          mesh->vertices[
+                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                          ]->DamgdVertPos.x,
+                          mesh->vertices[
+                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                          ]->DamgdVertPos.y,
+                          - (
+                            mesh->vertices[
+                              mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+                            ]->DamgdVertPos.z
+                          )  /* flip sign in Z-coordinate */
+                  );
+          }
+        }  /* if (use_part_positions) */
         fprintf(outf, "\n");
         fflush(outf);
 
@@ -1064,468 +1137,11 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
     }
 
     break;
-  }/* for (;;) */
+  }  /* for (;;) */
 
   free(global_mesh_to_global_obj_idxs);
   return retv;
 }
-
-#if 0
-/* DEPRECATED Returns boolean. Limited to 64 parts. center_parts == 1 centers all parts. */
-int FCELIB_IO_EncodeFce3_Fopen(FcelibMesh *mesh, const void *fcepath, const int center_parts)
-{
-  int retv = 1;
-  int i;
-  int j;
-  int n;
-  int k;
-  int m;
-  FILE *outf = NULL;
-  int sum_verts = 0;
-  int sum_triags = 0;
-  int *global_mesh_to_local_fce_idxs;
-  FcelibPart *part;
-  int buf;
-  unsigned char buffer[64];
-
-  fprintf(stderr, "Deprecated Warning: use FCELIB_IO_EncodeFce3 instead");
-
-  if (!FCELIB_TYPES_ValidateMesh(*mesh))
-    return 0;
-
-  global_mesh_to_local_fce_idxs = (int *)malloc(mesh->vertices_len * sizeof(int));
-  if (!global_mesh_to_local_fce_idxs)
-  {
-    fprintf(stderr, "FCELIB_IO_EncodeFce3_Fopen: Cannot allocate memory\n");
-    return 0;
-  }
-
-  for (;;)
-  {
-    outf = fopen((char *)fcepath, "wb");
-    if (!outf)
-    {
-      fprintf(stderr, "FCELIB_IO_EncodeFce3_Fopen: cannot create file '%s'\n", (char *)fcepath);
-      retv = 0;
-      break;
-    }
-
-    /* Print header --------------------------------------------------------- */
-    memset(buffer, '\0', (size_t)64);
-
-    buf = 0;
-    fwrite(&buf, sizeof(int), (size_t)1, outf);
-    fwrite(&mesh->hdr.NumTriangles, sizeof(int), (size_t)1, outf);
-    fwrite(&mesh->hdr.NumVertices, sizeof(int), (size_t)1, outf);
-    buf = 1;
-    fwrite(&buf, sizeof(int), (size_t)1, outf);
-
-    buf = 0;
-    fwrite(&buf, sizeof(int), (size_t)1, outf);
-    buf += 12 * mesh->hdr.NumVertices;
-    fwrite(&buf, sizeof(int), (size_t)1, outf);
-    buf += 12 * mesh->hdr.NumVertices;
-    fwrite(&buf, sizeof(int), (size_t)1, outf);
-
-    buf += 56 * mesh->hdr.NumTriangles;
-    fwrite(&buf, sizeof(int), (size_t)1, outf);
-    buf += 32 * mesh->hdr.NumVertices;
-    fwrite(&buf, sizeof(int), (size_t)1, outf);
-    buf += 12 * mesh->hdr.NumVertices;
-    fwrite(&buf, sizeof(int), (size_t)1, outf);
-
-    /* Center high body parts around local centroid (order idxs: 0-4, 12) */
-    if (center_parts == 1)
-    {
-      tVector centroid;
-      /* i - internal part index, j - part order */
-      for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(12, mesh->hdr.NumParts); ++i)
-      {
-        if (mesh->hdr.Parts[i] < 0 || (j > 4 && j != 12))
-          continue;
-
-        part = mesh->parts[ mesh->hdr.Parts[i] ];
-        FCELIB_TYPES_GetPartCentroid(mesh, part, &centroid);
-        FCELIB_TYPES_ResetPartCenter(mesh, part, centroid);
-
-        ++j;
-      }
-    }
-
-    /* Compute HalfSize from high body parts (order idxs: 0-4, 12) */
-    {
-      float *x_array = NULL;
-      float *y_array;
-      float *z_array;
-      FcelibVertex *vert;
-      int count_verts = 0;
-
-      x_array = (float *)malloc((size_t)(3 * (mesh->vertices_len + 1)) * sizeof(*x_array));
-      if (!x_array)
-      {
-        fprintf(stderr, "FCELIB_IO_EncodeFce3_Fopen: Cannot allocate memory\n");
-        retv = 0;
-        break;
-      }
-      memset(x_array, '\0', (size_t)(3 * (mesh->vertices_len + 1)) * sizeof(*x_array));
-      y_array = x_array + mesh->vertices_len;
-      z_array = y_array + mesh->vertices_len;
-
-      /* i - internal part index, j - part order */
-      for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(12, mesh->hdr.NumParts); ++i)
-      {
-        if (mesh->hdr.Parts[i] < 0 || (j > 4 && j != 12))
-          continue;
-
-        part = mesh->parts[ mesh->hdr.Parts[i] ];
-
-        /* n - internal vert index, k - vert order */
-        for (n = 0, k = 0; n < part->pvertices_len && k < part->PNumVertices; ++n)
-        {
-          if (part->PVertices[n] < 0)
-            continue;
-
-          vert = mesh->vertices[ part->PVertices[n] ];
-          x_array[count_verts + k] = vert->VertPos.x + part->PartPos.x;
-          y_array[count_verts + k] = vert->VertPos.y + part->PartPos.y;
-          z_array[count_verts + k] = vert->VertPos.z + part->PartPos.z;
-
-          ++k;
-        }
-        count_verts += k - 1;
-
-        ++j;
-      }
-
-      qsort(x_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
-      qsort(y_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
-      qsort(z_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
-
-      x_array[0] = 0.5f * FCELIB_MISC_Abs(x_array[count_verts - 1] - x_array[0]);
-      y_array[0] = FCELIB_MISC_Abs(y_array[0]) - 0.02f;
-      z_array[0] = 0.5f * FCELIB_MISC_Abs(z_array[count_verts - 1] - z_array[0]);
-
-      fwrite(x_array, sizeof(float), (size_t)1, outf);
-      fwrite(y_array, sizeof(float), (size_t)1, outf);
-      fwrite(z_array, sizeof(float), (size_t)1, outf);
-
-      free(x_array);
-    }  /* Set HalfSizes */
-
-    fwrite(&mesh->hdr.NumDummies, sizeof(int), (size_t)1, outf);
-    for (i = 0; i < mesh->hdr.NumDummies; ++i)
-    {
-      fwrite(&mesh->hdr.Dummies[i].x, sizeof(float), (size_t)1, outf);
-      fwrite(&mesh->hdr.Dummies[i].y, sizeof(float), (size_t)1, outf);
-      fwrite(&mesh->hdr.Dummies[i].z, sizeof(float), (size_t)1, outf);
-    }
-    buf = 0;
-    for (i = mesh->hdr.NumDummies; i < 16; ++i)
-    {
-      fwrite(&buf, sizeof(float), (size_t)1, outf);
-      fwrite(&buf, sizeof(float), (size_t)1, outf);
-      fwrite(&buf, sizeof(float), (size_t)1, outf);
-    }
-
-    /* PartPos */
-    fwrite(&mesh->hdr.NumParts, sizeof(int), (size_t)1, outf);
-    for (i = 0, j = 0; (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)) && (i < mesh->parts_len); ++i)
-    {
-      if (mesh->hdr.Parts[i] < 0)
-        continue;
-
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
-      fwrite(&part->PartPos.x, sizeof(float), (size_t)1, outf);
-      fwrite(&part->PartPos.y, sizeof(float), (size_t)1, outf);
-      fwrite(&part->PartPos.z, sizeof(float), (size_t)1, outf);
-      ++j;
-    }
-    buf = 0;
-    for (i = mesh->hdr.NumParts; i < 64; ++i)
-    {
-      fwrite(&buf, sizeof(float), (size_t)1, outf);
-      fwrite(&buf, sizeof(float), (size_t)1, outf);
-      fwrite(&buf, sizeof(float), (size_t)1, outf);
-    }
-
-    /* P1stVertices */
-    for (i = 0, j = 0; (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)) && (i < mesh->parts_len); ++i)
-    {
-      if (mesh->hdr.Parts[i] < 0)
-        continue;
-
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
-      fwrite(&sum_verts, sizeof(int), (size_t)1, outf);
-
-      sum_verts += part->PNumVertices;
-      ++j;
-    }
-    buf = 0;
-    for (i = mesh->hdr.NumParts; i < 64; ++i)
-      fwrite(&buf, sizeof(int), (size_t)1, outf);
-
-    /* PNumVertices */
-    for (i = 0, j = 0; (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)) && (i < mesh->parts_len); ++i)
-    {
-      if (mesh->hdr.Parts[i] < 0)
-        continue;
-
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
-      fwrite(&part->PNumVertices, sizeof(int), (size_t)1, outf);
-
-      ++j;
-    }
-    buf = 0;
-    for (i = mesh->hdr.NumParts; i < 64; ++i)
-      fwrite(&buf, sizeof(int), (size_t)1, outf);
-
-    /* P1stTriangles */
-    for (i = 0, j = 0; (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)) && (i < mesh->parts_len); ++i)
-    {
-      if (mesh->hdr.Parts[i] < 0)
-        continue;
-
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
-      fwrite(&sum_triags, sizeof(int), (size_t)1, outf);
-
-      sum_triags += part->PNumTriangles;
-      ++j;
-    }
-    buf = 0;
-    for (i = mesh->hdr.NumParts; i < 64; ++i)
-      fwrite(&buf, sizeof(int), (size_t)1, outf);
-
-    /* PNumTriangles */
-    for (i = 0, j = 0; (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)) && (i < mesh->parts_len); ++i)
-    {
-      if (mesh->hdr.Parts[i] < 0)
-        continue;
-
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
-      fwrite(&part->PNumTriangles, sizeof(int), (size_t)1, outf);
-
-      ++j;
-    }
-    buf = 0;
-    for (i = mesh->hdr.NumParts; i < 64; ++i)
-      fwrite(&buf, sizeof(int), (size_t)1, outf);
-
-    /* PriColors */
-    fwrite(&mesh->hdr.NumColors, sizeof(int), (size_t)1, outf);
-    buf = 0;
-    for (i = 0; i < mesh->hdr.NumColors; ++i)
-    {
-      memcpy(&buf, &mesh->hdr.PriColors[i].hue,          (size_t)1);
-      fwrite(&buf, sizeof(int), (size_t)1, outf);
-
-      memcpy(&buf, &mesh->hdr.PriColors[i].saturation,   (size_t)1);
-      fwrite(&buf, sizeof(int), (size_t)1, outf);
-
-      memcpy(&buf, &mesh->hdr.PriColors[i].brightness,   (size_t)1);
-      fwrite(&buf, sizeof(int), (size_t)1, outf);
-
-      memcpy(&buf, &mesh->hdr.PriColors[i].transparency, (size_t)1);
-      fwrite(&buf, sizeof(int), (size_t)1, outf);
-    }
-    for (i = mesh->hdr.NumColors; i < 16; ++i)
-      fwrite(buffer, (size_t)1, (size_t)(4 * sizeof(int)), outf);
-
-    /* SecColors */
-    fwrite(&mesh->hdr.NumSecColors, sizeof(int), (size_t)1, outf);
-    buf = 0;
-    for (i = 0; i < mesh->hdr.NumSecColors; ++i)
-    {
-      memcpy(&buf, &mesh->hdr.SecColors[i].hue,          (size_t)1);
-      fwrite(&buf, sizeof(int), (size_t)1, outf);
-
-      memcpy(&buf, &mesh->hdr.SecColors[i].saturation,   (size_t)1);
-      fwrite(&buf, sizeof(int), (size_t)1, outf);
-
-      memcpy(&buf, &mesh->hdr.SecColors[i].brightness,   (size_t)1);
-      fwrite(&buf, sizeof(int), (size_t)1, outf);
-
-      memcpy(&buf, &mesh->hdr.SecColors[i].transparency, (size_t)1);
-      fwrite(&buf, sizeof(int), (size_t)1, outf);
-    }
-    for (i = mesh->hdr.NumSecColors; i < 16; ++i)
-      fwrite(buffer, (size_t)1, (size_t)(4 * sizeof(int)), outf);
-
-    /* DummyNames */
-    fwrite(&mesh->hdr.DummyNames, (size_t)(16 * 64), (size_t)1, outf);
-
-    /* PartNames */
-    for (i = 0, j = 0; (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)) && (i < mesh->parts_len); ++i)
-    {
-      if (mesh->hdr.Parts[i] < 0)
-        continue;
-
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
-      fwrite(&part->PartName, (size_t)64, (size_t)1, outf);
-
-      ++j;
-    }
-    for (i = mesh->hdr.NumParts; i < 64; ++i)
-      fwrite(buffer, (size_t)1, (size_t)64, outf);
-
-    /* Unknown2 */
-    for (i = 0; i < 4; ++i)
-      fwrite(buffer, (size_t)1, (size_t)64, outf);
-
-
-    /* Print vertices ------------------------------------------------------- */
-    for (i = 0, j = 0; (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)) && (i < mesh->parts_len); ++i)
-    {
-      if (mesh->hdr.Parts[i] < 0)
-        continue;
-
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
-      for (n = 0, k = 0; (k < part->PNumVertices) && (n < part->pvertices_len); ++n)
-      {
-        if (part->PVertices[n] < 0)
-          continue;
-
-        memcpy(buffer + 0x00, &mesh->vertices[ part->PVertices[n] ]->VertPos.x, (size_t)4);
-        memcpy(buffer + 0x04, &mesh->vertices[ part->PVertices[n] ]->VertPos.y, (size_t)4);
-        memcpy(buffer + 0x08, &mesh->vertices[ part->PVertices[n] ]->VertPos.z, (size_t)4);
-        fwrite(buffer, (size_t)12, (size_t)1, outf);
-
-        ++k;
-      }
-
-      ++j;
-    }
-
-
-    /* Print normals -------------------------------------------------------- */
-    for (i = 0, j = 0; (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)) && (i < mesh->parts_len); ++i)
-    {
-      if (mesh->hdr.Parts[i] < 0)
-        continue;
-
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
-      for (n = 0, k = 0; (k < part->PNumVertices) && (n < part->pvertices_len); ++n)
-      {
-        if (part->PVertices[n] < 0)
-          continue;
-
-        memcpy(buffer + 0x00, &mesh->vertices[ part->PVertices[n] ]->NormPos.x, (size_t)4);
-        memcpy(buffer + 0x04, &mesh->vertices[ part->PVertices[n] ]->NormPos.y, (size_t)4);
-        memcpy(buffer + 0x08, &mesh->vertices[ part->PVertices[n] ]->NormPos.z, (size_t)4);
-        fwrite(buffer, (size_t)12, (size_t)1, outf);
-
-        ++k;
-      }
-
-      ++j;
-    }
-
-
-    /* Print triangles ------------------------------------------------------ */
-    for (i = 0, j = 0; (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)) && (i < mesh->parts_len); ++i)
-    {
-      if (mesh->hdr.Parts[i] < 0)
-        continue;
-
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
-
-      /* Create map: global vert index to local part idx (of used-in-this-part verts) */
-      memset(global_mesh_to_local_fce_idxs, -1, (size_t)mesh->vertices_len * sizeof(int));
-      for (n = 0; n < part->pvertices_len; ++n)
-      {
-        if (part->PVertices[n] < 0)
-          continue;
-
-        global_mesh_to_local_fce_idxs[
-          part->PVertices[n]
-        ] = n;
-      }
-
-      for (n = 0, k = 0; (k < part->PNumTriangles) && (n < part->ptriangles_len); ++n)
-      {
-        if (part->PTriangles[n] < 0)
-          continue;
-
-        memcpy(buffer + 0x00, &mesh->triangles[ part->PTriangles[n] ]->tex_page, (size_t)4);
-        memcpy(buffer + 0x04, &global_mesh_to_local_fce_idxs[ mesh->triangles[ part->PTriangles[n] ]->vidx[0] ], (size_t)4);
-        memcpy(buffer + 0x08, &global_mesh_to_local_fce_idxs[ mesh->triangles[ part->PTriangles[n] ]->vidx[1] ], (size_t)4);
-        memcpy(buffer + 0x0C, &global_mesh_to_local_fce_idxs[ mesh->triangles[ part->PTriangles[n] ]->vidx[2] ], (size_t)4);
-        for (m = 0; m < 6; ++m)
-        {
-          buf = 0xff00;
-          memcpy(buffer + 0x10 + m * 2 + 0x0, &buf, (size_t)2);
-        }
-        memcpy(buffer + 0x1C, &mesh->triangles[ part->PTriangles[n] ]->flag, (size_t)4);
-        memcpy(buffer + 0x20, &mesh->triangles[ part->PTriangles[n] ]->U, (size_t)12);
-        memcpy(buffer + 0x2C, &mesh->triangles[ part->PTriangles[n] ]->V, (size_t)12);
-
-        fwrite(buffer, (size_t)56, (size_t)1, outf);
-
-        ++k;
-      }
-
-      ++j;
-    }
-
-
-    /* Print Reserve1 ------------------------------------------------------- */
-    memset(buffer, '\0', (size_t)32);
-    for (i = 0, j = 0; (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)) && (i < mesh->parts_len); ++i)
-    {
-      if (mesh->hdr.Parts[i] < 0)
-        continue;
-
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
-      for (n = 0; n < part->PNumVertices; ++n)
-        fwrite(buffer, (size_t)32, (size_t)1, outf);
-
-      ++j;
-    }
-
-
-    /* Print Reserve2 ------------------------------------------------------- */
-    for (i = 0, j = 0; (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)) && (i < mesh->parts_len); ++i)
-    {
-      if (mesh->hdr.Parts[i] < 0)
-        continue;
-
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
-      for (n = 0; n < part->PNumVertices; ++n)
-        fwrite(buffer, (size_t)12, (size_t)1, outf);
-
-      ++j;
-    }
-
-
-    /* Print Reserve3 ------------------------------------------------------- */
-    for (i = 0, j = 0; (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)) && (i < mesh->parts_len); ++i)
-    {
-      if (mesh->hdr.Parts[i] < 0)
-        continue;
-
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
-      for (n = 0; n < part->PNumVertices; ++n)
-        fwrite(buffer, (size_t)12, (size_t)1, outf);
-
-      ++j;
-    }
-
-
-    if (fclose(outf) != 0)
-    {
-      fprintf(stderr, "FCELIB_IO_EncodeFce3_Fopen: cannot close file '%s'\n", (char *)fcepath);
-      retv = 0;
-      break;
-    }
-
-    break;
-  }/* for (;;) */
-
-  free(global_mesh_to_local_fce_idxs);
-
-  return retv;
-}
-#endif
-
 
 /* Limited to 64 parts. Returns boolean. */
 int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMesh *mesh, const int center_parts)
@@ -1826,7 +1442,6 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
 
   return retv;
 }
-
 
 /* Limited to 64 parts, 16 dummies, 16 colors. Returns boolean.
    For FCE4M, call with fce_version = 0x00101015 */

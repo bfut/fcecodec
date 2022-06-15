@@ -78,7 +78,8 @@ class Mesh : public fcelib::FcelibMesh {
     py::bytes IoEncode_Fce4M(const bool center_parts) const;
     void IoExportObj(std::string &objpath, std::string &mtlpath,
                      std::string &texture_name,
-                     const int print_damage, const int print_dummies) const;
+                     const int print_damage, const int print_dummies,
+                     const int use_part_positions) const;
     int IoGeomDataToNewPart_numpy(py::array_t<int, py::array::c_style | py::array::forcecast> vert_idxs,
                                   py::array_t<float, py::array::c_style | py::array::forcecast> vert_texcoords,
                                   py::array_t<float, py::array::c_style | py::array::forcecast> vert_pos,
@@ -217,11 +218,13 @@ py::bytes Mesh::IoEncode_Fce4M(const bool center_parts) const
 
 void Mesh::IoExportObj(std::string &objpath, std::string &mtlpath,
                        std::string &texture_name,
-                       const int print_damage, const int print_dummies) const
+                       const int print_damage, const int print_dummies,
+                       const int use_part_positions) const
 {
   if (fcelib::FCELIB_ExportObj(&mesh_, objpath.c_str(), mtlpath.c_str(),
                                texture_name.c_str(),
-                               print_damage, print_dummies) == 0)
+                               print_damage, print_dummies,
+                               use_part_positions) == 0)
     throw std::runtime_error("IoExportObj: Cannot export OBJ");
 }
 
@@ -1682,7 +1685,7 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def("IoEncode_Fce3", &Mesh::IoEncode_Fce3, py::arg("center_parts") = true)
     .def("IoEncode_Fce4", &Mesh::IoEncode_Fce4, py::arg("center_parts") = true)
     .def("IoEncode_Fce4M", &Mesh::IoEncode_Fce4M, py::arg("center_parts") = true)
-    .def("IoExportObj", &Mesh::IoExportObj, py::arg("objpath"), py::arg("mtlpath"), py::arg("texname"), py::arg("print_damage") = 0, py::arg("print_dummies") = 0)  // TODO: test
+    .def("IoExportObj", &Mesh::IoExportObj, py::arg("objpath"), py::arg("mtlpath"), py::arg("texname"), py::arg("print_damage") = 0, py::arg("print_dummies") = 0, py::arg("use_part_positions") = 1)
     .def("IoGeomDataToNewPart", &Mesh::IoGeomDataToNewPart_numpy,
       py::arg("vert_idxs"), py::arg("vert_texcoords"), py::arg("vert_pos"), py::arg("normals"),
       R"pbdoc( vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz... )pbdoc")

@@ -1,6 +1,6 @@
 """
 setup.py - adapted from https://github.com/pybind/python_example/blob/master/setup.py
-fcecodec Copyright (C) 2021 Benjamin Futasz <https://github.com/bfut>
+fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
 
 You may not redistribute this program without its source code.
 
@@ -32,7 +32,7 @@ from pybind11.setup_helpers import Pybind11Extension, build_ext
 script_path = pathlib.Path(__file__).parent.resolve()
 os.chdir(script_path)
 
-with open(script_path / "../src/fcelib/fcelib.h", 'r') as f:
+with open(script_path / "../src/fcelib/fcelib.h", "r", encoding="utf8") as f:
     for i in range(33):
         next(f)
     __version__ = f.readline().rstrip().split('\"')[-2]
@@ -102,8 +102,8 @@ ext_modules = [
         sorted(["fcecodecmodule.cpp"]),
         # Example: passing in the version to the compiled code
         define_macros=[
-            ('VERSION_INFO', __version__),
-            ('FCECVERBOSE', 0),
+            ("VERSION_INFO", __version__),
+            ("FCECVERBOSE", 0),
         ],
         extra_compile_args=extra_compile_args
     ),
@@ -126,10 +126,3 @@ setuptools.setup(
     cmdclass={"build_ext": build_ext},
     zip_safe=False,
 )
-
-# Linux / Anaconda:
-#     https://github.com/conda/conda/issues/10757
-#     https://github.com/sherpa/sherpa/issues/1325
-# workaround:
-#     conda install gcc_linux-64 gxx_linux-64 gfortran_linux-64
-# then compile as usual
