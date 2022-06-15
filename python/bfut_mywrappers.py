@@ -19,50 +19,50 @@
         misrepresented as being the original software.
     3. This notice may not be removed or altered from any source distribution.
 """
-import fcecodec
 import numpy as np
+
+import fcecodec
 
 def GetFceVersion(path):
     with open(path, "rb") as f:
         buf = f.read(0x2038)
         version = fcecodec.GetFceVersion(buf)
-        assert(version > 0)
+        assert version > 0
         return version
 
 def PrintFceInfo(path):
     with open(path, "rb") as f:
         buf = f.read()
         fcecodec.PrintFceInfo(buf)
-        assert(fcecodec.ValidateFce(buf) == 1)
+        assert fcecodec.ValidateFce(buf) == 1
 
 def LoadFce(mesh, path):
     with open(path, "rb") as f:
         fce_buf = f.read()
-    assert(fcecodec.ValidateFce(fce_buf) == 1)
+    assert fcecodec.ValidateFce(fce_buf) == 1
     mesh.IoDecode(fce_buf)
-    assert(mesh.MValid() == True)
+    assert mesh.MValid() is True
     return mesh
 
 def WriteFce(version, mesh, path, center_parts = 1):
     with open(path, "wb") as f:
-        # print(version == '3', version == '4', version)
-        if version == '3':
+        # print(version == "3", version == "4", version)
+        if version == "3":
             buf = mesh.IoEncode_Fce3(center_parts)
-        elif version == '4':
+        elif version == "4":
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)
-        assert(fcecodec.ValidateFce(buf) == 1)
+        assert fcecodec.ValidateFce(buf) == 1
         f.write(buf)
 
-def ExportObj(mesh, objpath, mtlpath, texname, print_damage, print_dummies):
-    mesh.IoExportObj(str(objpath), str(mtlpath), str(texname), print_damage, print_dummies)
+def ExportObj(mesh, objpath, mtlpath, texname, print_damage, print_dummies,
+              use_part_positions):
+    mesh.IoExportObj(str(objpath), str(mtlpath), str(texname), print_damage,
+                     print_dummies, use_part_positions)
 
 def GetPartNames(mesh):
-    # part_names = []
-    # for i in range(mesh.MNumParts):
-    #     part_names += mesh.PGetName(i)
-    part_names = np.empty(shape=(mesh.MNumParts, ), dtype='U64')
+    part_names = np.empty(shape=(mesh.MNumParts, ), dtype="U64")
     for i in range(mesh.MNumParts):
         part_names[i] = mesh.PGetName(i)
         i += 1
@@ -80,9 +80,9 @@ def GetPartIdxFromName(mesh, p_name):
     return retv
 
 def GetPartGlobalOrderVidxs(mesh, pid):
-    map = mesh.MVertsGetMap_idx2order_numpy
+    map_verts = mesh.MVertsGetMap_idx2order_numpy
     part_vidxs = mesh.PGetTriagsVidx_numpy(pid)
     for i in range(part_vidxs.shape[0]):
-        # print(part_vidxs[i], map[part_vidxs[i]])
-        part_vidxs[i] = map[part_vidxs[i]]
+        # print(part_vidxs[i], map_verts[part_vidxs[i]])
+        part_vidxs[i] = map_verts[part_vidxs[i]]
     return part_vidxs

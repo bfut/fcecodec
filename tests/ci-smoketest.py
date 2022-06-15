@@ -12,7 +12,7 @@ import linecache
 import os
 import tracemalloc
 
-def display_top(snapshot, key_type='lineno', limit=10):
+def display_top(snapshot, key_type="lineno", limit=10):
     snapshot = snapshot.filter_traces((
         tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
         tracemalloc.Filter(False, "<unknown>"),
@@ -27,7 +27,7 @@ def display_top(snapshot, key_type='lineno', limit=10):
               "({:d})".format(stat.size))
         line = linecache.getline(frame.filename, frame.lineno).strip()
         if line:
-            print('    %s' % line)
+            print("    %s" % line)
 
     other = top_stats[limit:]
     if other:
@@ -44,7 +44,6 @@ def display_top(snapshot, key_type='lineno', limit=10):
 try:
     import fcecodec
 except ModuleNotFoundError:
-
     import sys
     p = pathlib.Path(pathlib.Path(__file__).parent / "../python/build")
     print(p)
@@ -56,19 +55,19 @@ except ModuleNotFoundError:
 
 # --------------------------------------
 script_path = pathlib.Path(__file__).parent
-filepath_fce_input = pathlib.Path(script_path / 'fce/Snowman_car.fce')
-filepath_fce3_output  = pathlib.Path(script_path / '.out/ci-smoketest3.fce')
-filepath_fce4_output  = pathlib.Path(script_path / '.out/ci-smoketest4.fce')
-filepath_fce4m_output = pathlib.Path(script_path / '.out/ci-smoketest4m.fce')
+filepath_fce_input = pathlib.Path(script_path / "fce/Snowman_car.fce")
+filepath_fce3_output  = pathlib.Path(script_path / ".out/ci-smoketest3.fce")
+filepath_fce4_output  = pathlib.Path(script_path / ".out/ci-smoketest4.fce")
+filepath_fce4m_output = pathlib.Path(script_path / ".out/ci-smoketest4m.fce")
 
-filepath_obj_output = pathlib.Path(script_path / '.out/ci-smoketest.obj')
-filepath_mtl_output = pathlib.Path(script_path / '.out/ci-smoketest.mtl')
-objtexname = 'car00_Snowman.png'
+filepath_obj_output = pathlib.Path(script_path / ".out/ci-smoketest.obj")
+filepath_mtl_output = pathlib.Path(script_path / ".out/ci-smoketest.mtl")
+objtexname = "car00_Snowman.png"
 
 try:
-    os.mkdir(pathlib.Path(script_path / '.out'))
+    os.mkdir(pathlib.Path(script_path / ".out"))
 except FileExistsError:
-    None
+    pass
 
 del script_path
 
@@ -91,7 +90,7 @@ tracemalloc.start()
 
 # -------------------------------------- smoketest
 print(flush = True)
-print("version: {}".format(GetFceVersion(filepath_fce_input)))
+print(f"version: {GetFceVersion(filepath_fce_input)}")
 PrintFceInfo(filepath_fce_input)
 
 mesh = fcecodec.Mesh()
@@ -102,12 +101,13 @@ mesh = LoadFce(mesh, filepath_fce_input)
 mesh.PrintInfo()
 print(flush = True)
 
-WriteFce('3', mesh, filepath_fce3_output)
-WriteFce('4', mesh, filepath_fce4_output)
-WriteFce('4M', mesh, filepath_fce4m_output)
+WriteFce("3", mesh, filepath_fce3_output)
+WriteFce("4", mesh, filepath_fce4_output)
+WriteFce("4M", mesh, filepath_fce4m_output)
 ExportObj(mesh,
           filepath_obj_output, filepath_mtl_output, objtexname,
-          print_damage=0, print_dummies=0)
+          print_damage=0, print_dummies=0,
+          use_part_positions=1)
 del mesh
 print(flush = True)
 
@@ -115,9 +115,9 @@ PrintFceInfo(filepath_fce3_output)
 PrintFceInfo(filepath_fce4_output)
 PrintFceInfo(filepath_fce4m_output)
 
-print("fce version: {} ({})".format(GetFceVersion(filepath_fce3_output), filepath_fce3_output))
-print("fce version: {} ({})".format(GetFceVersion(filepath_fce4_output), filepath_fce4_output))
-print("fce version: {} ({})".format(GetFceVersion(filepath_fce4m_output), filepath_fce4m_output))
+print(f"fce version: {GetFceVersion(filepath_fce3_output)} ({filepath_fce3_output})")
+print(f"fce version: {GetFceVersion(filepath_fce4_output)} ({filepath_fce4_output})")
+print(f"fce version: {GetFceVersion(filepath_fce4m_output)} ({filepath_fce4m_output})")
 print(flush = True)
 
 print("EOF ci-smoketest.py", flush = True)
