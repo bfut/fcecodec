@@ -122,6 +122,13 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           mesh->hdr.DummyNames[(i + 1) * 64 - 1] = '\0';  /* ensure string */
 
         mesh->hdr.NumColors = header.NumColors;
+        if (fce_version == 0x00101015)
+        {
+          if (mesh->hdr.NumColors > 16)
+            mesh->hdr.NumColors = 16;
+          if (mesh->hdr.NumColors < 0)
+            mesh->hdr.NumColors = 0;
+        }
         mesh->hdr.NumSecColors = mesh->hdr.NumColors;
         for (i = 0; i < mesh->hdr.NumColors; ++i)
         {
@@ -145,7 +152,6 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           memcpy(&mesh->hdr.DriColors[i].brightness,   buf + 0x08e4 + i * 4 + 0x2, (size_t)1);
           memcpy(&mesh->hdr.DriColors[i].transparency, buf + 0x08e4 + i * 4 + 0x3, (size_t)1);
         }
-
 
         /* Parts ------------------------------------------------------------ */
         if (mesh->hdr.NumParts == 0)
@@ -646,24 +652,26 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
         break;
       }
 
-      fprintf(outf, "# fcecodec MTL File: '%s'\n"
-                    "# Material Count: %d\n",
-                    (char *)objpath, count_mtls);
+      fprintf(outf,
+              "# fcecodec MTL File: '%s'\n"
+              "# Material Count: %d\n",
+              (char *)objpath, count_mtls);
 
       for (i = 0; i < 4096; ++i)
       {
         if (mtls[i] == '1')
         {
-          fprintf(outf, "\n"
-                        "newmtl 0x%03x\n"
-                        "Ka 1.000 1.000 1.000\n"
-                        "Kd 1.000 1.000 1.000\n"
-                        "Ks 0.000 0.000 0.000\n"
-                        "d 0.7\n"
-                        /* "Tr 0.3\n" */
-                        "illum 2\n"
-                        "map_Kd %s\n",
-                        i, texture_name);
+          fprintf(outf,
+                  "\n"
+                  "newmtl 0x%03x\n"
+                  "Ka 1.000 1.000 1.000\n"
+                  "Kd 1.000 1.000 1.000\n"
+                  "Ks 0.000 0.000 0.000\n"
+                  "d 0.7\n"
+                  /* "Tr 0.3\n" */
+                  "illum 2\n"
+                  "map_Kd %s\n",
+                  i, texture_name);
         }
       }
       fflush(outf);
@@ -686,9 +694,10 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
       break;
     }
 
-    fprintf(outf, "# fcecodec OBJ File: '%s'\n"
-                  "# github.com/bfut/fcecodec\n"
-                  "mtllib %s\n", (char *)objpath, (char *)mtlpath);
+    fprintf(outf,
+            "# fcecodec OBJ File: '%s'\n"
+            "# github.com/bfut/fcecodec\n"
+            "mtllib %s\n", (char *)objpath, (char *)mtlpath);
     fflush(outf);
 
     for (i = 0; i < mesh->parts_len; ++i)
@@ -707,202 +716,147 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
       /* BEGIN printing undamaged part */
       /* Create map: global vert index to local part idx (of used-in-this-part verts) */
       memset(global_mesh_to_global_obj_idxs, -1, (size_t)mesh->vertices_len * sizeof(int));
-      for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+      for (j = 0; j < part->pvertices_len; ++j)
       {
-        if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+        if (part->PVertices[j] < 0)
           continue;
 
         global_mesh_to_global_obj_idxs[
-          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+          part->PVertices[j]
         ] = j + 1 + sum_verts;
       }
 
-      fprintf(outf, "\no %s\n", mesh->parts[ mesh->hdr.Parts[i] ]->PartName);
+      fprintf(outf, "\no %s\n", part->PartName);
 
       fprintf(outf, "#part position %f %f %f\n",
-                    mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.x,
-                    mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
-                    mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z);
+                    part->PartPos.x,
+                    part->PartPos.y,
+                    part->PartPos.z);
       fprintf(outf, "\n");
       fflush(outf);
 
       /* Verts */
-      fprintf(outf, "#%d verts\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
+      fprintf(outf, "#%d verts\n", part->PNumVertices);
       if (use_part_positions)
       {
-        for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+        for (j = 0; j < part->pvertices_len; ++j)
         {
-          if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+          if (part->PVertices[j] < 0)
             continue;
 
-          fprintf(outf, "v %f %f %f\n",
-                        mesh->vertices[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->VertPos.x + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.x,
-                        mesh->vertices[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->VertPos.y + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
-                        - (
-                          mesh->vertices[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                          ]->VertPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                        )  /* flip sign in Z-coordinate */
-                );
+          fprintf(outf,
+                  "v %f %f %f\n",
+                  mesh->vertices[ part->PVertices[j] ]->VertPos.x + part->PartPos.x,
+                  mesh->vertices[ part->PVertices[j] ]->VertPos.y + part->PartPos.y,
+                  - ( mesh->vertices[ part->PVertices[j] ]->VertPos.z + part->PartPos.z )  /* flip sign in Z-coordinate */
+          );
         }
       }
       else
       {
-        for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+        for (j = 0; j < part->pvertices_len; ++j)
         {
-          if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+          if (part->PVertices[j] < 0)
             continue;
 
-          fprintf(outf, "v %f %f %f\n",
-                        mesh->vertices[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->VertPos.x,
-                        mesh->vertices[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->VertPos.y,
-                        - (
-                          mesh->vertices[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                          ]->VertPos.z
-                        )  /* flip sign in Z-coordinate */
-                );
+          fprintf(outf,
+                  "v %f %f %f\n",
+                  mesh->vertices[ part->PVertices[j] ]->VertPos.x,
+                  mesh->vertices[ part->PVertices[j] ]->VertPos.y,
+                  - ( mesh->vertices[ part->PVertices[j] ]->VertPos.z )  /* flip sign in Z-coordinate */
+          );
         }
       }  /* if (use_part_positions) */
       fprintf(outf, "\n");
       fflush(outf);
 
       /* Texture coordinates */
-      fprintf(outf, "#%d vt\n", 3 * mesh->parts[ mesh->hdr.Parts[i] ]->PNumTriangles);
-      for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->ptriangles_len; ++j)
+      fprintf(outf, "#%d vt\n", 3 * part->PNumTriangles);
+      for (j = 0; j < part->ptriangles_len; ++j)
       {
-        if (mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j] < 0)
+        if (part->PTriangles[j] < 0)
           continue;
 
         for (n = 0; n < 3; ++n)
         {
-          fprintf(outf, "vt %f %f\n",
-                      mesh->triangles[
-                        mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                      ]->U[n],
-                      mesh->triangles[
-                        mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                      ]->V[n]
-               );
+          fprintf(outf,
+                  "vt %f %f\n",
+                  mesh->triangles[ part->PTriangles[j] ]->U[n],
+                  mesh->triangles[ part->PTriangles[j] ]->V[n]
+          );
         }  /* for n */
       }
       fprintf(outf, "\n");
       fflush(outf);
 
       /* Normals */
-      fprintf(outf, "#%d normals\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
+      fprintf(outf, "#%d normals\n", part->PNumVertices);
       if (use_part_positions)
       {
-        for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+        for (j = 0; j < part->pvertices_len; ++j)
         {
-          if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+          if (part->PVertices[j] < 0)
             continue;
 
-          fprintf(outf, "vn %f %f %f\n",
-                        mesh->vertices[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->NormPos.x + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.x,
-                        mesh->vertices[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->NormPos.y + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
-                        - (
-                          mesh->vertices[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                          ]->NormPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                        )  /* flip sign in Z-coordinate */
-                );
+          fprintf(outf,
+                  "vn %f %f %f\n",
+                  mesh->vertices[ part->PVertices[j] ]->NormPos.x + part->PartPos.x,
+                  mesh->vertices[ part->PVertices[j] ]->NormPos.y + part->PartPos.y,
+                  - ( mesh->vertices[ part->PVertices[j] ]->NormPos.z + part->PartPos.z )  /* flip sign in Z-coordinate */
+          );
         }
       }
       else
       {
-        for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+        for (j = 0; j < part->pvertices_len; ++j)
         {
-          if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+          if (part->PVertices[j] < 0)
             continue;
 
-          fprintf(outf, "vn %f %f %f\n",
-                        mesh->vertices[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->NormPos.x,
-                        mesh->vertices[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->NormPos.y,
-                        - (
-                          mesh->vertices[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                          ]->NormPos.z
-                        )  /* flip sign in Z-coordinate */
-                );
+          fprintf(outf,
+                  "vn %f %f %f\n",
+                  mesh->vertices[ part->PVertices[j] ]->NormPos.x,
+                  mesh->vertices[ part->PVertices[j] ]->NormPos.y,
+                  - ( mesh->vertices[ part->PVertices[j] ]->NormPos.z )  /* flip sign in Z-coordinate */
+          );
         }
       }  /* if (use_part_positions) */
       fprintf(outf, "\n");
       fflush(outf);
 
       /* Triangles */
-      fprintf(outf, "#%d faces (verts: %d..%d)\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumTriangles, sum_verts + 1, sum_verts + mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
-      for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->ptriangles_len; ++j)
+      fprintf(outf, "#%d faces (verts: %d..%d)\n", part->PNumTriangles, sum_verts + 1, sum_verts + part->PNumVertices);
+      for (j = 0; j < part->ptriangles_len; ++j)
       {
 
-        if (mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j] < 0)
+        if (part->PTriangles[j] < 0)
           continue;
 
-        fprintf(outf, "usemtl 0x%03x\n"
-                      "s 1\n",
-                      mesh->triangles[
-                        mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                      ]->flag & 0xfff);
+        fprintf(outf,
+                "usemtl 0x%03x\n"
+                "s 1\n",
+                mesh->triangles[ part->PTriangles[j] ]->flag & 0xfff);
 
-        fprintf(outf, "f %d/%d/%d %d/%d/%d %d/%d/%d\n",
-                      global_mesh_to_global_obj_idxs[
-                        mesh->triangles[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                        ]->vidx[0]
-                      ],
-                      3 * (j + sum_triags) + 1 + 0,
-                      global_mesh_to_global_obj_idxs[
-                        mesh->triangles[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                        ]->vidx[0]
-                      ],
+        fprintf(outf,
+                "f %d/%d/%d %d/%d/%d %d/%d/%d\n",
+                global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[0] ],
+                3 * (j + sum_triags) + 1 + 0,
+                global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[0] ],
 
-                      global_mesh_to_global_obj_idxs[
-                        mesh->triangles[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                        ]->vidx[1]
-                      ],
-                      3 * (j + sum_triags) + 1 + 1,
-                      global_mesh_to_global_obj_idxs[
-                        mesh->triangles[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                        ]->vidx[1]
-                      ],
+                global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[1] ],
+                3 * (j + sum_triags) + 1 + 1,
+                global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[1] ],
 
-                      global_mesh_to_global_obj_idxs[
-                        mesh->triangles[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                        ]->vidx[2]
-                      ],
-                      3 * (j + sum_triags) + 1 + 2,
-                      global_mesh_to_global_obj_idxs[
-                        mesh->triangles[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                        ]->vidx[2]
-                      ]
-                );
+                global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[2] ],
+                3 * (j + sum_triags) + 1 + 2,
+                global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[2] ]
+        );
       }  /* for j triangles */
       fprintf(outf, "\n");
       fflush(outf);
 
-      sum_verts  += mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices;
-      sum_triags += mesh->parts[ mesh->hdr.Parts[i] ]->PNumTriangles;
+      sum_verts  += part->PNumVertices;
+      sum_triags += part->PNumTriangles;
       /* END printing undamaged part */
 
 
@@ -911,177 +865,129 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
       {
         /* Create map: global vert index to local part idx (of used-in-this-part verts) */
         memset(global_mesh_to_global_obj_idxs, -1, (size_t)mesh->vertices_len * sizeof(int));
-        for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+        for (j = 0; j < part->pvertices_len; ++j)
         {
-          if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+          if (part->PVertices[j] < 0)
             continue;
 
           global_mesh_to_global_obj_idxs[
-            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
+            part->PVertices[j]
           ] = j + 1 + sum_verts;
         }
 
-        fprintf(outf, "\no DAMAGE_%s\n", mesh->parts[ mesh->hdr.Parts[i] ]->PartName);
+        fprintf(outf, "\no DAMAGE_%s\n", part->PartName);
 
         fprintf(outf, "#part position %f %f %f\n",
-                      mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.x,
-                      mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
-                      mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z);
+                      part->PartPos.x,
+                      part->PartPos.y,
+                      part->PartPos.z);
         fprintf(outf, "\n");
         fflush(outf);
 
         /* Verts */
-        fprintf(outf, "#%d verts\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
+        fprintf(outf, "#%d verts\n", part->PNumVertices);
         if (use_part_positions)
         {
-          for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+          for (j = 0; j < part->pvertices_len; ++j)
           {
-            if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+            if (part->PVertices[j] < 0)
               continue;
 
-            fprintf(outf, "v %f %f %f\n",
-                          mesh->vertices[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                          ]->DamgdVertPos.x + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.x,
-                          mesh->vertices[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                          ]->DamgdVertPos.y + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
-                          - (
-                            mesh->vertices[
-                              mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                            ]->DamgdVertPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                          )  /* flip sign in Z-coordinate */
-                  );
+            fprintf(outf,
+                    "v %f %f %f\n",
+                    mesh->vertices[ part->PVertices[j] ]->DamgdVertPos.x + part->PartPos.x,
+                    mesh->vertices[ part->PVertices[j] ]->DamgdVertPos.y + part->PartPos.y,
+                    - ( mesh->vertices[ part->PVertices[j] ]->DamgdVertPos.z + part->PartPos.z )  /* flip sign in Z-coordinate */
+            );
           }
         }
         else
         {
-          for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+          for (j = 0; j < part->pvertices_len; ++j)
           {
-            if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+            if (part->PVertices[j] < 0)
               continue;
 
-            fprintf(outf, "v %f %f %f\n",
-                          mesh->vertices[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                          ]->DamgdVertPos.x,
-                          mesh->vertices[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                          ]->DamgdVertPos.y,
-                          - (
-                            mesh->vertices[
-                              mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                            ]->DamgdVertPos.z
-                          )  /* flip sign in Z-coordinate */
-                  );
+            fprintf(outf,
+                    "v %f %f %f\n",
+                    mesh->vertices[ part->PVertices[j] ]->DamgdVertPos.x,
+                    mesh->vertices[ part->PVertices[j] ]->DamgdVertPos.y,
+                    - ( mesh->vertices[ part->PVertices[j] ]->DamgdVertPos.z )  /* flip sign in Z-coordinate */
+            );
           }
         }  /* if (use_part_positions) */
         fprintf(outf, "\n");
         fflush(outf);
 
         /* Texture coordinates */
-        fprintf(outf, "#%d vt\n", 3 * mesh->parts[ mesh->hdr.Parts[i] ]->PNumTriangles);
-        for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->ptriangles_len; ++j)
+        fprintf(outf, "#%d vt\n", 3 * part->PNumTriangles);
+        for (j = 0; j < part->ptriangles_len; ++j)
         {
-          if (mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j] < 0)
+          if (part->PTriangles[j] < 0)
             continue;
 
           for (n = 0; n < 3; ++n)
           {
-            fprintf(outf, "vt %f %f\n",
-                        mesh->triangles[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                        ]->U[n],
-                        mesh->triangles[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                        ]->V[n]
-                );
+            fprintf(outf,
+                    "vt %f %f\n",
+                    mesh->triangles[ part->PTriangles[j] ]->U[n],
+                    mesh->triangles[ part->PTriangles[j] ]->V[n]
+            );
           }  /* for n */
         }
         fprintf(outf, "\n");
         fflush(outf);
 
         /* Normals */
-        fprintf(outf, "#%d normals\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
-        for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->pvertices_len; ++j)
+        fprintf(outf, "#%d normals\n", part->PNumVertices);
+        for (j = 0; j < part->pvertices_len; ++j)
         {
-          if (mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j] < 0)
+          if (part->PVertices[j] < 0)
             continue;
 
-          fprintf(outf, "vn %f %f %f\n",
-                        mesh->vertices[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->DamgdNormPos.x + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.x,
-                        mesh->vertices[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                        ]->DamgdNormPos.y + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.y,
-                        - (
-                          mesh->vertices[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PVertices[j]
-                          ]->DamgdNormPos.z + mesh->parts[ mesh->hdr.Parts[i] ]->PartPos.z
-                        )  /* flip sign in Z-coordinate */
-                );
+          fprintf(outf,
+                  "vn %f %f %f\n",
+                  mesh->vertices[ part->PVertices[j] ]->DamgdNormPos.x + part->PartPos.x,
+                  mesh->vertices[ part->PVertices[j] ]->DamgdNormPos.y + part->PartPos.y,
+                  - ( mesh->vertices[ part->PVertices[j] ]->DamgdNormPos.z + part->PartPos.z )  /* flip sign in Z-coordinate */
+          );
         }
         fprintf(outf, "\n");
         fflush(outf);
 
         /* Triangles */
-        fprintf(outf, "#%d faces (verts: %d..%d)\n", mesh->parts[ mesh->hdr.Parts[i] ]->PNumTriangles, sum_verts + 1, sum_verts + mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices);
-        for (j = 0; j < mesh->parts[ mesh->hdr.Parts[i] ]->ptriangles_len; ++j)
+        fprintf(outf, "#%d faces (verts: %d..%d)\n", part->PNumTriangles, sum_verts + 1, sum_verts + part->PNumVertices);
+        for (j = 0; j < part->ptriangles_len; ++j)
         {
 
-          if (mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j] < 0)
+          if (part->PTriangles[j] < 0)
             continue;
 
-          fprintf(outf, "usemtl 0x%03x\n"
-                        "s 1\n",
-                        mesh->triangles[
-                          mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                        ]->flag & 0xfff);
+          fprintf(outf,
+                  "usemtl 0x%03x\n"
+                  "s 1\n",
+                  mesh->triangles[ part->PTriangles[j] ]->flag & 0xfff);
 
-          fprintf(outf, "f %d/%d/%d %d/%d/%d %d/%d/%d\n",
-                        global_mesh_to_global_obj_idxs[
-                          mesh->triangles[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                          ]->vidx[0]
-                        ],
-                        3 * (j + sum_triags) + 1 + 0,
-                        global_mesh_to_global_obj_idxs[
-                          mesh->triangles[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                          ]->vidx[0]
-                        ],
+          fprintf(outf,
+                  "f %d/%d/%d %d/%d/%d %d/%d/%d\n",
+                  global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[0] ],
+                  3 * (j + sum_triags) + 1 + 0,
+                  global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[0] ],
 
-                        global_mesh_to_global_obj_idxs[
-                          mesh->triangles[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                          ]->vidx[1]
-                        ],
-                        3 * (j + sum_triags) + 1 + 1,
-                        global_mesh_to_global_obj_idxs[
-                          mesh->triangles[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                          ]->vidx[1]
-                        ],
+                  global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[1] ],
+                  3 * (j + sum_triags) + 1 + 1,
+                  global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[1] ],
 
-                        global_mesh_to_global_obj_idxs[
-                          mesh->triangles[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                          ]->vidx[2]
-                        ],
-                        3 * (j + sum_triags) + 1 + 2,
-                        global_mesh_to_global_obj_idxs[
-                          mesh->triangles[
-                            mesh->parts[ mesh->hdr.Parts[i] ]->PTriangles[j]
-                          ]->vidx[2]
-                        ]
-                  );
+                  global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[2] ],
+                  3 * (j + sum_triags) + 1 + 2,
+                  global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[2] ]
+          );
         }  /* for j triangles */
         fprintf(outf, "\n");
         fflush(outf);
 
-        sum_verts  += mesh->parts[ mesh->hdr.Parts[i] ]->PNumVertices;
-        sum_triags += mesh->parts[ mesh->hdr.Parts[i] ]->PNumTriangles;
+        sum_verts  += part->PNumVertices;
+        sum_triags += part->PNumTriangles;
 
       }  /* if (print_damage) */
       /* END printing undamaged part */
@@ -1097,18 +1003,20 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
         fprintf(outf, "\no DUMMY_%02d_%s\n", i, mesh->hdr.DummyNames + (i * 64));
 
         /* Vertices */
-        fprintf(outf, "#position %f %f %f\n",
-                      mesh->hdr.Dummies[i].x,
-                      mesh->hdr.Dummies[i].y,
-                      mesh->hdr.Dummies[i].z);
+        fprintf(outf,
+                "#position %f %f %f\n",
+                mesh->hdr.Dummies[i].x,
+                mesh->hdr.Dummies[i].y,
+                mesh->hdr.Dummies[i].z);
 
         for (j = 0; j < 6; ++j)
         {
-          fprintf(outf, "v %f %f %f\n",
-                        0.1f * kVertDiamond[3 * j + 0] + mesh->hdr.Dummies[i].x,
-                        0.1f * kVertDiamond[3 * j + 1] + mesh->hdr.Dummies[i].y,
-                        0.1f * kVertDiamond[3 * j + 2] + mesh->hdr.Dummies[i].z * (-1)
-                 );
+          fprintf(outf,
+                  "v %f %f %f\n",
+                  0.1f * kVertDiamond[3 * j + 0] + mesh->hdr.Dummies[i].x,
+                  0.1f * kVertDiamond[3 * j + 1] + mesh->hdr.Dummies[i].y,
+                  0.1f * kVertDiamond[3 * j + 2] + mesh->hdr.Dummies[i].z * (-1)
+          );
         }
 
         /* Triangles */
@@ -1116,11 +1024,12 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
 
         for (j = 0; j < 8; ++j)
         {
-          fprintf(outf, "f %d %d %d\n",
-                        kTrianglesDiamond[3 * j + 0] + sum_verts,
-                        kTrianglesDiamond[3 * j + 1] + sum_verts,
-                        kTrianglesDiamond[3 * j + 2] + sum_verts
-                 );
+          fprintf(outf,
+                  "f %d %d %d\n",
+                  kTrianglesDiamond[3 * j + 0] + sum_verts,
+                  kTrianglesDiamond[3 * j + 1] + sum_verts,
+                  kTrianglesDiamond[3 * j + 2] + sum_verts
+          );
         }
         fflush(outf);
 

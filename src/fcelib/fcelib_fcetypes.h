@@ -1,6 +1,6 @@
 /*
   fcelib_fcetypes.h
-  fcecodec Copyright (C) 2021 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -646,7 +646,7 @@ FceHeader3 FCELIB_FCETYPES_GetFceHeader3(const unsigned char *header)
   memcpy(&hdr.ZHalfSize, header + 0x0030, (size_t)4);
 
   memcpy(&hdr.NumDummies, header + 0x0034, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(hdr.NumDummies, 16); ++i)
+  for (i = 0; i < FCELIB_MISC_Min(16, hdr.NumDummies); ++i)
   {
     memcpy(&hdr.Dummies[i].x, header + 0x0038 + i * 12 + 0x0, (size_t)4);
     memcpy(&hdr.Dummies[i].y, header + 0x0038 + i * 12 + 0x4, (size_t)4);
@@ -654,7 +654,7 @@ FceHeader3 FCELIB_FCETYPES_GetFceHeader3(const unsigned char *header)
   }
 
   memcpy(&hdr.NumParts, header + 0x00F8, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(hdr.NumParts, 64); ++i)
+  for (i = 0; i < FCELIB_MISC_Min(64, hdr.NumParts); ++i)
   {
     memcpy(&hdr.PartPos[i].x, header + 0x00FC + i * 12 + 0x0, (size_t)4);
     memcpy(&hdr.PartPos[i].y, header + 0x00FC + i * 12 + 0x4, (size_t)4);
@@ -667,7 +667,7 @@ FceHeader3 FCELIB_FCETYPES_GetFceHeader3(const unsigned char *header)
   memcpy(&hdr.PNumTriangles, header + 0x06FC, (size_t)(64 * 4));
 
   memcpy(&hdr.NumPriColors, header + 0x07FC, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(hdr.NumPriColors, 16); ++i)
+  for (i = 0; i < FCELIB_MISC_Min(16, hdr.NumPriColors); ++i)
   {
     memcpy(&hdr.PriColors[i].hue,          header + 0x0800 + i * 16 + 0x00, (size_t)4);
     memcpy(&hdr.PriColors[i].saturation,   header + 0x0800 + i * 16 + 0x04, (size_t)4);
@@ -676,7 +676,7 @@ FceHeader3 FCELIB_FCETYPES_GetFceHeader3(const unsigned char *header)
   }
 
   memcpy(&hdr.NumSecColors, header + 0x0900, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(hdr.NumSecColors, 16); ++i)
+  for (i = 0; i < FCELIB_MISC_Min(16, hdr.NumSecColors); ++i)
   {
     memcpy(&hdr.SecColors[i].hue,          header + 0x0904 + i * 16 + 0x00, (size_t)4);
     memcpy(&hdr.SecColors[i].saturation,   header + 0x0904 + i * 16 + 0x04, (size_t)4);
@@ -729,7 +729,7 @@ FceHeader4 FCELIB_FCETYPES_GetFceHeader4(const unsigned char *header)
   memcpy(&hdr.ZHalfSize, header + 0x0054, (size_t)4);
 
   memcpy(&hdr.NumDummies, header + 0x0058, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(hdr.NumDummies, 16); ++i)
+  for (i = 0; i < FCELIB_MISC_Min(16, hdr.NumDummies); ++i)
   {
     memcpy(&hdr.Dummies[i].x, header + 0x005c + i * 12 + 0x0, (size_t)4);
     memcpy(&hdr.Dummies[i].y, header + 0x005c + i * 12 + 0x4, (size_t)4);
@@ -737,7 +737,7 @@ FceHeader4 FCELIB_FCETYPES_GetFceHeader4(const unsigned char *header)
   }
 
   memcpy(&hdr.NumParts, header + 0x011c, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(hdr.NumParts, 64); ++i)
+  for (i = 0; i < FCELIB_MISC_Min(64, hdr.NumParts); ++i)
   {
     memcpy(&hdr.PartPos[i].x, header + 0x0120 + i * 12 + 0x0, (size_t)4);
     memcpy(&hdr.PartPos[i].y, header + 0x0120 + i * 12 + 0x4, (size_t)4);
@@ -750,7 +750,7 @@ FceHeader4 FCELIB_FCETYPES_GetFceHeader4(const unsigned char *header)
   memcpy(&hdr.PNumTriangles, header + 0x0720, (size_t)(64 * 4));
 
   memcpy(&hdr.NumColors, header + 0x0820, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(hdr.NumColors, 16); ++i)
+  for (i = 0; i < FCELIB_MISC_Min(16, hdr.NumColors); ++i)
   {
     memcpy(&hdr.PriColors[i].hue,          header + 0x0824 + i * 4 + 0, (size_t)1);
     memcpy(&hdr.PriColors[i].saturation,   header + 0x0824 + i * 4 + 1, (size_t)1);
@@ -1081,7 +1081,7 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const void *header, const int infilesize)
 
   if ((hdr.NumDummies > 16) || (hdr.NumDummies < 0))
   {
-    fprintf(stderr, "Invalid number of dummies (%d)\n", hdr.NumDummies);
+    fprintf(stderr, "Invalid number of dummies (%d is not in [0, 16]\n", hdr.NumDummies);
     retv = 0;
   }
 
@@ -1091,13 +1091,16 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const void *header, const int infilesize)
     retv = 0;
   }
 
-  if (hdr.Version == 0x00101014)
+  if ((hdr.NumColors > 16) || (hdr.NumColors < 0))
   {
-    if ((hdr.NumColors > 16) || (hdr.NumColors < 0))
+    /* FCE4M does not use colors and hence allows incorrect values */
+    if (hdr.Version == 0x00101014)
     {
-      fprintf(stderr, "Invalid number of colors (%d)\n", hdr.NumColors);
+      fprintf(stderr, "Invalid number of colors (%d is not in [0, 16])\n", hdr.NumColors);
       retv = 0;
     }
+    else if (hdr.Version == 0x00101015)
+      fprintf(stdout, "Warning: Invalid number of colors (%d is not in [0, 16])\n", hdr.NumColors);
   }
 
   /* Vertices, triangles counts */

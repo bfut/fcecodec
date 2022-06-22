@@ -18,15 +18,6 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/**
-  BUILD:
-  - to cwd
-      python setup.py build
-  - install
-      python -m pip install --upgrade pip wheel setuptools pybind11
-      python -m pip install -e .
- **/
-
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>

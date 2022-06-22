@@ -1,6 +1,6 @@
 /*
   fcelib_types.h
-  fcecodec Copyright (C) 2021 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -294,6 +294,12 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh mesh)
   int sum_verts = 0;
   FcelibPart *part = NULL;
 
+#if FCECVERBOSE >= 1
+  fprintf(stdout, "ValidateMesh: mesh.parts_len=%d\n", mesh.parts_len);
+  fprintf(stdout, "ValidateMesh: mesh.triangles_len=%d\n", mesh.triangles_len);
+  fprintf(stdout, "ValidateMesh: mesh.vertices_len=%d\n", mesh.vertices_len);
+#endif
+
   if (mesh.parts_len == 0     && !mesh.parts     && !mesh.hdr.Parts &&
       mesh.triangles_len == 0 && !mesh.triangles &&
       mesh.vertices_len == 0  && !mesh.vertices)
@@ -345,7 +351,7 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh mesh)
 
   if (count_parts != mesh.hdr.NumParts)
   {
-    fprintf(stderr, "ValidateMesh: inconsistent list (mesh.hdr.NumParts)\n");
+    fprintf(stderr, "ValidateMesh: inconsistent list (%d != mesh.hdr.NumParts = %d)\n", count_parts, mesh.hdr.NumParts);
     return 0;
   }
   if (sum_triags != mesh.hdr.NumTriangles)
