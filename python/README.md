@@ -15,12 +15,10 @@ Install `Visual Studio` with the Python Development workload. For a detailed
 description, see the _Prerequisites_ section on
 [microsoft.com: C++ extensions for Python](https://docs.microsoft.com/en-us/visualstudio/python/working-with-c-cpp-python-in-visual-studio?view=vs-2019#prerequisites)
 
-Installing the `Anaconda` distribution and `git` is recommended.
+Installing `Anaconda` and `git` is recommended.
 
 Once these prerequisites have been met, installation generally works as
 described above.
-
-`Note: Consider running fcecodec under WSL.`
 
 ## Examples
 For a script template and handy function wrappers, see
