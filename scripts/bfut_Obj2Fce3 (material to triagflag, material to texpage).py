@@ -316,6 +316,7 @@ def ShapeToPart(reader,
                 try:
                     # print(tmp, "->", int(tmp[2:], base=16), f"0x{hex(int(tmp[2:], base=16))}")
                     val = int(tmp[2:], base=16)
+                    del val
                 except ValueError:
                     print(f"Cannot map faces material name to triangles flags ('{materials[i].name}' is not hex value) 1")
                     break
@@ -507,3 +508,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
