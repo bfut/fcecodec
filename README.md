@@ -6,8 +6,8 @@ Python bindings are written in C++ (pybind11). Supported on Windows and Linux.
 Tested on macOS.
 
 [/scripts](/scripts) contains ready-to-use scripts (Obj2Fce, Fce2Obj, etc.)<br/>
-[/scripts/doc_Obj2Fce.MD](/scripts/doc_Obj2Fce.MD) is a tutorial for preparing
-OBJ/MTL files for conversion to finished FCE
+[/scripts/doc_Obj2Fce.md](/scripts/doc_Obj2Fce.md) is an OBJ/MTL to FCE
+conversion tutorial
 
 ## Example
 [fcecodec-example.ipynb](https://colab.research.google.com/github/bfut/notebooks/blob/main/fcecodec/fcecodec-example.ipynb)

@@ -2,7 +2,7 @@
 This tutorial describes how to prepare OBJ/MTL files for the Obj2Fce converter
 scripts. This tutorial covers FCE3, FCE4, and FCE4M.
 
-The latest version of this tutorial can be found [here](https://github.com/bfut/fcecodec/tree/main/scripts/doc_Obj2Fce.MD).<br/>
+The latest version of this tutorial can be found [here](https://github.com/bfut/fcecodec/tree/main/scripts/doc_Obj2Fce.md).<br/>
 The following files can be found in [_/scripts_](https://github.com/bfut/fcecodec/tree/main/scripts)
 
 ```
