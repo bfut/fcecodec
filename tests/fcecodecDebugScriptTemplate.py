@@ -21,10 +21,12 @@ try:
     import fcecodec
 except ModuleNotFoundError:
     import sys
-    p = pathlib.Path(script_path / "../python/build")
-    print(p)
-    for x in p.glob("**"):
+    PATH = pathlib.Path(pathlib.Path(__file__).parent / "../python/build")
+    print(PATH)
+    for x in PATH.glob("**"):
         sys.path.append(str(x.resolve()))
+    del PATH
+
     import fcecodec
 
 # Parse command (or print module help)

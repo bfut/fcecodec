@@ -8,6 +8,19 @@ import sys
 
 import pytest
 
+# Look for local build, if not installed
+try:
+    import fcecodec
+except ModuleNotFoundError:
+    import sys
+    PATH = pathlib.Path(pathlib.Path(__file__).parent / "../python/build")
+    print(PATH)
+    for x in PATH.glob("**"):
+        sys.path.append(str(x.resolve()))
+    del PATH
+
+    import fcecodec
+
 script_path = pathlib.Path(__file__).parent
 filepath_fce_input = script_path / "fce/Snowman_car.fce"
 filepath_fce3_output = script_path / ".out/test_diff3.fce"
@@ -57,7 +70,7 @@ def test_diff_identical_src_X_X(version1, version2, filepath_fce_output):
 
 def test_diff_identical_src_4m_4_to_4():
     print("Compare src->4 with src->4m->4 (required identical)")
-    outpath = str(filepath_fce4m_output) + f"diff4m4"
+    outpath = str(filepath_fce4m_output) + "diff4m4"
     mesh = fcecodec.Mesh()
     mesh = LoadFce(mesh, filepath_fce4m_output)
     WriteFce("4", mesh, outpath, center_parts=0)
