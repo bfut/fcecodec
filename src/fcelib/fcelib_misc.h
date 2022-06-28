@@ -1,6 +1,6 @@
 /*
   fcelib_misc.h
-  fcecodec Copyright (C) 2021 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -16,10 +16,10 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+*/
 
-#ifndef FCELIB_MISC_H
-#define FCELIB_MISC_H
+#ifndef FCELIB_MISC_H_
+#define FCELIB_MISC_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,12 +48,12 @@ static const int kFceLibNumFce4HiBodyParts = 18;
 /* Represent dummies */
 static
 const float kVertDiamond[6 * 3] = {
-   1.0,  0.0,  0.0,
-  -1.0,  0.0,  0.0,
-   0.0,  1.0,  0.0,
-   0.0, -1.0,  0.0,
-   0.0,  0.0,  1.0,
-   0.0,  0.0, -1.0,
+  1.0,  0.0,  0.0,
+ -1.0,  0.0,  0.0,
+  0.0,  1.0,  0.0,
+  0.0, -1.0,  0.0,
+  0.0,  0.0,  1.0,
+  0.0,  0.0, -1.0,
 };
 
 static
@@ -143,4 +143,4 @@ int FCELIB_MISC_StrIsInArray(char *str, const char **arr)
 }  /* namespace fcelib */
 #endif
 
-#endif  /* FCELIB_MISC_H */
+#endif  /* FCELIB_MISC_H_ */

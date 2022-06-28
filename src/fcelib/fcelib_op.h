@@ -1,6 +1,6 @@
 /*
   fcelib_op.h
-  fcecodec Copyright (C) 2021 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -16,23 +16,23 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+*/
 
 /**
   implements mesh operations
- **/
+**/
 
-#ifndef FCELIB_OP_H
-#define FCELIB_OP_H
+#ifndef FCELIB_OP_H_
+#define FCELIB_OP_H_
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "fcelib_fcetypes.h"
-#include "fcelib_io.h"  /* FCELIB_IO_GeomDataToNewPart */
-#include "fcelib_misc.h"  /* kTrianglesDiamond, kVertDiamond */
-#include "fcelib_types.h"
+#include "./fcelib_fcetypes.h"
+#include "./fcelib_io.h"  /* FCELIB_IO_GeomDataToNewPart */
+#include "./fcelib_misc.h"  /* kTrianglesDiamond, kVertDiamond */
+#include "./fcelib_types.h"
 
 #ifdef __cplusplus
 namespace fcelib {
@@ -54,11 +54,11 @@ int FCELIB_OP_AddHelperPart(FcelibMesh *mesh)
   float vert_pos[6 * 3];
 
   memcpy(vert_idxs, kTrianglesDiamond, sizeof(kTrianglesDiamond));
-  for(i = 0; i < 8 * 3; ++i)
+  for (i = 0; i < 8 * 3; ++i)
     --vert_idxs[i];
   memset(vert_texcoords, 0, sizeof(vert_texcoords));
   memcpy(vert_pos, kVertDiamond, sizeof(kVertDiamond));
-  for(i = 0; i < 6 * 3; ++i)
+  for (i = 0; i < 6 * 3; ++i)
     vert_pos[i] *= 0.1f;
 
   return FCELIB_IO_GeomDataToNewPart(mesh,
@@ -470,7 +470,7 @@ int FCELIB_OP_DeleteUnrefdVerts(FcelibMesh *mesh)
     return 0;
 
   map = (int *)malloc((size_t)mesh->vertices_len * sizeof(*map));
-  if(!map)
+  if (!map)
   {
     fprintf(stderr, "DeleteUnrefdVerts: Cannot allocate memory (map)\n");
     return 0;
@@ -824,4 +824,4 @@ int FCELIB_OP_MoveUpPart(FcelibMesh *mesh, const int idx)
 }  /* namespace fcelib */
 #endif
 
-#endif  /* FCELIB_OP_H */
+#endif  /* FCELIB_OP_H_ */

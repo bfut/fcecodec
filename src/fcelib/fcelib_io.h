@@ -16,22 +16,22 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+*/
 
 /**
   import/export FCE3, FCE4, FCE4M, export OBJ/MTL, import geometric data
- **/
+**/
 
-#ifndef FCELIB_IO_H
-#define FCELIB_IO_H
+#ifndef FCELIB_IO_H_
+#define FCELIB_IO_H_
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "fcelib_fcetypes.h"
-#include "fcelib_misc.h"
-#include "fcelib_types.h"
+#include "./fcelib_fcetypes.h"
+#include "./fcelib_misc.h"
+#include "./fcelib_types.h"
 
 #ifdef __cplusplus
 namespace fcelib {
@@ -211,7 +211,6 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
             break;
           }
           memset(mesh->parts[i]->PTriangles, -1, (size_t)(mesh->parts[i]->ptriangles_len) * sizeof(int));
-
         }  /* for i */
         for (i = mesh->hdr.NumParts; i < mesh->parts_len; ++i)
           mesh->parts[i] = NULL;
@@ -328,7 +327,6 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
         }
         for (i = mesh->hdr.NumVertices; i < mesh->vertices_len; ++i)
           mesh->vertices[i] = NULL;
-
       }  /* case FCE4, FCEM */
 
       retv = 1;
@@ -455,7 +453,6 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
             break;
           }
           memset(mesh->parts[i]->PTriangles, -1, (size_t)(mesh->parts[i]->ptriangles_len * sizeof(int)));
-
         }  /* for i */
         for (i = mesh->hdr.NumParts; i < mesh->parts_len; ++i)
           mesh->parts[i] = NULL;
@@ -566,7 +563,6 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
         }
         for (i = mesh->hdr.NumVertices; i < mesh->vertices_len; ++i)
           mesh->vertices[i] = NULL;
-
       }  /* case default */
 
       /* Tidy up names */
@@ -828,7 +824,6 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
       fprintf(outf, "#%d faces (verts: %d..%d)\n", part->PNumTriangles, sum_verts + 1, sum_verts + part->PNumVertices);
       for (j = 0; j < part->ptriangles_len; ++j)
       {
-
         if (part->PTriangles[j] < 0)
           continue;
 
@@ -959,7 +954,6 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
         fprintf(outf, "#%d faces (verts: %d..%d)\n", part->PNumTriangles, sum_verts + 1, sum_verts + part->PNumVertices);
         for (j = 0; j < part->ptriangles_len; ++j)
         {
-
           if (part->PTriangles[j] < 0)
             continue;
 
@@ -988,11 +982,8 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
 
         sum_verts  += part->PNumVertices;
         sum_triags += part->PNumTriangles;
-
       }  /* if (print_damage) */
       /* END printing undamaged part */
-
-
     }  /* for i parts */
 
     if (print_dummies)
@@ -1028,8 +1019,7 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                   "f %d %d %d\n",
                   kTrianglesDiamond[3 * j + 0] + sum_verts,
                   kTrianglesDiamond[3 * j + 1] + sum_verts,
-                  kTrianglesDiamond[3 * j + 2] + sum_verts
-          );
+                  kTrianglesDiamond[3 * j + 2] + sum_verts);
         }
         fflush(outf);
 
@@ -2029,4 +2019,4 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
 }  /* namespace fcelib */
 #endif
 
-#endif  /* FCELIB_IO_H */
+#endif  /* FCELIB_IO_H_ */

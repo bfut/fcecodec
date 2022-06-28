@@ -16,29 +16,29 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+*/
 
 /**
   library interface
 
   library structs are defined in fcelib_types.h
   FCE structs and format documentation can be found in fcelib_fcetypes.h
- **/
+**/
 
-#ifndef FCELIB_H
-#define FCELIB_H
+#ifndef FCELIB_H_
+#define FCELIB_H_
 
 #include <stdio.h>
 #include <string.h>
 
 #define FCECVERS "1.1"
 #ifndef FCECVERBOSE
-#define FCECVERBOSE 0  /* set 1 for additional console output */
+#define FCECVERBOSE 0  /* >=1 for verbose console output */
 #endif
 
-#include "fcelib_io.h"
-#include "fcelib_op.h"
-#include "fcelib_types.h"
+#include "./fcelib_io.h"
+#include "./fcelib_op.h"
+#include "./fcelib_types.h"
 
 #ifdef __cplusplus
 namespace fcelib {
@@ -237,4 +237,4 @@ int FCELIB_GetInternalPartIdxByOrder(FcelibMesh *mesh, const int idx)
 } /* namespace fcelib */
 #endif
 
-#endif /* FCELIB_H */
+#endif /* FCELIB_H_ */

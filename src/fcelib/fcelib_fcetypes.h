@@ -16,20 +16,19 @@
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+*/
 
 /**
   implements FCE types, format validations. documents FCE format.
- **/
+**/
 
-
-#ifndef FCELIB_FCETYPES_H
-#define FCELIB_FCETYPES_H
+#ifndef FCELIB_FCETYPES_H_
+#define FCELIB_FCETYPES_H_
 
 #include <stdio.h>
 #include <string.h>
 
-#include "fcelib_misc.h"
+#include "./fcelib_misc.h"
 
 #ifdef __cplusplus
 namespace fcelib {
@@ -1213,7 +1212,7 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const void *header, const int infilesize)
 
      Note: Fcecodec warns about, accepts (VertTblOffset > 0)
   */
- if ((size = FCELIB_FCETYPES_Fce4ComputeSize(hdr.Version, hdr.NumVertices, hdr.NumTriangles)) != infilesize)
+  if ((size = FCELIB_FCETYPES_Fce4ComputeSize(hdr.Version, hdr.NumVertices, hdr.NumTriangles)) != infilesize)
   {
     /* Are just Reserve5, Reserve6 invalid? ex. 99viper/?.fce */
 
@@ -1616,4 +1615,4 @@ void FCELIB_FCETYPES_PrintHeaderFce3(const int fce_size, const void *header)
 }  /* namespace fcelib */
 #endif
 
-#endif  /* FCELIB_FCETYPES_H */
+#endif  /* FCELIB_FCETYPES_H_ */
