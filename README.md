@@ -1,3 +1,7 @@
+<a title="'Python (Linux)' workflow Status" href="https://github.com/bfut/fcecodec/actions?query=workflow%3Alinux"><img alt="'linux' workflow Status" src="https://img.shields.io/github/workflow/status/bfut/fcecodec/linux?longCache=true&style=flat&label=Python%20&#40Linux&#41"></a>
+<a title="'Python (macOS)' workflow Status" href="https://github.com/bfut/fcecodec/actions?query=workflow%3Amacos"><img alt="'macos' workflow Status" src="https://img.shields.io/github/workflow/status/bfut/fcecodec/macos?longCache=true&style=flat&label=Python%20&#40macOS&#41"></a>
+<a title="'Python (Windows)' workflow Status" href="https://github.com/bfut/fcecodec/actions?query=workflow%3Awindows"><img alt="'windows' workflow Status" src="https://img.shields.io/github/workflow/status/bfut/fcecodec/windows?longCache=true&style=flat&label=Python%20&#40Windows&#41"></a>
+
 # fcecodec
 `fcecodec` is a Python extension module that decodes, encodes, and operates on
 FCE data. FCE is a geometry definition file format.

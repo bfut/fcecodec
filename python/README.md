@@ -114,16 +114,8 @@ CLASSES
      |      
      |      vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz...
      |  
-     |  IoGeomDataToNewPart_numpy(...)
-     |      IoGeomDataToNewPart_numpy(self: fcecodec.Mesh, vert_idxs: numpy.ndarray[numpy.int32], vert_texcoords: numpy.ndarray[numpy.float32], vert_pos: numpy.ndarray[numpy.float32], normals: numpy.ndarray[numpy.float32]) -> int
-     |      
-     |      vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz...
-     |  
      |  MGetColors(...)
      |      MGetColors(self: fcecodec.Mesh) -> buffer
-     |  
-     |  MGetColors_numpy(...)
-     |      MGetColors_numpy(self: fcecodec.Mesh) -> buffer
      |  
      |  MGetDummyNames(...)
      |      MGetDummyNames(self: fcecodec.Mesh) -> List[str]
@@ -131,16 +123,8 @@ CLASSES
      |  MGetDummyPos(...)
      |      MGetDummyPos(self: fcecodec.Mesh) -> buffer
      |  
-     |  MGetDummyPos_numpy(...)
-     |      MGetDummyPos_numpy(self: fcecodec.Mesh) -> buffer
-     |  
      |  MSetColors(...)
      |      MSetColors(self: fcecodec.Mesh, colors: numpy.ndarray[numpy.uint8]) -> None
-     |      
-     |      Expects shape=(N, 4, 4)
-     |  
-     |  MSetColors_numpy(...)
-     |      MSetColors_numpy(self: fcecodec.Mesh, colors: numpy.ndarray[numpy.uint8]) -> None
      |      
      |      Expects shape=(N, 4, 4)
      |  
@@ -152,21 +136,11 @@ CLASSES
      |      
      |      Expects shape (N*3, ) for N dummies
      |  
-     |  MSetDummyPos_numpy(...)
-     |      MSetDummyPos_numpy(self: fcecodec.Mesh, positions: numpy.ndarray[numpy.float32]) -> None
-     |      
-     |      Expects shape (N*3, ) for N dummies
-     |  
      |  MValid(...)
      |      MValid(self: fcecodec.Mesh) -> bool
      |  
      |  OpAddHelperPart(...)
-     |      OpAddHelperPart(self: fcecodec.Mesh, name: str, new_center: List[float[3]] = [0.0, 0.0, 0.0]) -> int
-     |      
-     |      Add diamond-shaped part at coordinate origin or at optionally given position.
-     |  
-     |  OpAddHelperPart_numpy(...)
-     |      OpAddHelperPart_numpy(self: fcecodec.Mesh, name: str, new_center: numpy.ndarray[numpy.float32] = [0.0, 0.0, 0.0]) -> int
+     |      OpAddHelperPart(self: fcecodec.Mesh, name: str, new_center: numpy.ndarray[numpy.float32] = [0.0, 0.0, 0.0]) -> int
      |      
      |      Add diamond-shaped part at coordinate origin or at optionally given position.
      |  
@@ -207,12 +181,7 @@ CLASSES
      |      Move up specified part towards order 0. Returns new part index.
      |  
      |  OpSetPartCenter(...)
-     |      OpSetPartCenter(self: fcecodec.Mesh, pid: int, new_center: List[float[3]]) -> bool
-     |      
-     |      Center specified part to given position. Does not move part w.r.t. to global coordinates.
-     |  
-     |  OpSetPartCenter_numpy(...)
-     |      OpSetPartCenter_numpy(self: fcecodec.Mesh, pid: int, new_center: numpy.ndarray[numpy.float32]) -> bool
+     |      OpSetPartCenter(self: fcecodec.Mesh, pid: int, new_center: numpy.ndarray[numpy.float32]) -> bool
      |      
      |      Center specified part to given position. Does not move part w.r.t. to global coordinates.
      |  
@@ -220,35 +189,21 @@ CLASSES
      |      PGetName(self: fcecodec.Mesh, pid: int) -> str
      |  
      |  PGetPos(...)
-     |      PGetPos(self: fcecodec.Mesh, pid: int) -> List[float[3]]
-     |  
-     |  PGetPos_numpy(...)
-     |      PGetPos_numpy(self: fcecodec.Mesh, pid: int) -> buffer
+     |      PGetPos(self: fcecodec.Mesh, pid: int) -> buffer
      |  
      |  PGetTriagsFlags(...)
-     |      PGetTriagsFlags(self: fcecodec.Mesh, pid: int) -> List[int]
+     |      PGetTriagsFlags(self: fcecodec.Mesh, pid: int) -> buffer
      |  
-     |  PGetTriagsFlags_numpy(...)
-     |      PGetTriagsFlags_numpy(self: fcecodec.Mesh, pid: int) -> buffer
-     |  
-     |  PGetTriagsTexcoords_numpy(...)
-     |      PGetTriagsTexcoords_numpy(self: fcecodec.Mesh, pid: int) -> buffer
+     |  PGetTriagsTexcoords(...)
+     |      PGetTriagsTexcoords(self: fcecodec.Mesh, pid: int) -> buffer
      |      
      |      uuuvvv..., Returns (N*6, ) numpy array for N triangles.
      |  
      |  PGetTriagsTexpages(...)
-     |      PGetTriagsTexpages(self: fcecodec.Mesh, pid: int) -> List[int]
-     |  
-     |  PGetTriagsTexpages_numpy(...)
-     |      PGetTriagsTexpages_numpy(self: fcecodec.Mesh, pid: int) -> buffer
+     |      PGetTriagsTexpages(self: fcecodec.Mesh, pid: int) -> buffer
      |  
      |  PGetTriagsVidx(...)
-     |      PGetTriagsVidx(self: fcecodec.Mesh, pid: int) -> List[int]
-     |      
-     |      Returns (N*3, ) array of global vert indexes for N triangles.
-     |  
-     |  PGetTriagsVidx_numpy(...)
-     |      PGetTriagsVidx_numpy(self: fcecodec.Mesh, pid: int) -> buffer
+     |      PGetTriagsVidx(self: fcecodec.Mesh, pid: int) -> buffer
      |      
      |      Returns (N*3, ) numpy array of global vert indexes for N triangles.
      |  
@@ -262,33 +217,20 @@ CLASSES
      |      PSetName(self: fcecodec.Mesh, pid: int, name: str) -> None
      |  
      |  PSetPos(...)
-     |      PSetPos(self: fcecodec.Mesh, pid: int, pos: List[float[3]]) -> None
-     |  
-     |  PSetPos_numpy(...)
-     |      PSetPos_numpy(self: fcecodec.Mesh, pid: int, pos: numpy.ndarray[numpy.float32]) -> None
+     |      PSetPos(self: fcecodec.Mesh, pid: int, pos: numpy.ndarray[numpy.float32]) -> None
      |  
      |  PSetTriagsFlags(...)
-     |      PSetTriagsFlags(self: fcecodec.Mesh, pid: int, arr: List[int]) -> None
-     |      
-     |      Expects (N, ) array for N triangles
-     |  
-     |  PSetTriagsFlags_numpy(...)
-     |      PSetTriagsFlags_numpy(self: fcecodec.Mesh, pid: int, arr: numpy.ndarray[numpy.int32]) -> None
+     |      PSetTriagsFlags(self: fcecodec.Mesh, pid: int, arr: numpy.ndarray[numpy.int32]) -> None
      |      
      |      Expects (N, ) numpy array for N triangles
      |  
-     |  PSetTriagsTexcoords_numpy(...)
-     |      PSetTriagsTexcoords_numpy(self: fcecodec.Mesh, pid: int, arr: numpy.ndarray[numpy.float32]) -> None
+     |  PSetTriagsTexcoords(...)
+     |      PSetTriagsTexcoords(self: fcecodec.Mesh, pid: int, arr: numpy.ndarray[numpy.float32]) -> None
      |      
      |      arr: uuuvvv..., Expects (N*6, ) numpy array for N triangles.
      |  
      |  PSetTriagsTexpages(...)
-     |      PSetTriagsTexpages(self: fcecodec.Mesh, pid: int, arr: List[int]) -> None
-     |      
-     |      Expects (N, ) array for N triangles
-     |  
-     |  PSetTriagsTexpages_numpy(...)
-     |      PSetTriagsTexpages_numpy(self: fcecodec.Mesh, pid: int, arr: numpy.ndarray[numpy.int32]) -> None
+     |      PSetTriagsTexpages(self: fcecodec.Mesh, pid: int, arr: numpy.ndarray[numpy.int32]) -> None
      |      
      |      Expects (N, ) numpy array for N triangles
      |  
@@ -319,9 +261,6 @@ CLASSES
      |  MVertsGetMap_idx2order
      |      Maps from global vert indexes (contained in triangles) to global vertex order.
      |  
-     |  MVertsGetMap_idx2order_numpy
-     |      Maps from global vert indexes (contained in triangles) to global vertex order.
-     |  
      |  ----------------------------------------------------------------------
      |  Data descriptors defined here:
      |  
@@ -332,33 +271,18 @@ CLASSES
      |      Unknown purpose in FCE4M. Only exists in FCE4M.
      |  
      |  MVertsAnimation
-     |      Returns (N, ) array for N vertices.
-     |  
-     |  MVertsAnimation_numpy
      |      Returns (N, ) numpy array for N vertices.
      |  
      |  MVertsDamgdNorms
-     |      Returns (N*3, ) array for N vertices.
-     |  
-     |  MVertsDamgdNorms_numpy
      |      Returns (N*3, ) numpy array for N vertices.
      |  
      |  MVertsDamgdPos
-     |      Local vertice positions. Returns (N*3, ) array for N vertices.
-     |  
-     |  MVertsDamgdPos_numpy
      |      Local vertice positions. Returns (N*3, ) numpy array for N vertices.
      |  
      |  MVertsNorms
-     |      Returns (N*3, ) array for N vertices.
-     |  
-     |  MVertsNorms_numpy
      |      Returns (N*3, ) numpy array for N vertices.
      |  
      |  MVertsPos
-     |      Local vertice positions. Returns (N*3, ) array for N vertices.
-     |  
-     |  MVertsPos_numpy
      |      Local vertice positions. Returns (N*3, ) numpy array for N vertices.
      |  
      |  ----------------------------------------------------------------------
@@ -380,4 +304,7 @@ FUNCTIONS
         ValidateFce(buf: str) -> int
         
         Returns 1 for valid FCE data, 0 otherwise.
+
+VERSION
+    1.1
 ```
