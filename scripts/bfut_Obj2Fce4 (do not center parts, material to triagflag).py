@@ -1,3 +1,21 @@
+# Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
+# This file is distributed under: zlib License
+#
+# This software is provided 'as-is', without any express or implied
+# warranty.  In no event will the authors be held liable for any damages
+# arising from the use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it
+# freely, subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not
+#     claim that you wrote the original software. If you use this software
+#     in a product, an acknowledgment in the product documentation would be
+#     appreciated but is not required.
+# 2. Altered source versions must be plainly marked as such, and must not be
+#     misrepresented as being the original software.
+# 3. This notice may not be removed or altered from any source distribution.
 """
     bfut_Obj2Fce4 (do not center parts, material to triagflag).py
 
@@ -11,40 +29,20 @@ HOW TO USE
     python 'bfut_Obj2Fce4 (do not center parts, material to triagflag).py' /path/to/model.obj
 
 TUTORIAL
-    check <doc_Obj2Fce.MD> in fcecodec/scripts/
+    check <doc_Obj2Fce.md> in fcecodec/scripts/
 
 REQUIRES
     installing fcecodec <https://github.com/bfut/fcecodec>
     installing numpy <https://numpy.org/install>
     installing tinyobjloader <https://github.com/tinyobjloader/tinyobjloader/tree/master/python>
-
-LICENSE
-    Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
-    This file is distributed under: zlib License
-
-    This software is provided 'as-is', without any express or implied
-    warranty.  In no event will the authors be held liable for any damages
-    arising from the use of this software.
-
-    Permission is granted to anyone to use this software for any purpose,
-    including commercial applications, and to alter it and redistribute it
-    freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-        claim that you wrote the original software. If you use this software
-        in a product, an acknowledgment in the product documentation would be
-        appreciated but is not required.
-    2. Altered source versions must be plainly marked as such, and must not be
-        misrepresented as being the original software.
-    3. This notice may not be removed or altered from any source distribution.
 """
 import argparse
 import pathlib
 import re
 import sys
-import numpy as np
 
 import fcecodec
+import numpy as np
 import tinyobjloader
 
 CONFIG = {
@@ -54,13 +52,13 @@ CONFIG = {
     "material2triagflag" : 1,  # maps OBJ face materials to FCE triangles flag (expects 0|1)
 }
 
-# Parse command (or print module help)
+# Parse command-line
 parser = argparse.ArgumentParser()
-parser.add_argument("cmd", nargs="+", help="path")
+parser.add_argument("path", nargs="+", help="file path")
 args = parser.parse_args()
 
-filepath_obj_input = pathlib.Path(args.cmd[0])
-output_path_stem = pathlib.Path(filepath_obj_input.parent / filepath_obj_input.stem)
+filepath_obj_input = pathlib.Path(args.path[0])
+output_path_stem = filepath_obj_input.parent / filepath_obj_input.stem
 filepath_fce_output = output_path_stem.with_suffix(".fce")
 
 
@@ -91,8 +89,8 @@ def GetPartNames(mesh):
     return part_names
 
 def GetPartGlobalOrderVidxs(mesh, pid):
-    map_verts = mesh.MVertsGetMap_idx2order_numpy
-    part_vidxs = mesh.PGetTriagsVidx_numpy(pid)
+    map_verts = mesh.MVertsGetMap_idx2order
+    part_vidxs = mesh.PGetTriagsVidx(pid)
     for i in range(part_vidxs.shape[0]):
         # print(part_vidxs[i], map_verts[part_vidxs[i]])
         part_vidxs[i] = map_verts[part_vidxs[i]]
@@ -101,7 +99,7 @@ def GetPartGlobalOrderVidxs(mesh, pid):
 
 # -------------------------------------- tinyobjloader wrappers
 def LoadObj(filename):
-    # src: https://github.com/tinyobjloader/tinyobjloader/blob/master/python/sample.py
+    """src: https://github.com/tinyobjloader/tinyobjloader/blob/master/python/sample.py"""
     reader = tinyobjloader.ObjReader()
     config = tinyobjloader.ObjReaderConfig()
     config.triangulate = False
@@ -277,7 +275,7 @@ def ShapeToPart(reader,
         print("mapping faces material names to triangles texpages...")
         num_arts_warning = False
         materials = reader.GetMaterials()
-        texps = mesh.PGetTriagsTexpages_numpy(mesh.MNumParts - 1)
+        texps = mesh.PGetTriagsTexpages(mesh.MNumParts - 1)
         for i in range(texps.shape[0]):
             if materials[s_matls[i]].name[:2] == "0x":
                 texps[i] = int(materials[s_matls[i]].name[2:], base=16)
@@ -289,14 +287,14 @@ def ShapeToPart(reader,
         # print(type(texps), texps.dtype, texps.shape)
         if num_arts_warning:
             print("Warning: texpage greater than zero is present. FCE3/FCE4 require amending Mesh.NumArts value")
-        mesh.PSetTriagsTexpages_numpy(mesh.MNumParts - 1, texps)
+        mesh.PSetTriagsTexpages(mesh.MNumParts - 1, texps)
 
     # map faces material names to triangles flags iff
     # all material names are integer hex values (strings of the form '0xiii')
     if material2triagflag == 1:
         print("mapping faces material names to triangles flags...")
         materials = reader.GetMaterials()
-        tflags = mesh.PGetTriagsFlags_numpy(mesh.MNumParts - 1)
+        tflags = mesh.PGetTriagsFlags(mesh.MNumParts - 1)
 
         # if material name is hex value, map straight to triag flag
         # if it isn't, treat as string of tags
@@ -307,7 +305,7 @@ def ShapeToPart(reader,
             except ValueError:
                 tags = materials[s_matls[i]].name.split("_")
                 tflags[i] = GetFlagFromTags(tags)
-        mesh.PSetTriagsFlags_numpy(mesh.MNumParts - 1, tflags)
+        mesh.PSetTriagsFlags(mesh.MNumParts - 1, tflags)
 
         for i in range(len(materials)):
             tmp = materials[i].name
@@ -348,12 +346,12 @@ def CopyDamagePartsVertsToPartsVerts(mesh):
             damgd_part_vidxs = np.arange(np.amin(damgd_part_vidxs), np.amax(damgd_part_vidxs) + 1)
             part_vidxs = np.arange(np.amin(part_vidxs), np.amax(part_vidxs) + 1)
 
-            dn = mesh.MVertsDamgdNorms_numpy.reshape((-1, 3))
-            dv = mesh.MVertsDamgdPos_numpy.reshape((-1, 3))
-            dn[part_vidxs] = mesh.MVertsNorms_numpy.reshape((-1, 3))[damgd_part_vidxs]
-            dv[part_vidxs] = mesh.MVertsPos_numpy.reshape((-1, 3))[damgd_part_vidxs]
-            mesh.MVertsDamgdNorms_numpy = dn.flatten()
-            mesh.MVertsDamgdPos_numpy = dv.flatten()
+            dn = mesh.MVertsDamgdNorms.reshape((-1, 3))
+            dv = mesh.MVertsDamgdPos.reshape((-1, 3))
+            dn[part_vidxs] = mesh.MVertsNorms.reshape((-1, 3))[damgd_part_vidxs]
+            dv[part_vidxs] = mesh.MVertsPos.reshape((-1, 3))[damgd_part_vidxs]
+            mesh.MVertsDamgdNorms = dn.flatten()
+            mesh.MVertsDamgdPos = dv.flatten()
             damgd_pids += [damgd_pid]
     for i in sorted(damgd_pids, reverse=True):
         mesh.OpDeletePart(i)
@@ -374,12 +372,12 @@ def PartsToDummies(mesh):
             pids += [i]
             dms += [mesh.PGetName(i)[9:]]
             mesh.OpCenterPart(i)
-            dms_pos = np.append(dms_pos, mesh.PGetPos_numpy(i))
+            dms_pos = np.append(dms_pos, mesh.PGetPos(i))
     for i in reversed(pids):
         mesh.OpDeletePart(i)
     print(pids, dms, dms_pos)
     mesh.MSetDummyNames(dms)
-    mesh.MSetDummyPos_numpy(dms_pos)
+    mesh.MSetDummyPos(dms_pos)
     return mesh
 
 def SetAnimatedVerts(mesh):
@@ -388,8 +386,8 @@ def SetAnimatedVerts(mesh):
     hull, where # is digit
     """
     print("SetAnimatedVerts(mesh):")
-    vpos = mesh.MVertsPos_numpy.reshape((-1, 3))
-    animation_flags = mesh.MVertsAnimation_numpy
+    vpos = mesh.MVertsPos.reshape((-1, 3))
+    animation_flags = mesh.MVertsAnimation
     anim_pids = []
     part_names = GetPartNames(mesh)
     r = re.compile("ANIMATED_[0-9][0-9]_", re.IGNORECASE)
@@ -429,7 +427,7 @@ def SetAnimatedVerts(mesh):
                     animation_flags[part_vidxs] = part_animation_flags
                 print(np.unique(animation_flags[part_vidxs]))
     print(anim_pids, np.unique(animation_flags))
-    mesh.MVertsAnimation_numpy = animation_flags
+    mesh.MVertsAnimation = animation_flags
     for i in sorted(anim_pids, reverse=True):
         mesh.OpDeletePart(i)
     return mesh
@@ -455,7 +453,7 @@ def CenterParts(mesh):
                 print(f"center {part_names[pid]} to centroid of {part_names[pos_pid]}")
                 pos_pids += [pos_pid]
                 mesh.OpCenterPart(pos_pid)
-                mesh.OpSetPartCenter_numpy(pid, mesh.PGetPos_numpy(pos_pid))
+                mesh.OpSetPartCenter(pid, mesh.PGetPos(pos_pid))
     for i in sorted(pos_pids, reverse=True):
         mesh.OpDeletePart(i)
     return mesh

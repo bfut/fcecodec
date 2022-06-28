@@ -1,27 +1,25 @@
+# Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
+#
+# This software is provided 'as-is', without any express or implied
+# warranty.  In no event will the authors be held liable for any damages
+# arising from the use of this software.
+#
+# Permission is granted to anyone to use this software for any purpose,
+# including commercial applications, and to alter it and redistribute it
+# freely, subject to the following restrictions:
+#
+# 1. The origin of this software must not be misrepresented; you must not
+#     claim that you wrote the original software. If you use this software
+#     in a product, an acknowledgment in the product documentation would be
+#     appreciated but is not required.
+# 2. Altered source versions must be plainly marked as such, and must not be
+#     misrepresented as being the original software.
+# 3. This notice may not be removed or altered from any source distribution.
 """
     bfut_mywrappers.py - wrapping i/o functions etc.
-
-    Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
-
-    This software is provided 'as-is', without any express or implied
-    warranty.  In no event will the authors be held liable for any damages
-    arising from the use of this software.
-
-    Permission is granted to anyone to use this software for any purpose,
-    including commercial applications, and to alter it and redistribute it
-    freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not
-        claim that you wrote the original software. If you use this software
-        in a product, an acknowledgment in the product documentation would be
-        appreciated but is not required.
-    2. Altered source versions must be plainly marked as such, and must not be
-        misrepresented as being the original software.
-    3. This notice may not be removed or altered from any source distribution.
 """
-import numpy as np
-
 import fcecodec
+import numpy as np
 
 def GetFceVersion(path):
     with open(path, "rb") as f:
@@ -80,8 +78,8 @@ def GetPartIdxFromName(mesh, p_name):
     return retv
 
 def GetPartGlobalOrderVidxs(mesh, pid):
-    map_verts = mesh.MVertsGetMap_idx2order_numpy
-    part_vidxs = mesh.PGetTriagsVidx_numpy(pid)
+    map_verts = mesh.MVertsGetMap_idx2order
+    part_vidxs = mesh.PGetTriagsVidx(pid)
     for i in range(part_vidxs.shape[0]):
         # print(part_vidxs[i], map_verts[part_vidxs[i]])
         part_vidxs[i] = map_verts[part_vidxs[i]]
