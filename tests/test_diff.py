@@ -1,3 +1,19 @@
+# fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
+#
+# You may not redistribute this program without its source code.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
   test_diff.py -
 """
@@ -38,12 +54,12 @@ except FileExistsError:
     pass
 
 #
-sys.path.append(str( pathlib.Path(pathlib.Path(__file__).parent / "../python/").resolve()))
+sys.path.append(str((pathlib.Path(__file__).parent / "../python/").resolve()))
 from bfut_mywrappers import *
 
 
 # Generate src->X and src->X->Y
-def GenerateData(version1, version2, filepath_fce_output):
+def generate_data(version1, version2, filepath_fce_output):
     outpath = str(filepath_fce_output) + f"diff{version1}{version2}"
     mesh = fcecodec.Mesh()
 
@@ -61,7 +77,7 @@ def GenerateData(version1, version2, filepath_fce_output):
       ("4m", "4m", filepath_fce4m_output) ])
 def test_diff_identical_src_X_X(version1, version2, filepath_fce_output):
     print(f"Compare src->{version1} with src->{version1}->{version1} (required identical)")
-    outpath = GenerateData(version1, version2, filepath_fce_output)
+    outpath = generate_data(version1, version2, filepath_fce_output)
     p = subprocess.run(["cmp", str(filepath_fce_output), outpath])
     subprocess.run(["cksum", str(filepath_fce_output), outpath])
     print()

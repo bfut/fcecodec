@@ -1,3 +1,19 @@
+# fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
+#
+# You may not redistribute this program without its source code.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
   test_smoketest.py - smoke-testing fcecodec Python extension module
 """
@@ -42,7 +58,7 @@ del script_path
 
 
 # -------------------------------------- import python wrappers
-sys.path.append(str( pathlib.Path(pathlib.Path(__file__).parent / "../python/").resolve()))
+sys.path.append(str((pathlib.Path(__file__).parent / "../python/").resolve()))
 from bfut_mywrappers import *
 
 
@@ -53,7 +69,7 @@ if platform.python_implementation() != "PyPy":
     import os
     import tracemalloc
 
-    def DisplayTop(snapshot, key_type="lineno", limit=10):
+    def display_top(snapshot, key_type="lineno", limit=10):
         snapshot = snapshot.filter_traces((
             tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
             tracemalloc.Filter(False, "<unknown>"),
@@ -83,9 +99,7 @@ if platform.python_implementation() != "PyPy":
 
 @pytest.mark.skipif(platform.python_implementation() == "PyPy",
                     reason="'pypy-3.8' no tracemalloc")
-def test_SmoketestTracemalloc():
-    import tracemalloc
-
+def test_smoketest_tracemalloc():
     # tracemalloc -- BEGIN ---------------------------------------------------------
     # tracemalloc.stop()
     first_size, first_peak = tracemalloc.get_traced_memory()
@@ -134,7 +148,7 @@ def test_SmoketestTracemalloc():
     # tracemalloc.start()
 
     snapshot = tracemalloc.take_snapshot()
-    DisplayTop(snapshot, limit=40)
+    display_top(snapshot, limit=40)
 
     print(f"first_size={first_size}", f"first_peak={first_peak}")
     print(f"second_size={second_size}", f"second_peak={second_peak}")
@@ -146,7 +160,7 @@ def test_SmoketestTracemalloc():
 
 @pytest.mark.skipif(platform.python_implementation() != "PyPy",
                    reason="test_SmoketestNoTracemalloc 'pypy-3.8' no tracemalloc")
-def test_SmoketestNoTracemalloc():
+def test_smoketest_no_tracemalloc():
     # -------------------------------------- smoketest
     print(flush = True)
     print(f"version: {GetFceVersion(filepath_fce_input)}")
@@ -397,4 +411,18 @@ def test_PrintFceInfo(vers, path):
     with wurlitzer.pipes() as (out, err):
         fcecodec.PrintFceInfo(path.read_bytes())
     stdout = out.read()
-    assert len(err.read()) == 0 and stdout[:10] == vers[:10]
+    assert len(err.read()) == 0 and stdout == vers
+
+def test_version():
+    script_path = pathlib.Path(__file__).parent.resolve()
+    os.chdir(script_path)
+    with open(script_path / "../src/fcelib/fcelib.h", mode="r", encoding="utf8") as f:
+        for _ in range(33):
+            next(f)
+        __version__ = f.readline().rstrip().split("\"")[-2]
+    print(f"VERSION_INFO={__version__}")
+    if hasattr(fcecodec, "__version__"):
+        print(f"fcecodec.__version__={fcecodec.__version__}")
+    else:
+        print(f'hasattr(fcecodec, "__version__")={hasattr(fcecodec, "__version__")}')
+    assert hasattr(fcecodec, "__version__") and fcecodec.__version__ == __version__
