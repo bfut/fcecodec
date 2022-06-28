@@ -1,44 +1,45 @@
+# fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
+#
+# You may not redistribute this program without its source code.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 setup.py - adapted from https://github.com/pybind/python_example/blob/master/setup.py
-fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
-
-You may not redistribute this program without its source code.
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 import os
 import platform
 import pathlib
 import setuptools
 
-# from pybind11 import get_cmake_dir
 # Available at setup time due to pyproject.toml
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 
 
 # ------------------------------------------------------------------------------
 
+if os.environ.get("FCECVERBOSE") is not None:
+    print(f'FCECVERBOSE={os.environ["FCECVERBOSE"]}')
+
 script_path = pathlib.Path(__file__).parent.resolve()
 os.chdir(script_path)
-
-with open(script_path / "../src/fcelib/fcelib.h", "r", encoding="utf8") as f:
-    for i in range(33):
+with open(script_path / "../src/fcelib/fcelib.h", mode="r", encoding="utf8") as f:
+    for _ in range(33):
         next(f)
-    __version__ = f.readline().rstrip().split('\"')[-2]
-    print("fcelib version:", __version__)
-long_description = (script_path / "../README.md").read_text(encoding="utf-8")
+    __version__ = f.readline().rstrip().split("\"")[-2]
+    print(f"VERSION_INFO={__version__}")
 
+long_description = (script_path / "../README.md").read_text(encoding="utf-8")
 extra_compile_args = [
     ("-DPYMEM_MALLOC"),
 ]
@@ -84,7 +85,7 @@ else:
         extra_compile_args += [
             # ("-Weverything"),
             ("-Wno-braced-scalar-init"),
-            ("-Wno-newline-eof"),
+            # ("-Wno-newline-eof"),
         ]
 
 # The main interface is through Pybind11Extension.
@@ -102,8 +103,10 @@ ext_modules = [
         sorted(["fcecodecmodule.cpp"]),
         # Example: passing in the version to the compiled code
         define_macros=[
+            # https://github.com/pybind/python_example/issues/12
+            # https://github.com/pybind/python_example/blob/master/src/main.cpp
             ("VERSION_INFO", __version__),
-            ("FCECVERBOSE", 0),
+            ("FCECVERBOSE", os.environ.get("FCECVERBOSE", 0)),  # 0 if key not set
         ],
         extra_compile_args=extra_compile_args
     ),
@@ -119,10 +122,10 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     ext_modules=ext_modules,
-    python_requires=">=3.7",
-#    extras_require={"test": "pytest"},
-    # Currently, build_ext only provides an optional "highest supported C++
-    # level" feature, but in the future it may provide more features.
+    python_requires=">=3.8",
+    # extras_require={"test": "pytest"},
+    # # Currently, build_ext only provides an optional "highest supported C++
+    # # level" feature, but in the future it may provide more features.
     cmdclass={"build_ext": build_ext},
     zip_safe=False,
 )
