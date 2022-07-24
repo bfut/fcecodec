@@ -31,7 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FCECVERS "1.1"
+#define FCECVERS "1.2"
 #ifndef FCECVERBOSE
 #define FCECVERBOSE 0  /* >=1 for verbose console output */
 #endif
