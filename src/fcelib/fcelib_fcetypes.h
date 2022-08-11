@@ -143,7 +143,7 @@ typedef struct {
 /* Valid values for all four components: 0..255
   hue<degrees>  / 360 * 255
   saturation<%> / 100 * 255
-  brightness<%> / 100 * 255 (comment source: OpenNFS/NFS4Loader.h) */
+  brightness<%> / 100 * 255 */
 typedef struct {
   int hue;
   int saturation;
@@ -538,7 +538,6 @@ FCE4M only:
 :L_LDASH                  lit dash                                    Y
 :R_MPH (0.0 to 0.55/110)  dial                                               Y
 :F_SHIFT                  shifter
-
 */
 
 /* car.fce - light objects (FCE3)
@@ -594,7 +593,6 @@ Omni01     0   POV
 :Omni01    0   POV
            0   POV
 :W_AXIS    1   far-end of steering column (sets angle of rotation)
-
 */
 
 /* Version ------------------------------------------------------------------ */
