@@ -184,11 +184,12 @@ int FCELIB_ExportObj(FcelibMesh *mesh,
                      const char *objpath, const char *mtlpath,
                      const char *texture_name,
                      const int print_damage, const int print_dummies,
-                     const int use_part_positions)
+                     const int use_part_positions,
+                     const int print_part_positions)
 {
   return FCELIB_IO_ExportObj(mesh, objpath, mtlpath, texture_name,
                              print_damage, print_dummies,
-                             use_part_positions);
+                             use_part_positions, print_part_positions);
 }
 
 int FCELIB_EncodeFce3(unsigned char **buf, const int buf_size,

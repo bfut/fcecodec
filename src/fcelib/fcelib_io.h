@@ -598,7 +598,8 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
                         const void *objpath, const void *mtlpath,
                         const char *texture_name,
                         const int print_damage, const int print_dummies,
-                        const int use_part_positions)
+                        const int use_part_positions,
+                        const int print_part_positions)
 {
   int retv = 1;
   int i;
@@ -1027,6 +1028,60 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
         sum_triags += 8;
       }
     }  /* if (print_dummies) */
+
+    if (print_part_positions)
+    {
+      for (i = 0; i < mesh->parts_len; ++i)
+      {
+        if (mesh->hdr.Parts[i] < 0)
+        continue;
+
+        part = mesh->parts[ mesh->hdr.Parts[i] ];
+        if (!part)
+        {
+          fprintf(stderr, "ExportObj: unexpected NULL pointer (mesh->parts[mesh->hdr.Parts[i]]\n");
+          retv = 0;
+          break;
+        }
+
+        /* unique shape names */
+        fprintf(outf, "\no POSITION_%s\n", part->PartName);
+
+        fprintf(outf, "#part position %f %f %f\n",
+                    part->PartPos.x,
+                    part->PartPos.y,
+                    part->PartPos.z);
+        fprintf(outf, "\n");
+        fflush(outf);
+
+        /* Vertices */
+        for (j = 0; j < 6; ++j)
+        {
+          fprintf(outf,
+                  "v %f %f %f\n",
+                  0.1f * kVertDiamond[3 * j + 0] + part->PartPos.x,
+                  0.1f * kVertDiamond[3 * j + 1] + part->PartPos.y,
+                  0.1f * kVertDiamond[3 * j + 2] + part->PartPos.z * (-1)
+          );
+        }
+
+        /* Triangles */
+        fprintf(outf, "\n#f %d..%d (%d)\n", sum_triags + 1, sum_triags + 8, 8);
+
+        for (j = 0; j < 8; ++j)
+        {
+          fprintf(outf,
+                  "f %d %d %d\n",
+                  kTrianglesDiamond[3 * j + 0] + sum_verts,
+                  kTrianglesDiamond[3 * j + 1] + sum_verts,
+                  kTrianglesDiamond[3 * j + 2] + sum_verts);
+        }
+        fflush(outf);
+
+        sum_verts  += 6;
+        sum_triags += 8;
+      }
+    }  /* if (print_part_positions) */
 
     if (fclose(outf) != 0)
     {

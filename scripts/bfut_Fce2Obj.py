@@ -45,10 +45,11 @@ filepath_obj_output = output_path_stem.with_suffix(".obj")
 filepath_mtl_output = output_path_stem.with_suffix(".mtl")
 
 CONFIG = {
-    "objtexname"         : filepath_fce_input.stem + "00.png",  # texture file path in MTL file
-    "print_damage"       : 1,  # prints parts damage model to shapes named DAMAGE_<partname> (relevant for FCE4, FCE4M)
-    "print_dummies"      : 1,  # prints shapes named DUMMY_##_<dummyname> for each dummy, centered on dummy position
-    "use_part_positions" : 1,
+    "objtexname"           : filepath_fce_input.stem + "00.png",  # texture file path in MTL file
+    "print_damage"         : 1,  # prints parts damage model to shapes named DAMAGE_<partname> (relevant for FCE4, FCE4M)
+    "print_dummies"        : 1,  # prints shapes named DUMMY_##_<dummyname> for each dummy, centered on dummy position
+    "use_part_positions"   : 1,
+    "print_part_positions" : 1,  # prints shapes named PARTPOS_<partname> for each part, centered on part position
 }
 
 
@@ -62,9 +63,9 @@ def LoadFce(mesh, path):
     return mesh
 
 def ExportObj(mesh, objpath, mtlpath, texname, print_damage, print_dummies,
-              use_part_positions):
+              use_part_positions, print_part_positions):
     mesh.IoExportObj(str(objpath), str(mtlpath), str(texname), print_damage,
-                     print_dummies, use_part_positions)
+                     print_dummies, use_part_positions, print_part_positions)
 
 
 #
@@ -75,6 +76,8 @@ def main():
         print("printing extra shapes for each dummy")
     if CONFIG["use_part_positions"] == 0:
         print("ignoring part positions")
+    if CONFIG["print_part_positions"] == 1:
+        print("printing extra shapes for each part position")
     mesh = fcecodec.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
     os.chdir(filepath_obj_output.parent)
@@ -82,7 +85,7 @@ def main():
     ExportObj(mesh,
         filepath_obj_output.name, filepath_mtl_output.name, CONFIG["objtexname"],
         CONFIG["print_damage"], CONFIG["print_dummies"],
-        CONFIG["use_part_positions"])
+        CONFIG["use_part_positions"], CONFIG["print_part_positions"])
     print(filepath_obj_output)
     print(filepath_mtl_output)
 

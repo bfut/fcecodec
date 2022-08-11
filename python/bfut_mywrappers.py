@@ -55,9 +55,9 @@ def WriteFce(version, mesh, path, center_parts = 1):
         f.write(buf)
 
 def ExportObj(mesh, objpath, mtlpath, texname, print_damage, print_dummies,
-              use_part_positions):
+              use_part_positions, print_part_positions):
     mesh.IoExportObj(str(objpath), str(mtlpath), str(texname), print_damage,
-                     print_dummies, use_part_positions)
+                     print_dummies, use_part_positions, print_part_positions)
 
 def GetPartNames(mesh):
     part_names = np.empty(shape=(mesh.MNumParts, ), dtype="U64")

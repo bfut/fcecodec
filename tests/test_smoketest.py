@@ -130,7 +130,7 @@ def test_smoketest_tracemalloc():
     ExportObj(mesh,
             filepath_obj_output, filepath_mtl_output, objtexname,
             print_damage=0, print_dummies=0,
-            use_part_positions=1)
+            use_part_positions=1, print_part_positions=0)
     del mesh
     print(flush = True)
 
@@ -180,7 +180,7 @@ def test_smoketest_no_tracemalloc():
     ExportObj(mesh,
             filepath_obj_output, filepath_mtl_output, objtexname,
             print_damage=0, print_dummies=0,
-            use_part_positions=1)
+            use_part_positions=1, print_part_positions=0)
     del mesh
     print(flush = True)
 

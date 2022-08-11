@@ -107,7 +107,7 @@ CLASSES
      |      IoEncode_Fce4M(self: fcecodec.Mesh, center_parts: bool = True) -> bytes
      |  
      |  IoExportObj(...)
-     |      IoExportObj(self: fcecodec.Mesh, objpath: str, mtlpath: str, texname: str, print_damage: int = 0, print_dummies: int = 0, use_part_positions: int = 1) -> None
+     |      IoExportObj(self: fcecodec.Mesh, objpath: str, mtlpath: str, texname: str, print_damage: int = 0, print_dummies: int = 0, use_part_positions: int = 1, print_part_positions: int = 0) -> None
      |  
      |  IoGeomDataToNewPart(...)
      |      IoGeomDataToNewPart(self: fcecodec.Mesh, vert_idxs: numpy.ndarray[numpy.int32], vert_texcoords: numpy.ndarray[numpy.float32], vert_pos: numpy.ndarray[numpy.float32], normals: numpy.ndarray[numpy.float32]) -> int
