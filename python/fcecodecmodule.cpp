@@ -1181,7 +1181,7 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
       R"pbdoc( vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz... )pbdoc")
 
     .def_property("MNumArts", &Mesh::MGetNumArts, &Mesh::MSetNumArts, R"pbdoc( Usually equal to 1. Larger values enable multi-texture access for cop#.fce )pbdoc")
-    .def_property("MUnknown3", &Mesh::MGetUnknown3, &Mesh::MSetUnknown3, R"pbdoc( Unknown purpose in FCE4M. Only exists in FCE4M. )pbdoc")
+    .def_property("MUnknown3", &Mesh::MGetUnknown3, &Mesh::MSetUnknown3, R"pbdoc( FCE4M only. Unknown purpose. )pbdoc")
     .def("MGetColors", &Mesh::MGetColors)
     .def("MSetColors", &Mesh::MSetColors, py::arg("colors"), R"pbdoc( Expects shape=(N, 4, 4) )pbdoc")
     .def("MGetDummyNames", &Mesh::GetDummyNames)
