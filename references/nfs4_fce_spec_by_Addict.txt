@@ -1,0 +1,255 @@
+=========================
+FCE 3D Mesh Files (*.FCE)
+=========================
+1) The .FCE file starts with following 8248-byte header:
+-------------------------------------------------------------------------------
+ Offset  Length   Type            Description
+-------------------------------------------------------------------------------
+ 0x0000  0x0004   ????       Value always seems to be 14 10 10 00
+ 0x0004  0x0004   ????       Unknown purposes
+ 0x0008  0x0004  LONGINT     Number of triangles in model
+ 0x000C  0x0004  LONGINT     Number of vertices in model
+ 0x0010  0x0004  LONGINT     Number of ART's
+ 0x0014  0x0004  LONGINT     Vertex table offset from 0x2038
+ 0x0018  0x0004  LONGINT     Normal table offset from 0x2038
+ 0x001C  0x0004  LONGINT     Triangle table offset from 0x2038
+ 0x0020  0x0004  LONGINT     Temporary Storage #1 offset from 0x2038
+ 0x0024  0x0004  LONGINT     Temporary Storage #2 offset from 0x2038
+ 0x0028  0x0004  LONGINT     Temporary Storage #3 offset from 0x2038
+ 0x002C  0x0004  LONGINT     Undamaged vertices offset from 0x2038
+ 0x0030  0x0004  LONGINT     Undamaged normals offset from 0x2038
+ 0x0034  0x0004  LONGINT     Damaged vertices offset form 0x2038
+ 0x0038  0x0004  LONGINT     Damaged normals offset from 0x2038
+ 0x003C  0x0004  LONGINT     Unknown area offset from 0x2038
+ 0x0040  0x0004  LONGINT     Driver movements offset form 0x2038
+ 0x0044  0x0004  LONGINT     Unknown offset from 0x2038
+ 0x0048  0x0004  LONGINT     Unknown offset from 0x2038
+ 0x004C  0x0004   REAL       X half-size of whole model
+ 0x0050  0x0004   REAL       Y half-size of whole model
+ 0x0054  0x0004   REAL       Z half-size of whole model
+ 0x0058  0x0004  LONGINT     Number of dummies (Values: 0..16)
+ 0x005C  0x00C0  Vector[16]  Coordinates of dummies
+ 0x011C  0x0004  LONGINT     Number of car parts (Values: 0..64)
+ 0x0120  0x0300  Vector[64]  Global coördinates of car parts
+ 0x0420  0x0100  LONGINT[64] First vertex index for each part
+ 0x0520  0x0100  LONGINT[64] Number of vertices for each part
+ 0x0620  0x0100  LONGINT[64] First triangle index for each part
+ 0x0720  0x0100  LONGINT[64] Number of triangles for each part
+ 0x0820  0x0004  LONGINT     Number of colors (Values: 0..16)
+ 0x0824  0x0040  Color[16]   Primary colors (alpha channel: RGB 224,224,224)
+ 0x0864  0x0040  Color[16]   Interior colors (alpha channel: RGB 164,164,164)
+ 0x08A4  0x0040  Color[16]   Secondary colors (alpha channel: RGB 96,96,96)
+ 0x08E4  0x0040  Color[16]   Driver's hair colors (alpha channel: RGB 32,32,32)
+ 0x0924  0x0104   ????       Unknown purposes
+ 0x0A28  0x0400  Dummy[16]   Dummy object info
+ 0x0E28  0x1000  Part[64]    Part names
+ 0x1E28  0x0210   ????       Unknown purposes
+
+-------------------------------------------------------------------------------
+         0x2038  -  size of header
+-------------------------------------------------------------------------------
+ 1a) Vector structure:
+  ------------------------------------------------
+   Offset  Length   Type   Field   Description
+  ------------------------------------------------
+    0x00    0x04    REAL     X      X-coordinate
+    0x04    0x04    REAL     Y      Y-coordinate
+    0x08    0x04    REAL     Z      Z-coordinate
+  ------------------------------------------------
+             0x0C  -  size of Vector
+  ------------------------------------------------
+
+ 1b) Color structure:
+  ------------------------------------------------
+   Offset  Length   Type   Field   Description
+  ------------------------------------------------
+    0x00    0x01  SHORTINT   H      Hue
+    0x01    0x01  SHORTINT   S      Saturation
+    0x02    0x01  SHORTINT   B      Brightness
+    0x03    0x01  SHORTINT   T      Transparency?
+  ------------------------------------------------
+             0x04  -  size of Color
+  ------------------------------------------------
+   Valid values for all four components: 0..255
+    H = hue<degrees>  / 360 * 255
+    S = saturation<%> / 100 * 255
+    B = brightness<%> / 100 * 255
+
+ 1c) Dummy structure:
+  Wether a license plate, a smoke generator, a water generator or a light
+   License plate: ":LICENSE"/":LICMED"/":LICLOW" (License plate in High/Medium/Low res);
+                  ":LICENSE_EURO" (Long license plate in High res)
+   Smoke generator: ":SMOKE" (generates smoke when shifting)
+   Water generator: ":WATER" (generates water all the time)
+   Light:
+  ------------------------------------------------
+   Offset  Length   Type   Field   Description
+  ------------------------------------------------
+    0x00    0x01    CHAR     K      Kind
+    0x01    0x01    CHAR     C      Color
+    0x02    0x01    CHAR     B      Breakable
+    0x03    0x01    CHAR     F      Flashing
+    0x04    0x01    CHAR     I      Intensity
+    0x05    0x01    CHAR     T      Time
+    0x06    0x01    CHAR     D      Delay
+  ------------------------------------------------
+             0x64  -  size of Dummy
+  ------------------------------------------------
+   Valid values for components:
+    K : "H" (Headlights); "T" (Taillights); "B" (Brakelight); "R" (Reverse light);
+        "P" (Direction indicator); "S" (Siren);
+    C : "W" (White); "R" (Red); "B" (Blue); "O" (Orange); "Y" (Yellow)
+    B : "Y" (Yes); "N" (No)
+    F : "O" (Flashing at moment 1); "E" (Flashing at moment 2); "N" (No flashing)
+    I : Number between 0 and 9 with 0 being broken (normal max 5)
+   Next only used with flashing lights:
+    T : Number between 1 and 9 with 9 being longest time and 0 being constant (normal max 5)
+    D : Number between 0 and 9 with 9 being longest delay and 0 no delay (normal max 2)
+
+ 1d) Part structure:
+   Valid values:
+    ":HB"   : High Body
+    ":HLFW" : High Left Front Wheel
+    ":HRFW" : High Right Front Wheel
+    ":HLMW" : High Left Middle Wheel
+    ":HRMW" : High Right Middle Wheel
+    ":HLRW" : High Left Rear Wheel
+    ":HRRW" : High Right Rear Wheel
+    ":MB"   : Medium Body
+    ":MLFW" : Medium Left Front Wheel
+    ":MRFW" : Medium Right Front Wheel
+    ":MLMW" : Medium Left Middle Wheel
+    ":MRMW" : Medium Right Middle Wheel
+    ":MLRW" : Medium Left Rear Wheel
+    ":MRRW" : Medium Right Rear Wheel
+    ":LB"   : Low Body
+    ":TB"   : Tiny Body
+    ":OC"   : Interior
+    ":OND"  : Driver's chair and steering wheel
+    ":OD"   : Driver holding steering wheel
+    ":OH"   : Driver head
+    ":ODL"  : Dash when lit
+    ":OLM"  : Left Mirror
+    ":ORM"  : Right Mirror
+    ":OLB"  : Left Front Brake
+    ":ORB"  : Right Front Brake
+    ":OL"   : Popup lights
+    ":OT"   : Top of convertibles
+    ":OS"   : Optional spoiler
+
+2) Data in .FCE file from end of header = 0x2038
+ 2a) Table of vertices
+    Offset      : Header Size + Vertex table offset
+    Length      : Number of Vertices * Size of Vector
+    Type        : Vector[Number of Vertices]
+  All coordinates are local. Use values from 'Parts' table (file offset 0x0120)
+  to make them global.
+
+ 2b) Table of normals
+    Offset      : Header Size + Normal table offset
+    Length      : Number of Vertices * Size of Vector
+    Type        : Vector[Number of Vertices]
+  These vectors should be normalized. Each normal in this table corresponds to the
+  vertex in the vertex table with the same index.
+
+ 2c) Table of triangles
+    Offset      : Header Size + Triangle table offset
+    Length      : Number of Triangles * Size of Triangle
+    Type        : Triangle[Number of Triangles]
+   Triangle structure:
+    -------------------------------------------------------------------------
+     Offset  Length   Type          Description
+    -------------------------------------------------------------------------
+      0x00    0x04   LONGINT     Texture page number
+      0x04    0x04   LONGINT     Vertex #1 index (local)
+      0x08    0x04   LONGINT     Vertex #2 index (local)
+      0x0C    0x04   LONGINT     Vertex #3 index (local)
+      0x10    0x0C    ????       Value always 00FF00FF00FF00FF00FF00FF
+      0x1C    0x04   LONGINT     Smoothing bits
+      0x20    0x04    REAL       Vertex #1 texture U-coordinate
+      0x24    0x04    REAL       Vertex #2 texture U-coordinate
+      0x28    0x04    REAL       Vertex #3 texture U-coordinate
+      0x2C    0x04    REAL       Vertex #1 texture V-coordinate
+      0x30    0x04    REAL       Vertex #2 texture V-coordinate
+      0x34    0x04    REAL       Vertex #3 texture V-coordinate
+    -------------------------------------------------------------------------
+              0x38  -  size of Triangle
+    -------------------------------------------------------------------------
+    Vertex indices are local. Use values from 'First Vertices' table (file offset 0x0420)
+    to make them global.
+
+ 2d) Temporary Storage #1
+    Offset      : Header Size + Reserved #1 offset
+    Length      : Number of Vertices * 32
+    Type        : ????
+
+ 2e) Temporary Storage #2
+    Offset      : Header Size + Reserved #2 offset
+    Length      : Number of Vertices * 12
+    Type        : ????
+
+ 2f) Temporary Storage #3
+    Offset      : Header Size + Reserved #3 offset
+    Length      : Number of Vertices * 12
+    Type        : ????
+
+ 2g) Undamaged vertices
+    Offset      : Header Size + Reserved #4 offset
+    Length      : Number of Vertices * 12
+    Type        : Vector
+
+ 2h) Undamaged normals
+    Offset      : Header Size + Reserved #5 offset
+    Length      : Number of Vertices * 12
+    Type        : Vector
+
+ 2i) Damaged vertices
+    Offset      : Header Size + Reserved #6 offset
+    Length      : Number of Vertices * 12
+    Type        : Vector
+
+ 2j) Damaged normals
+    Offset      : Header Size + Reserved #7 offset
+    Length      : Number of Vertices * 12
+    Type        : Vector
+
+ 2k) Unknown area #1
+    Offset      : Header Size + Reserved #8 offset
+    Length      : Number of Vertices * 4
+    Type        : ????
+
+ 2l) Driver movements
+    Offset      : Header Size + Reserved #9 offset
+    Length      : Number of Vertices * 4
+    Type        : 4 bytes in length
+
+ 2m) Unknown area #2
+    Offset      : Header Size + Reserved #10 offset
+    Length      : Number of Vertices * 4
+    Type        : ????
+
+ 2n) Unknown area #3
+    Offset      : Header Size + Reserved #11 offset
+    Length      : Number of Triangles * 12
+    Type        : ????
+
+  All areas should exist. The Driver Movements keeps a value for each vertice.
+  This value is only used in the part ":OD". If the value for a vertex here is
+  00 00 00 00, the vertice will rotate when the driver turns the wheel. If it is
+  04 00 00 00, the vertice won't rotate.
+
+3) Coordinate system. From the car:
+    X axis points to the right;
+    Y axis points upward;
+    Z axis points forward.
+
+4) Notes
+    LONGINT : long integer (32-bit)
+    SHORTINT: short integer (8-bit)
+    REAL    : floating point number (32-bit)
+
+5) Copyright
+    This file was based on SPECS.TXT on NFS3 released by NFSCheats.
+    The hacking and extensions were done by Addict.
+    I'm not responsible for any damage this info does to your properties.
+    I'm in no way affiliated with EA.

@@ -39,11 +39,13 @@ Python extension module: [_/python/README.md_](/python/README.md)<br/>
 FCE format documentation: [_/src/fcelib/fcelib_fcetypes.h_](/src/fcelib/fcelib_fcetypes.h)<br/>
 
 ## References
-FCE3 specifications taken from [1]. FCE4 specifications partially adapted from
-[1] and [2]. Thank you.
+FCE3 specifications taken from [1].
+FCE4 specifications are loosely adapted from [1] and [2].
+[2] was apparently based on [3].
 
 [1] D. Auroux et al. [_The unofficial Need For Speed III file format specifications - Version 1.0_](/references/unofficial_nfs3_file_specs_10.txt) [1998]<br/>
 [2] A. Sadhra [_NFS4Loader.h_](/references/OpenNFS/NFS4Loader.h) via _OpenNFS_ [2015]<br/>
+[3] Addict [_NFS4 FCE file format specification_](/references/nfs4_fce_spec_by_Addict.txt) [1999]<br/>
 
 ## Information
 __fcecodec License:__ GNU General Public License v3.0+<br/>

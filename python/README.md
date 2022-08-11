@@ -6,7 +6,7 @@ module.
 Requires Python 3.8+
 
         cd ~
-        python -m pip install --upgrade pip wheel setuptools pybind11
+        python -m pip install --upgrade numpy pip wheel setuptools pybind11
         git clone https://github.com/bfut/fcecodec.git
         python -m pip install --verbose fcecodec/python
 
@@ -268,7 +268,7 @@ CLASSES
      |      Usually equal to 1. Larger values enable multi-texture access for cop#.fce
      |  
      |  MUnknown3
-     |      Unknown purpose in FCE4M. Only exists in FCE4M.
+     |      FCE4M only. Unknown purpose.
      |  
      |  MVertsAnimation
      |      Returns (N, ) numpy array for N vertices.
