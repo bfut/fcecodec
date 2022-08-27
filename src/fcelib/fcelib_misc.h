@@ -45,6 +45,13 @@ static const int kFceLibImplementedFce3Parts = 13;
 static const int kFceLibNumFce4HiBodyParts = 18;
 #endif
 
+#ifndef INT_MAX
+#define INT_MAX 2147483647
+#endif
+#ifndef INT_MIN
+#define INT_MIN -2147483648
+#endif
+
 /* Represent dummies */
 static
 const float kVertDiamond[6 * 3] = {
