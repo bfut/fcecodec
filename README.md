@@ -9,6 +9,10 @@ The Python extension module is based on a header-only library written in C89.
 Python bindings are written in C++ (pybind11). Supported on Windows and Linux.
 Tested on macOS.
 
+## Installation / Documentation
+Python extension module: [/python/README.md](/python/README.md)<br/>
+FCE format documentation: [/src/fcelib/fcelib_fcetypes.h](/src/fcelib/fcelib_fcetypes.h)<br/>
+
 ## Usage
 [/scripts](/scripts) contains ready-to-use scripts (Obj2Fce, Fce2Obj, etc.)<br/>
 [/scripts/doc_Obj2Fce.md](/scripts/doc_Obj2Fce.md) is an OBJ/MTL to FCE
@@ -32,10 +36,6 @@ conversion tutorial
 * Operations: deletes triangles, vertices
 * Stats: prints Mesh info
 * Stats: prints FCE binary data info
-
-## Installation / Documentation
-Python extension module: [/python/README.md](/python/README.md)<br/>
-FCE format documentation: [/src/fcelib/fcelib_fcetypes.h](/src/fcelib/fcelib_fcetypes.h)<br/>
 
 ## References
 FCE3 specifications taken from [1].
