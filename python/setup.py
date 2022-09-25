@@ -34,15 +34,17 @@ if os.environ.get("FCECVERBOSE") is not None:
 script_path = pathlib.Path(__file__).parent.resolve()
 os.chdir(script_path)
 with open(script_path / "../src/fcelib/fcelib.h", mode="r", encoding="utf8") as f:
-    for _ in range(33):
+    for _ in range(34 - 1):
         next(f)
     __version__ = f.readline().rstrip().split("\"")[-2]
     print(f"VERSION_INFO={__version__}")
 
 long_description = (script_path / "../README.md").read_text(encoding="utf-8")
-extra_compile_args = [
-    ("-DPYMEM_MALLOC"),
-]
+
+extra_compile_args = []
+if "PYMEM_MALLOC" in os.environ:
+    print(f'PYMEM_MALLOC={os.environ["PYMEM_MALLOC"]}')
+    extra_compile_args += [ "-DPYMEM_MALLOC" ]
 if platform.system() == "Windows":
     extra_compile_args += [
         ("/wd4267")  # prevents warnings on conversion from size_t to int
@@ -56,6 +58,9 @@ else:
 
     if "gcc" in platform.python_compiler().lower():
         extra_compile_args += [
+            ("-Wno-unused-parameter"),
+            ("-Wno-missing-field-initializers"),
+
             ("-fasynchronous-unwind-tables"),
             ("-Wall"),
             ("-Wextra"),
@@ -66,7 +71,7 @@ else:
             ("-Wunused-result"),
             ("-Wvarargs"),
             ("-Wvla"),
-            ("-Wwrite-strings"),
+            ("-Wwrite-strings"),  # ("-Wno-discarded-qualifiers"),
 
             # # https://developers.redhat.com/blog/2018/03/21/compiler-and-linker-flags-gcc
             # ("-D_FORTIFY_SOURCE=2"),
