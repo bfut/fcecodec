@@ -20,6 +20,16 @@
 
 /**
   implements FCE types, format validations. documents FCE format.
+
+FCE4/FCE4M format theoretical limits (assuming signed int):
+  min filesize:            0x2038, except FCE3: 0x1F04
+  max Reserve6offset:      2147483647 0x7FFFFFFF
+  triangle size:           56         0x38
+  vertice size:            12         0xC
+  max triangle count:      38347921   0x2492491 (3 verts)
+  max vert count:          4880644    0x4A7904 (x triags, 3*x verts)
+  min triangle count:      0
+  min vert count:          0
 **/
 
 #ifndef FCELIB_FCETYPES_H_
@@ -28,7 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "./fcelib_misc.h"
+#include "./fcelib_util.h"
 
 #ifdef __cplusplus
 namespace fcelib {
@@ -124,7 +134,7 @@ typedef struct {
 /* 0x04 */  int   vidx1;        /* Vertex #1 local index */
 /* 0x08 */  int   vidx2;
 /* 0x0C */  int   vidx3;
-/* 0x10 */  char  unknown[12];  /* all items = 0xFF00 */
+/* 0x10 */  char  unknown[12];  /* all items = 0xFF00 or 0xFFFF */
 /* 0x1C */  int   flag;         /* triangle flag */
 /* 0x20 */  float U1;           /* Vertex #1 texture U-coordinate */
 /* 0x24 */  float U2;
@@ -544,24 +554,24 @@ FCE4M only:
 KDSF, KDSFU - Components: char kind, direction, side, flashing, unknown;
 Valid values:
   K : "H" (Headlights); "T" (Taillights); "S" (Siren);
-  D : "F" (Front/White); "R" (Rear/Read); "M" (Mounted);
+  D : "F" (Front/White); "R" (Rear/Red); "M" (Mounted);
   S : "L" (Left); "R" (Right)
   F : "O" (Flashing at moment 1); "E" (Flashing at moment 2); "N" (No flashing)
   U : "N"  ex. corv/car.viv->car.fce, has "TRLN" and "TRLNN"
-Colors:
+Colors (in-game):
 HF__ : headlights, visible from front, white
 TR__ : taillights, visible from rear, red
-HR__ : headlights, visible from rear, red (broken behavior)
-TF__ : taillights, visible from front, white (broken behavior)
+HR__ : taillights, visible from rear, red, with fog glare (broken behavior)
+TF__ : headlights, visible from front, white, w/o fog glare (broken behavior)
 S_L_ : siren, red
 S_R_ : siren, blue
 Taillights and Sirens never flash. Dummies may appear differently between the
 "Player Car" menu, and in-game. Unknown dummies are ignored.
 
-car.fce, hel.fce - light objects (FCE4) (FCE4M) (source: OpenNFS/NFS4Loader.h)
+car.fce, hel.fce - light objects (FCE4) (FCE4M)
 KCBFI, KCBFITD - Components: char kind, color/direction, breakable, flashing, intensity, time, delay;
 Valid values:
-  K : "H" (Headlights); "T" (Taillights); "B" (Brakelight); "R" (Reverse light); "P" (Parking lights); "S" (Siren);
+  K : "H" (Headlights); "T" (Taillights); "B" (Brake light); "R" (Reverse light); "P" (Parking lights); "S" (Siren);
   C : "W" (White); "R" (Red); "B" (Blue); "O" (Orange); "Y" (Yellow)
   B : "Y" (Yes); "N" (No)
   F : "O" (Flashing at moment 1); "E" (Flashing at moment 2); "N" (No flashing)
@@ -789,7 +799,7 @@ int FCELIB_FCETYPES_MiniValidateHdr3(const unsigned char *header)
   int retv = 1;
   int tmp;
   int i;
-  static const int kHdrPos3[8] = {
+  const int kHdrPos3[8] = {
     0x0004, 0x0008,
     0x0010, 0x0014, 0x0018,
     0x001C, 0x0020, 0x0024
@@ -1081,7 +1091,7 @@ int FCELIB_FCETYPES_MiniValidateHdr4(const unsigned char *header)
   int retv = 1;
   int tmp;
   int i;
-  static const int kHdrPos4[16] = {
+  const int kHdrPos4[16] = {
     0x0008, 0x000c,
     0x0014, 0x0018, 0x001C,
     0x0020, 0x0024, 0x0028,

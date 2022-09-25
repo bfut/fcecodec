@@ -31,8 +31,8 @@
 
 #include "./fcelib_fcetypes.h"
 #include "./fcelib_io.h"  /* FCELIB_IO_GeomDataToNewPart */
-#include "./fcelib_misc.h"  /* kTrianglesDiamond, kVertDiamond */
 #include "./fcelib_types.h"
+#include "./fcelib_util.h"  /* kTrianglesDiamond, kVertDiamond */
 
 #ifdef __cplusplus
 namespace fcelib {
@@ -339,39 +339,57 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_dest,
 
 int FCELIB_OP_DeletePart(FcelibMesh *mesh, const int idx)
 {
+  int retv = 0;
   int i;
-  int j;
+  int internal_idx;
   FcelibPart *part;
 
-  if (!FCELIB_TYPES_ValidateMesh(*mesh))
-    return 0;
-  j = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, idx);
-  if (j < 0)
-    return 0;
-  part = mesh->parts[ mesh->hdr.Parts[j] ];
-
-  for (i = 0; i < part->PNumVertices; ++i)
+  for (;;)
   {
-    free(mesh->vertices[ part->PVertices[i] ]);
-    mesh->vertices[ part->PVertices[i] ] = NULL;
-  }
-  free(part->PVertices);
+    if (!FCELIB_TYPES_ValidateMesh(*mesh))
+    {
+      fprintf(stderr, "DeletePart: invalid mesh\n");
+      break;
+    }
 
-  for (i = 0; i < part->PNumTriangles; ++i)
-  {
-    free(mesh->triangles[ part->PTriangles[i] ]);
-    mesh->triangles[ part->PTriangles[i] ] = NULL;
-  }
-  free(part->PTriangles);
+    internal_idx = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, idx);
+    if (internal_idx < 0)
+    {
+      fprintf(stderr, "DeletePart: Invalid index (internal_idx)\n");
+      break;
+    }
+    part = mesh->parts[ mesh->hdr.Parts[internal_idx] ];
 
-  mesh->hdr.NumVertices -= part->PNumVertices;
-  mesh->hdr.NumTriangles -= part->PNumTriangles;
-  --mesh->hdr.NumParts;
-  free(part);
-  mesh->parts[ mesh->hdr.Parts[j] ] = NULL;
-  mesh->hdr.Parts[j] = -1;
+    for (i = 0; i < part->pvertices_len; ++i)
+    {
+      if (part->PVertices[i] < 0)
+        continue;
+      free(mesh->vertices[ part->PVertices[i] ]);
+      mesh->vertices[ part->PVertices[i] ] = NULL;
+    }
+    free(part->PVertices);
 
-  return 1;
+    for (i = 0; i < part->ptriangles_len; ++i)
+    {
+      if (part->PTriangles[i] < 0)
+        continue;
+      free(mesh->triangles[ part->PTriangles[i] ]);
+      mesh->triangles[ part->PTriangles[i] ] = NULL;
+    }
+    free(part->PTriangles);
+
+    mesh->hdr.NumVertices -= part->PNumVertices;
+    mesh->hdr.NumTriangles -= part->PNumTriangles;
+    --mesh->hdr.NumParts;
+    free(part);
+    mesh->parts[ mesh->hdr.Parts[internal_idx] ] = NULL;
+    mesh->hdr.Parts[internal_idx] = -1;
+    
+    retv = 1;
+    break;
+  }  /* for (;;) */
+
+  return retv;
 }
 
 /* Delete part triangles by order. */

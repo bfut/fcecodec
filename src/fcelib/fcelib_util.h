@@ -1,5 +1,5 @@
 /*
-  fcelib_misc.h
+  fcelib_util.h
   fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
@@ -18,8 +18,8 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef FCELIB_MISC_H_
-#define FCELIB_MISC_H_
+#ifndef FCELIB_UTIL_H_
+#define FCELIB_UTIL_H_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +33,13 @@ namespace fcelib {
 extern "C" {
 #endif
 
+#ifndef INT_MAX
+#define INT_MAX 2147483647
+#endif
+#ifndef INT_MIN
+#define INT_MIN -2147483648
+#endif
+
 #ifndef __cplusplus
 enum { kFceLibBufferSize = 1024 };
 enum { kFceLibFilenameMaxLen = 200 };
@@ -43,13 +50,6 @@ static const int kFceLibBufferSize = 1024;
 static const int kFceLibFilenameMaxLen = 200;
 static const int kFceLibImplementedFce3Parts = 13;
 static const int kFceLibNumFce4HiBodyParts = 18;
-#endif
-
-#ifndef INT_MAX
-#define INT_MAX 2147483647
-#endif
-#ifndef INT_MIN
-#define INT_MIN -2147483648
 #endif
 
 /* Represent dummies */
@@ -150,4 +150,4 @@ int FCELIB_MISC_StrIsInArray(char *str, const char **arr)
 }  /* namespace fcelib */
 #endif
 
-#endif  /* FCELIB_MISC_H_ */
+#endif  /* FCELIB_UTIL_H_ */

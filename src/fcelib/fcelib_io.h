@@ -30,8 +30,8 @@
 #include <string.h>
 
 #include "./fcelib_fcetypes.h"
-#include "./fcelib_misc.h"
 #include "./fcelib_types.h"
+#include "./fcelib_util.h"
 
 #ifdef __cplusplus
 namespace fcelib {
