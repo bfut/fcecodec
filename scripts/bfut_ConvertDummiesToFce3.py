@@ -16,10 +16,10 @@
 #     misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 """
-    fcecodecScriptTemplate.py - description
+    bfut_ConvertDummiesToFce3.py - description
 
 HOW TO USE
-    python fcecodecScriptTemplate.py /path/to/model.fce
+    python bfut_ConvertDummiesToFce3.py /path/to/model.fce
 
 REQUIRES
     installing <https://github.com/bfut/fcecodec>
@@ -56,6 +56,59 @@ sys.path.append(str((pathlib.Path(__file__).parent / "../python/").resolve()))
 from bfut_mywrappers import *
 
 
+def GetDummies(mesh):
+    dms_pos = mesh.MGetDummyPos()
+    dms_pos = np.reshape(dms_pos, (int(dms_pos.shape[0] / 3), 3))
+    dms_names = mesh.MGetDummyNames()
+    return dms_pos, dms_names
+
+def SetDummies(mesh, dms_pos, dms_names):
+    dms_pos = np.reshape(dms_pos, (int(dms_pos.shape[0] * 3)))
+    dms_pos = dms_pos.astype("float32")
+    mesh.MSetDummyPos(dms_pos)
+    mesh.MSetDummyNames(dms_names)
+    return mesh
+
+def DummiesToFce3(dms_pos, dms_names):
+    for i in range(len(dms_names)):
+        x = dms_names[i]
+        """
+        if x[0] in [":", "B", "I", "M", "P", "R"]:
+            print(x, "->", dms_names[i])
+            continue
+        # """
+        if x[0] == "B":
+            # dms_names[i] = "TRLO"  # convert brake lights to taillights?
+            pass
+        elif x[0] in ["H", "I"]:
+            if x[3] == "O":
+                dms_names[i] = "HFLO"
+            elif x[3] == "E":
+                dms_names[i] = "HFRE"
+            elif dms_pos[i, 0] < 0:  # left-hand
+                dms_names[i] = "HFLN"
+            else:
+                dms_names[i] = "HFRN"
+            """
+            # T - fce4 taillights seemingly work for fce3
+            elif x[0] == "T":
+                if x[3] == "O":
+                    dms_names[i] = "TRLO"
+                elif x[3] == "E":
+                    dms_names[i] = "TRRE"
+                elif dms_pos[i, 0] < 0:  # left-hand
+                    dms_names[i] = "TRLN"
+                else:
+                    dms_names[i] = "TRRN"
+            # """
+        elif x[0] == "S":
+            if x[1] == "B":
+                dms_names[i] = "SMLN"  # blue
+            else:
+                dms_names[i] = "SMRN"  # red
+        print(x, "->", dms_names[i])
+    return dms_pos, dms_names
+
 #
 def main():
     if CONFIG["fce_version"] == "keep":
@@ -66,10 +119,11 @@ def main():
         fce_outversion = CONFIG["fce_version"]
     mesh = fcecodec.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
-    ## do stuff here
 
+    dms_pos, dms_names = GetDummies(mesh)
+    dms_pos, dms_names = DummiesToFce3(dms_pos, dms_names)
+    mesh = SetDummies(mesh, dms_pos, dms_names)
 
-    ## done doing stuff
     WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"])
     PrintFceInfo(filepath_fce_output)
     print("FILE =", filepath_fce_output, flush=True)

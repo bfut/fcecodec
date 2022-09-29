@@ -16,44 +16,68 @@
 #     misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 """
-    fcecodecScriptTemplate.py - description
+    bfut_CopyCarColors.py - copy car colors from source to target, overwriting target
 
 HOW TO USE
-    python fcecodecScriptTemplate.py /path/to/model.fce
+    python bfut_CopyCarColors.py /path/to/source.fce /path/to/target.fce
 
 REQUIRES
     installing <https://github.com/bfut/fcecodec>
 """
 import argparse
 import pathlib
-import sys
 
 import fcecodec
-import numpy as np
+import numpy
 
 CONFIG = {
-    "fce_version"  : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
+    "fce_version"  : "keep",  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
     "center_parts" : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
 }
-
-script_path = pathlib.Path(__file__).parent
 
 # Parse command-line
 parser = argparse.ArgumentParser()
 parser.add_argument("path", nargs="+", help="file path")
 args = parser.parse_args()
 
-filepath_fce_input = pathlib.Path(args.path[0])
-if len(args.path) < 2:
-    filepath_fce_output = filepath_fce_input.parent / (filepath_fce_input.stem + "_out" + filepath_fce_input.suffix)
-else:
-    filepath_fce_output = pathlib.Path(args.path[1])
-
+filepath_fce_input_source = pathlib.Path(args.path[0])
+filepath_fce_input = pathlib.Path(args.path[1])
+filepath_fce_output = filepath_fce_input
+# filepath_fce_output = filepath_fce_input.parent / (filepath_fce_input.stem + "_out" + filepath_fce_input.suffix)
 
 # -------------------------------------- wrappers
-sys.path.append(str(pathlib.Path(__file__).resolve()))
-sys.path.append(str((pathlib.Path(__file__).parent / "../python/").resolve()))
-from bfut_mywrappers import *
+def GetFceVersion(path):
+    with open(path, "rb") as f:
+        buf = f.read(0x2038)
+        version = fcecodec.GetFceVersion(buf)
+        assert version > 0
+        return version
+
+def PrintFceInfo(path):
+    with open(path, "rb") as f:
+        buf = f.read()
+        fcecodec.PrintFceInfo(buf)
+        assert fcecodec.ValidateFce(buf) == 1
+
+def LoadFce(mesh, path):
+    with open(path, "rb") as f:
+        fce_buf = f.read()
+    assert fcecodec.ValidateFce(fce_buf) == 1
+    mesh.IoDecode(fce_buf)
+    assert mesh.MValid() is True
+    return mesh
+
+def WriteFce(version, mesh, path, center_parts = 1):
+    with open(path, "wb") as f:
+        # print(version == "3", version == "4", version)
+        if version == "3":
+            buf = mesh.IoEncode_Fce3(center_parts)
+        elif version == "4":
+            buf = mesh.IoEncode_Fce4(center_parts)
+        else:
+            buf = mesh.IoEncode_Fce4M(center_parts)
+        assert fcecodec.ValidateFce(buf) == 1
+        f.write(buf)
 
 
 #
@@ -64,15 +88,20 @@ def main():
             fce_outversion = "4M"
     else:
         fce_outversion = CONFIG["fce_version"]
+
     mesh = fcecodec.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
-    ## do stuff here
 
+    mesh_source = fcecodec.Mesh()
+    mesh_source = LoadFce(mesh_source, filepath_fce_input_source)
 
-    ## done doing stuff
+    # copy colors
+    mesh.MSetColors(mesh_source.MGetColors())
+
     WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"])
     PrintFceInfo(filepath_fce_output)
     print("FILE =", filepath_fce_output, flush=True)
+
 
 if __name__ == "__main__":
     main()
