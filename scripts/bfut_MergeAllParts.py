@@ -31,7 +31,7 @@ import fcecodec
 
 CONFIG = {
     "fce_version"  : "keep",  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
-    "center_parts" : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
+    "center_parts" : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
 }
 
 # Parse command-line
@@ -101,7 +101,11 @@ def main():
         print("deleting part", mesh.PGetName(0))
         mesh.OpDeletePart(0)
 
-    WriteFce(CONFIG["fce_version"], mesh, filepath_fce_output, CONFIG["center_parts"])
+    if fce_outversion == "4":
+        mesh.PSetName(0, ":HB")
+    elif fce_outversion == "4M":
+        mesh.PSetName(0, ":Hbody")
+    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"])
     PrintFceInfo(filepath_fce_output)
     print("FILE =", filepath_fce_output, flush=True)
 

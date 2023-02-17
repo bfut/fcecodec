@@ -21,6 +21,62 @@
 import fcecodec
 import numpy as np
 
+def ReorderTriagsTransparentToLast(mesh, pid_opaq):
+    """ Copy original part, delete semi-transparent triags in original,
+        delete opaque triags in copy, merge both, delete original & temporary,
+        move merged part to original index, clean-up """
+    print(mesh.PGetName(pid_opaq))
+    pid_transp = mesh.OpCopyPart(pid_opaq)
+    
+    # delete semi-transparent triags in original
+    flags = mesh.PGetTriagsFlags(pid_opaq)
+    triags_idxs = []
+    for i in range(flags.shape[0]):
+        if flags[i] & 0x8 == 0x8:
+            triags_idxs += [i]
+    print(f"{triags_idxs}")
+    mesh.OpDeletePartTriags(pid_opaq, triags_idxs)
+    
+    # delete opaque triags in copy
+    flags = mesh.PGetTriagsFlags(pid_transp)
+    triags_idxs = []
+    for i in range(flags.shape[0]):
+        if flags[i] & 0x8 < 0x8:
+            triags_idxs += [i]
+    print(f"{triags_idxs}")
+    mesh.OpDeletePartTriags(pid_transp, triags_idxs)
+    
+    # merge both & rename
+    new_pid = mesh.OpMergeParts(pid_opaq, pid_transp)
+    mesh.PSetName(new_pid, mesh.PGetName(pid_opaq))
+    
+    # delete original & temporary
+    mesh.OpDeletePart(pid_transp)
+    mesh.OpDeletePart(pid_opaq)
+    new_pid -= 2
+    
+    # move merged part to original index
+    while new_pid > pid_opaq:
+        new_pid = mesh.OpMovePart(new_pid)
+        print("new_pid", new_pid)
+    
+    # clean-up
+    mesh.OpDelUnrefdVerts()
+    return mesh
+    
+def HiBody_ReorderTriagsTransparentToLast(mesh, version):
+    """ Not implemented for FCE4M because windows are separate parts """
+    if version == "3":
+        mesh = ReorderTriagsTransparentToLast(mesh, 0)  # high body
+        if mesh.MNumParts >= 12:
+            mesh = ReorderTriagsTransparentToLast(mesh, 12)  # high headlights
+    elif version == "4":
+        for pn in (":HB", ":OT", ":OL"):
+            pid = GetPartIdxFromName(mesh, pn)
+            if pid >= 0:
+                mesh = ReorderTriagsTransparentToLast(mesh, pid)
+    return mesh
+
 def GetFceVersion(path):
     with open(path, "rb") as f:
         buf = f.read(0x2038)
@@ -42,7 +98,9 @@ def LoadFce(mesh, path):
     assert mesh.MValid() is True
     return mesh
 
-def WriteFce(version, mesh, path, center_parts = 1):
+def WriteFce(version, mesh, path, center_parts = 1, transparent_triags_to_last = 0):
+    if transparent_triags_to_last:
+        mesh = HiBody_ReorderTriagsTransparentToLast(mesh, version)
     with open(path, "wb") as f:
         # print(version == "3", version == "4", version)
         if version == "3":

@@ -171,7 +171,7 @@ def main():
             sys.exit()
         convertible = convertible_opt[args.path[0]]
         if args.path[1] not in ["0", "1", "opaque", "transp"]:
-            print(f"requires transparent_windows = 0|1 (received {args.path[1]})")
+            print(f"""requires transparent_windows in ["0", "1", "opaque", "transp"] (received {args.path[1]})""")
             sys.exit()
         transparent_windows = transparent_windows_opt[args.path[1]]
     else:
@@ -249,6 +249,7 @@ def main():
             delete_parts.pop()
             print(f"delete_parts={delete_parts}")
             PrintMeshParts(mesh, fce4_fuse_map)
+            print(f"renaming part {new_pid} {mesh.PGetName(new_pid)} to :HB")
             mesh.PSetName(new_pid, ":HB")
             # cleanup
             for idx in reversed(range(mesh.MNumParts)):

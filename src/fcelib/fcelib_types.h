@@ -4,10 +4,10 @@
 
   You may not redistribute this program without its source code.
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,7 +15,8 @@
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 /**
@@ -603,7 +604,8 @@ int FCELIB_TYPES_AddParts(FcelibMesh *mesh, const int num_required)
   }
   mesh->hdr.Parts = (int *)ptr;
   ptr = NULL;
-  memset(mesh->hdr.Parts + mesh->parts_len, -1, (size_t)(new_len - mesh->parts_len) * sizeof(*mesh->hdr.Parts));
+  /* for signed int, -1 is represented as 0xFFFFFFFF */
+  memset(mesh->hdr.Parts + mesh->parts_len, 0xFF, (size_t)(new_len - mesh->parts_len) * sizeof(*mesh->hdr.Parts));
 
   ptr = realloc(mesh->parts, (size_t)new_len * sizeof(*mesh->parts));
   if (!ptr)
@@ -670,7 +672,8 @@ int FCELIB_TYPES_AddTrianglesToPart(FcelibPart *part, const int num_required)
   }
   part->PTriangles = (int *)ptr;
   ptr = NULL;
-  memset(part->PTriangles, -1, (size_t)part->ptriangles_len * sizeof(*part->PTriangles));
+  /* for signed int, -1 is represented as 0xFFFFFFFF */
+  memset(part->PTriangles, 0xFF, (size_t)part->ptriangles_len * sizeof(*part->PTriangles));
 
   return 1;
 }
@@ -688,7 +691,8 @@ int FCELIB_TYPES_AddVerticesToPart(FcelibPart *part, const int num_required)
   }
   part->PVertices = (int *)ptr;
   ptr = NULL;
-  memset(part->PVertices, -1, (size_t)part->pvertices_len * sizeof(*part->PVertices));
+  /* for signed int, -1 is represented as 0xFFFFFFFF */
+  memset(part->PVertices, 0xFF, (size_t)part->pvertices_len * sizeof(*part->PVertices));
 
   return 1;
 }
@@ -890,6 +894,8 @@ void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh mesh)
   printf("NumDummies = %d\n", mesh.hdr.NumDummies);
   printf("NumColors = %d\n", mesh.hdr.NumColors);
   printf("NumSecColors = %d\n", mesh.hdr.NumSecColors);
+
+  printf("Unknown3 (0x0924) = %d (0x%04x)\n", mesh.hdr.Unknown3, mesh.hdr.Unknown3);
 
   printf("Parts:\n"
          "Ord Idx   Verts  Triangles  (PartPos)                          FCE3 role            Name\n");

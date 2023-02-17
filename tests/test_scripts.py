@@ -2,18 +2,19 @@
 #
 # You may not redistribute this program without its source code.
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
+
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
   test_scripts.py - testing scripts in ./scripts
 """
@@ -3793,10 +3794,13 @@ def test_MergeAllParts():
     p_cmp = subprocess.run(f"cmp ./tests/fce/test_scripts_MergeAllParts_4_Snowman_car.fce {str(outpath)}", shell=True, check=True)
     p_cksum = subprocess.run(f"cksum ./tests/fce/test_scripts_MergeAllParts_4_Snowman_car.fce {str(outpath)}", shell=True, check=True)
     print(p_cksum.stdout)
+    print(p_cksum.stderr)
     if p_cksum.returncode != 0:
         print(p_cksum.stderr)
     outpath.unlink()
-    assert p.returncode == 0 and len(p.stderr) == 0 and p_cmp.returncode == 0
+    assert p.returncode == 0
+    assert len(p.stderr) == 0
+    assert p_cmp.returncode == 0
 
 
 def test_PrintFceInfo():

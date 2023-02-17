@@ -2,18 +2,19 @@
 #
 # You may not redistribute this program without its source code.
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-#
+
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 """
   test_smoketest.py - smoke-testing fcecodec Python extension module
 """
@@ -353,7 +354,6 @@ Reserve5offset = 0x8818 (0xa850), Size = 636
 Reserve6offset = 0x8a94 (0xaacc), Size = 2991
 Unknown1 (0x0004) = 0 (0x0000)
 Unknown3 (0x0924) = 0 (0x0000)
-Unknown3 (0x0924) as color    0,   0,   0,   0
 Parts:
 Idx  Verts       Triangles   (PartPos)                         Name
   0      0     4     0     2 (-0.001832, -0.579950, -1.036170) :HLRW
@@ -417,7 +417,7 @@ def test_version():
     script_path = pathlib.Path(__file__).parent.resolve()
     os.chdir(script_path)
     with open(script_path / "../src/fcelib/fcelib.h", mode="r", encoding="utf8") as f:
-        for _ in range(33):
+        for _ in range(35 - 1):
             next(f)
         __version__ = f.readline().rstrip().split("\"")[-2]
     print(f"VERSION_INFO={__version__}")

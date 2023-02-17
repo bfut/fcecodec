@@ -4,10 +4,10 @@
 
   You may not redistribute this program without its source code.
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,7 +15,8 @@
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 /**
@@ -31,7 +32,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FCECVERS "1.2"
+#define FCECVERS "1.3"
 #ifndef FCECVERBOSE
 #define FCECVERBOSE 0  /* >=1 for verbose console output */
 #endif
@@ -138,6 +139,26 @@ int FCELIB_MeshMoveUpPart(FcelibMesh *mesh, const int idx)
 
 
 /* tools -------------------------------------------------------------------- */
+
+/* Returns size in bytes. target_fce_version: 3 (FCE3), 4 (FCE4), 5 (FCE4M) */
+int FCELIB_FceComputeSize(FcelibMesh mesh, const int target_fce_version)
+{
+  switch (target_fce_version)
+  {
+    case 4:
+      return FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, mesh.hdr.NumVertices,
+                                             mesh.hdr.NumTriangles);
+      break;
+    case 5:
+      return FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, mesh.hdr.NumVertices,
+                                             mesh.hdr.NumTriangles);
+      break;
+    default:
+      return FCELIB_FCETYPES_Fce3ComputeSize(mesh.hdr.NumVertices,
+                                             mesh.hdr.NumTriangles);
+      break;
+  }
+}
 
 int FCELIB_GetFceVersion(const void *buf, const int length)
 {

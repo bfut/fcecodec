@@ -4,10 +4,10 @@
 
   You may not redistribute this program without its source code.
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,7 +15,8 @@
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 /**
@@ -1356,7 +1357,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
       part = mesh->parts[ mesh->hdr.Parts[i] ];
 
       /* Create map: global vert index to local part idx (of used-in-this-part verts) */
-      memset(global_mesh_to_local_fce_idxs, -1, (size_t)mesh->vertices_len * sizeof(*global_mesh_to_local_fce_idxs));
+      memset(global_mesh_to_local_fce_idxs, 0xFF, (size_t)mesh->vertices_len * sizeof(*global_mesh_to_local_fce_idxs));
       for (n = 0, k = 0; n < part->pvertices_len && k < part->PNumVertices; ++n)
       {
         if (part->PVertices[n] < 0)
@@ -1390,9 +1391,10 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
 
     retv = 1;
     break;
-  }/* for (;;) */
+  }  /* for (;;) */
 
-  free(global_mesh_to_local_fce_idxs);
+  if (global_mesh_to_local_fce_idxs)
+    free(global_mesh_to_local_fce_idxs);
 
   return retv;
 }
@@ -1519,6 +1521,10 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       FcelibVertex *vert;
       int count_verts = 0;
 
+#if FCECVERBOSE >= 1
+    fprintf(stdout, "Compute HalfSize from high body parts\n");
+#endif
+
       x_array = (float *)malloc((size_t)(3 * (mesh->vertices_len + 1)) * sizeof(*x_array));
       if (!x_array)
       {
@@ -1543,8 +1549,8 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
             continue;
         }
 #if FCECVERBOSE >= 1
-        fprintf(stdout, "<%s> partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
-        fprintf(stdout, "PNumVertices: %d\n", part->PNumVertices);
+        fprintf(stdout, "HalfSize: <%s> partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
+        fprintf(stdout, "HalfSize: PNumVertices: %d\n", part->PNumVertices);
 #endif
 
         /* n - internal vert index, k - vert order */
@@ -1564,7 +1570,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
         ++j;
       }
 #if FCECVERBOSE >= 1
-    fprintf(stdout, "count_verts: %d\n", count_verts);
+    fprintf(stdout, "HalfSize: count_verts: %d\n", count_verts);
 #endif
       qsort(x_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
       qsort(y_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
@@ -1779,7 +1785,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
         part = mesh->parts[ mesh->hdr.Parts[i] ];
 
         /* Create map: global vert index to local part idx (of used-in-this-part verts) */
-        memset(global_mesh_to_local_fce_idxs, -1, (size_t)mesh->vertices_len * sizeof(*global_mesh_to_local_fce_idxs));
+        memset(global_mesh_to_local_fce_idxs, 0xFF, (size_t)mesh->vertices_len * sizeof(*global_mesh_to_local_fce_idxs));
         for (n = 0, k = 0; n < part->pvertices_len && k < part->PNumVertices; ++n)
         {
           if (part->PVertices[n] < 0)
@@ -1822,7 +1828,10 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
 
     retv = 1;
     break;
-  }/* for (;;) */
+  }  /* for (;;) */
+
+  if (global_mesh_to_local_fce_idxs)
+    free(global_mesh_to_local_fce_idxs);
 
 #if FCECVERBOSE == 1
     fprintf(stdout, "return %d\n", retv);
@@ -1909,7 +1918,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
 
     /* Get first unused index */
     i = mesh->parts_len - 1;
-    while (mesh->hdr.Parts[i] < 0 && i >= 0)
+    while (i >= 0 && mesh->hdr.Parts[i] < 0)
       --i;
     ++i;
     new_pid = i;

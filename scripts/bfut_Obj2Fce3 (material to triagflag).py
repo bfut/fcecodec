@@ -173,14 +173,17 @@ def GetShapeFaces(reader, vertices, normals, texcoords, shapename):
 
     # Get normals (use vert positions, if no normals for shape)
     # obj: number of verts and normals may differ; fce: each vert has a normal
+    print("GetShapeFaces: Get normals")
     norm_selection = np.empty(vert_selection.shape[0], dtype=int)
     map_v_t = np.copy(vert_selection)
+    print(f"GetShapeFaces: for i in range{map_v_t.shape[0]}")
     for i in range(map_v_t.shape[0]):
         argwhere = np.argwhere(s_faces == map_v_t[i])
         if len(argwhere) == 0:
             map_v_t[i] = -1
         else:
             map_v_t[i] = argwhere[0]
+    print(f"GetShapeFaces: for i in range{map_v_t.shape[0]}")
     for i in range(map_v_t.shape[0]):
         if map_v_t[i] < 0:
             norm_selection[i] = np.copy(vert_selection[i])
@@ -193,7 +196,7 @@ def GetShapeFaces(reader, vertices, normals, texcoords, shapename):
         print("shape has no normals... use vert positions as normals")
         s_norms = np.copy(s_verts)
 
-    # uvuvuv... -> uuuvvv...
+    print("GetShapeFaces: uvuvuv... -> uuuvvv...")
     s_texcs = np.empty(s_NumFaces * 6)
     for i in range(s_NumFaces):
         for j in range(3):
@@ -503,6 +506,7 @@ def main():
     WriteFce(CONFIG["fce_version"], mesh, filepath_fce_output, center_parts=0)
     print(flush=True)
     PrintFceInfo(filepath_fce_output)
+    print(f"filepath_fce_output={filepath_fce_output}")
 
 if __name__ == "__main__":
     main()
