@@ -49,10 +49,11 @@ filepath_mtl_output = script_path / ".out/test_scripts.mtl"
 objtexname = "car00_Snowman.png"
 
 #
-try:
+if (script_path / ".out").exists() and not (script_path / ".out").is_dir():
+    os.remove(script_path / ".out")
     os.mkdir(script_path / ".out")
-except FileExistsError:
-    pass
+elif not (script_path / ".out").exists():
+    os.mkdir(script_path / ".out")
 
 #
 sys.path.append(str((pathlib.Path(__file__).parent / "../python/").resolve()))

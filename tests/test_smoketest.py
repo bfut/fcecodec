@@ -50,10 +50,12 @@ filepath_obj_output = script_path / ".out/ci-smoketest.obj"
 filepath_mtl_output = script_path / ".out/ci-smoketest.mtl"
 objtexname = "car00_Snowman.png"
 
-try:
-    os.mkdir(pathlib.Path(script_path / ".out"))
-except FileExistsError:
-    pass
+#
+if (script_path / ".out").exists() and not (script_path / ".out").is_dir():
+    os.remove(script_path / ".out")
+    os.mkdir(script_path / ".out")
+elif not (script_path / ".out").exists():
+    os.mkdir(script_path / ".out")
 
 del script_path
 

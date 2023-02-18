@@ -222,7 +222,6 @@ def main():
                     print(f"delete part from mesh: {Hbody_order[idx]} ({pid})")
                     mesh.OpDeletePart(pid)
                 Hbody_order.pop(idx)
-        mesh_partnames = GetMeshPartnames(mesh)
 
 
         print(f"Hbody_order={Hbody_order}")

@@ -42,13 +42,9 @@ extern "C" {
 #endif
 
 #ifndef __cplusplus
-enum { kFceLibBufferSize = 1024 };
-enum { kFceLibFilenameMaxLen = 200 };
 enum { kFceLibImplementedFce3Parts = 13 };
 enum { kFceLibNumFce4HiBodyParts = 18 };
 #else
-static const int kFceLibBufferSize = 1024;
-static const int kFceLibFilenameMaxLen = 200;
 static const int kFceLibImplementedFce3Parts = 13;
 static const int kFceLibNumFce4HiBodyParts = 18;
 #endif
