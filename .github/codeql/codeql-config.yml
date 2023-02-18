@@ -1,0 +1,9 @@
+name: fcecodec
+queries:
+- uses: security-and-quality
+query-filters:
+- exclude:
+    id:
+    # recommended alternative n/a in C89
+    - cpp/world-writable-file-creation
+    # - cpp/irregular-enum-init
