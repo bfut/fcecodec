@@ -1,6 +1,6 @@
 /*
   fcelib.h
-  fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FCECVERS "1.3"
+#define FCECVERS "1.4"
 #ifndef FCECVERBOSE
 #define FCECVERBOSE 0  /* >=1 for verbose console output */
 #endif

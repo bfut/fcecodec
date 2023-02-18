@@ -1,6 +1,6 @@
 /*
   fcelib_op.h
-  fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -385,7 +385,7 @@ int FCELIB_OP_DeletePart(FcelibMesh *mesh, const int idx)
     free(part);
     mesh->parts[ mesh->hdr.Parts[internal_idx] ] = NULL;
     mesh->hdr.Parts[internal_idx] = -1;
-    
+
     retv = 1;
     break;
   }  /* for (;;) */
