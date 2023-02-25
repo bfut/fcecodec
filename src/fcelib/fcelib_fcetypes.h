@@ -839,17 +839,14 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const void *header, const int infilesize)
   int dist_to_eof;
   FceHeader3 hdr = FCELIB_FCETYPES_GetFceHeader3((unsigned char *)header);
 
-  /*
-    parts: triangle indices within bounds?
+  /* parts: triangle indices within bounds?
    */
 
   /* aborts */
   for (;;)
   {
     if (!FCELIB_FCETYPES_MiniValidateHdr3((unsigned char *)header))
-    {
       retv = 0;
-    }
 
     if (hdr.NumTriangles < 0)
     {
@@ -1113,7 +1110,7 @@ int FCELIB_FCETYPES_MiniValidateHdr4(const unsigned char *header)
 }
 
 int FCELIB_FCETYPES_Fce4ComputeSize(const int Version,
-                                 const int NumVertices, const int NumTriangles)
+                                    const int NumVertices, const int NumTriangles)
 {
   int fsize = 0;
 
@@ -1142,9 +1139,7 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const void *header, const int infilesize)
   for (;;)
   {
     if (!FCELIB_FCETYPES_MiniValidateHdr4((unsigned char *)header))
-    {
       retv = 0;
-    }
 
     if (hdr.NumTriangles < 0)
     {
@@ -1639,20 +1634,6 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const int fce_size, const void *header)
 
     printf("Unknown1 (0x0004) = %d (0x%04x)\n", hdr.Unknown1, hdr.Unknown1);
     printf("Unknown3 (0x0924) = %d (0x%04x)\n", hdr.Unknown3, hdr.Unknown3);
-#if 0
-    if (hdr.Version == 0x00101015)
-    {
-      tColor4 c;
-      c.hue          = *((unsigned char *)header + 0x0924 + 0x0);
-      c.saturation   = *((unsigned char *)header + 0x0924 + 0x1);
-      c.brightness   = *((unsigned char *)header + 0x0924 + 0x2);
-      c.transparency = *((unsigned char *)header + 0x0924 + 0x3);
-
-      printf("Unknown3 (0x0924) as color  %3u, %3u, %3u, %3u\n",
-             c.hue, c.saturation,
-             c.brightness, c.transparency);
-    }
-#endif
 
     printf("Parts:\n"
                     "Idx  Verts       Triangles   (PartPos)                         Name\n");

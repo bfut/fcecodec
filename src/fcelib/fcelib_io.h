@@ -612,9 +612,6 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
   int *global_mesh_to_global_obj_idxs;
   FcelibPart *part;
 
-  if (!FCELIB_TYPES_ValidateMesh(*mesh))
-    return 0;
-
   global_mesh_to_global_obj_idxs = (int *)malloc(mesh->vertices_len * sizeof(int));
   if (!global_mesh_to_global_obj_idxs)
   {
@@ -1116,12 +1113,6 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
 
   for (;;)
   {
-    if (!FCELIB_TYPES_ValidateMesh(*mesh))
-    {
-      fprintf(stderr, "EncodeFce3: Invalid mesh\n");
-      break;
-    }
-
     {
       const int fsize = FCELIB_FCETYPES_Fce3ComputeSize(mesh->hdr.NumVertices, mesh->hdr.NumTriangles);
       if (outbuf_size < fsize)
@@ -1362,9 +1353,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
       {
         if (part->PVertices[n] < 0)
           continue;
-        global_mesh_to_local_fce_idxs[
-          part->PVertices[n]
-        ] = k;
+        global_mesh_to_local_fce_idxs[ part->PVertices[n] ] = k;
         ++k;
       }
 
@@ -1402,8 +1391,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
 /* Limited to 64 parts, 16 dummies, 16 colors. Returns boolean.
    For FCE4M, call with fce_version = 0x00101015 */
 int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh *mesh,
-                         const int center_parts,
-                         const int fce_version)
+                         const int center_parts, const int fce_version)
 {
   int retv = 0;
   int *global_mesh_to_local_fce_idxs = NULL;
@@ -1423,12 +1411,6 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
 
   for (;;)
   {
-    if (!FCELIB_TYPES_ValidateMesh(*mesh))
-    {
-      fprintf(stderr, "EncodeFce4: Invalid mesh\n");
-      break;
-    }
-
     {
       const int fsize = FCELIB_FCETYPES_Fce4ComputeSize(fce_version, mesh->hdr.NumVertices, mesh->hdr.NumTriangles);
       if (buf_size < fsize)
@@ -1790,9 +1772,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
         {
           if (part->PVertices[n] < 0)
             continue;
-          global_mesh_to_local_fce_idxs[
-            part->PVertices[n]
-          ] = k;
+          global_mesh_to_local_fce_idxs[ part->PVertices[n] ] = k;
           ++k;
         }
 
@@ -1868,12 +1848,6 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     }
 
     mesh->freed = 0;
-
-    if (!FCELIB_TYPES_ValidateMesh(*mesh))
-    {
-      fprintf(stderr, "GeomDataToNewPart: invalid mesh\n");
-      break;
-    }
 
     if (vert_idxs_len % 3 != 0)
     {

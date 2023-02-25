@@ -27,7 +27,7 @@ def ReorderTriagsTransparentToLast(mesh, pid_opaq):
         move merged part to original index, clean-up """
     print(mesh.PGetName(pid_opaq))
     pid_transp = mesh.OpCopyPart(pid_opaq)
-    
+
     # delete semi-transparent triags in original
     flags = mesh.PGetTriagsFlags(pid_opaq)
     triags_idxs = []
@@ -36,7 +36,7 @@ def ReorderTriagsTransparentToLast(mesh, pid_opaq):
             triags_idxs += [i]
     print(f"{triags_idxs}")
     mesh.OpDeletePartTriags(pid_opaq, triags_idxs)
-    
+
     # delete opaque triags in copy
     flags = mesh.PGetTriagsFlags(pid_transp)
     triags_idxs = []
@@ -45,25 +45,25 @@ def ReorderTriagsTransparentToLast(mesh, pid_opaq):
             triags_idxs += [i]
     print(f"{triags_idxs}")
     mesh.OpDeletePartTriags(pid_transp, triags_idxs)
-    
+
     # merge both & rename
     new_pid = mesh.OpMergeParts(pid_opaq, pid_transp)
     mesh.PSetName(new_pid, mesh.PGetName(pid_opaq))
-    
+
     # delete original & temporary
     mesh.OpDeletePart(pid_transp)
     mesh.OpDeletePart(pid_opaq)
     new_pid -= 2
-    
+
     # move merged part to original index
     while new_pid > pid_opaq:
         new_pid = mesh.OpMovePart(new_pid)
         print("new_pid", new_pid)
-    
+
     # clean-up
     mesh.OpDelUnrefdVerts()
     return mesh
-    
+
 def HiBody_ReorderTriagsTransparentToLast(mesh, version):
     """ Not implemented for FCE4M because windows are separate parts """
     if version == "3":

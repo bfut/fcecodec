@@ -875,12 +875,6 @@ void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh mesh)
   int verts = 0;
   int triags = 0;
 
-  if (!FCELIB_TYPES_ValidateMesh(mesh))
-  {
-    fprintf(stderr, "PrintMeshInfo: invalid mesh\n");
-    return;
-  }
-
   printf("NumTriangles (true) = %d\n", mesh.hdr.NumTriangles);
   printf("triangles_len (alloc'd) = %d\n", mesh.triangles_len);
 
@@ -953,12 +947,6 @@ void FCELIB_TYPES_PrintMeshParts(const FcelibMesh mesh)
 {
   int j;
 
-  if (!FCELIB_TYPES_ValidateMesh(mesh))
-  {
-    fprintf(stderr, "PrintMeshParts: Cannot print\n");
-    return;
-  }
-
   printf("NumParts = %d, parts_len = %d, [\n",
          mesh.hdr.NumParts, mesh.parts_len);
 
@@ -974,12 +962,6 @@ void FCELIB_TYPES_PrintMeshTriangles(const FcelibMesh mesh)
 {
   int i;
   int j;
-
-  if (!FCELIB_TYPES_ValidateMesh(mesh))
-  {
-    fprintf(stderr, "PrintMeshTriangles: Cannot print\n");
-    return;
-  }
 
   for (i = 0; i < mesh.parts_len; ++i)
   {
@@ -1003,12 +985,6 @@ void FCELIB_TYPES_PrintMeshVertices(const FcelibMesh mesh)
 {
   int i;
   int j;
-
-  if (!FCELIB_TYPES_ValidateMesh(mesh))
-  {
-    fprintf(stderr, "PrintMeshVertices: Cannot print\n");
-    return;
-  }
 
   for (i = 0; i < mesh.parts_len; ++i)
   {

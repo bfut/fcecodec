@@ -1,4 +1,4 @@
-# fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
+# fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
 #
 # You may not redistribute this program without its source code.
 #
@@ -419,7 +419,7 @@ def test_version():
     script_path = pathlib.Path(__file__).parent.resolve()
     os.chdir(script_path)
     with open(script_path / "../src/fcelib/fcelib.h", mode="r", encoding="utf8") as f:
-        for _ in range(35 - 1):
+        for _ in range(36 - 1):
             next(f)
         __version__ = f.readline().rstrip().split("\"")[-2]
     print(f"VERSION_INFO={__version__}")

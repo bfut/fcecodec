@@ -1,4 +1,4 @@
-# fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
+# fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
 #
 # You may not redistribute this program without its source code.
 #

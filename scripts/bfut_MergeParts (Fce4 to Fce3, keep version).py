@@ -31,7 +31,6 @@ import pathlib
 import sys
 
 import fcecodec
-import numpy as np
 
 CONFIG = {
     "fce_version"  : "keep",  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
@@ -116,7 +115,7 @@ def DeleteUnwantedParts4(mesh, fce_part_fuse_map, convertible, transparent_windo
 
 
 def PrintMeshParts(mesh, fuse_map):
-    print(f"pid  PART NAME                        FUSE TO PART")
+    print("pid  PART NAME                        FUSE TO PART")
     for pid in range(mesh.MNumParts):
         print(f"{pid:<4} {mesh.PGetName(pid):<32} {fuse_map.get(mesh.PGetName(pid), ''):<24}")
 
@@ -135,10 +134,10 @@ def GetMeshPartnameIdx(mesh, partname):
 
 def RemoveSemiTransparencyTriagFlagFromWindows(mesh, pid):
     flags = mesh.PGetTriagsFlags(pid)
-    for i in range(flags.shape[0]):
-        if flags[i] & 0x7F0 > 0x010:  # only windows to opaque
+    for j in range(flags.shape[0]):
+        if flags[j] & 0x7F0 > 0x010:  # only windows to opaque
             # print(f"{hex(flags[i])} -> {hex(flags[i] & 0xFFFFFFF7)}")
-            flags[i] = flags[i] & 0xFFFFFFF7
+            flags[j] = flags[j] & 0xFFFFFFF7
     mesh.PSetTriagsFlags(pid, flags)
 
 def main():
@@ -285,7 +284,6 @@ def main():
     WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"])
     PrintFceInfo(filepath_fce_output)
     print("FILE =", filepath_fce_output, flush=True)
-
 
 
 if __name__ == "__main__":

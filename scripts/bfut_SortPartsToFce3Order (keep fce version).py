@@ -82,7 +82,7 @@ def WriteFce(version, mesh, path, center_parts = 1):
 
 #
 def PrintMeshParts(mesh, part_names_sorted):
-    print(f"pid  IS                          SHOULD")
+    print("pid  IS                          SHOULD")
     for pid in range(mesh.MNumParts):
         print(f"{pid:<2} {mesh.PGetName(pid):<12} {part_names_sorted[pid]:<12}")
 

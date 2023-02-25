@@ -20,10 +20,11 @@
 */
 
 /**
-  library interface
+  library interface: library users should only use functions from this header externally,
+    whereas functions from here are never used internally
 
   library structs are defined in fcelib_types.h
-  FCE structs and format documentation can be found in fcelib_fcetypes.h
+  FCE structs and FCE format documentation can be found in fcelib_fcetypes.h
 **/
 
 #ifndef FCELIB_H_
@@ -105,8 +106,8 @@ int FCELIB_SetPartCenter(FcelibMesh *mesh, const int pidx,
   return FCELIB_OP_SetPartCenter(mesh, pidx, new_center);
 }
 
-int FCELIB_CopyPartToMesh(FcelibMesh *mesh_rcv,
-                          FcelibMesh *mesh_src, const int idx)
+int FCELIB_CopyPartToMesh(FcelibMesh *mesh_rcv, FcelibMesh *mesh_src,
+                          const int idx)
 {
   return FCELIB_OP_CopyPartToMesh(mesh_rcv, mesh_src, idx);
 }

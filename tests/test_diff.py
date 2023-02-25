@@ -1,4 +1,4 @@
-# fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
+# fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
 #
 # You may not redistribute this program without its source code.
 #
@@ -80,8 +80,8 @@ def generate_data(version1, version2, filepath_fce_output):
 def test_diff_identical_src_X_X(version1, version2, filepath_fce_output):
     print(f"Compare src->{version1} with src->{version1}->{version1} (required identical)")
     outpath = generate_data(version1, version2, filepath_fce_output)
-    p = subprocess.run(["cmp", str(filepath_fce_output), outpath])
-    subprocess.run(["cksum", str(filepath_fce_output), outpath])
+    p = subprocess.run(["cmp", str(filepath_fce_output), outpath], check=False)
+    subprocess.run(["cksum", str(filepath_fce_output), outpath], check=False)
     print()
     assert p.returncode == 0
 
@@ -92,15 +92,15 @@ def test_diff_identical_src_4m_4_to_4():
     mesh = fcecodec.Mesh()
     mesh = LoadFce(mesh, filepath_fce4m_output)
     WriteFce("4", mesh, outpath, center_parts=0)
-    p = subprocess.run(["cmp", str(filepath_fce4_output), outpath])
-    subprocess.run(["cksum", str(filepath_fce4_output), outpath])
+    p = subprocess.run(["cmp", str(filepath_fce4_output), outpath], check=False)
+    subprocess.run(["cksum", str(filepath_fce4_output), outpath], check=False)
     print()
     assert p.returncode == 0
 
 
 def test_diff_different_src_to_4():
     print("Compare src with src->4 (expected different, src not fcecodec-encoded)")
-    p = subprocess.run(["cmp", str(filepath_fce_input), filepath_fce4_output])
-    subprocess.run(["cksum", str(filepath_fce_input), filepath_fce4_output])
+    p = subprocess.run(["cmp", str(filepath_fce_input), filepath_fce4_output], check=False)
+    subprocess.run(["cksum", str(filepath_fce_input), filepath_fce4_output], check=False)
     print()
     assert p.returncode == 1

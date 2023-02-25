@@ -80,9 +80,6 @@ int FCELIB_OP_CenterPart(FcelibMesh *mesh, const int idx)
 
   for (;;)
   {
-    if (!FCELIB_TYPES_ValidateMesh(*mesh))
-      break;
-
     internal_idx = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, idx);
     if (internal_idx < 0)
     {
@@ -103,8 +100,7 @@ int FCELIB_OP_CenterPart(FcelibMesh *mesh, const int idx)
 
 /* Center specified part around new_center.
    Does not move part w.r.t. to global coordinates */
-int FCELIB_OP_SetPartCenter(FcelibMesh *mesh, const int pidx,
-                            const float new_center[3])
+int FCELIB_OP_SetPartCenter(FcelibMesh *mesh, const int pidx, const float new_center[3])
 {
   int retv = 0;
   int internal_pidx;
@@ -113,9 +109,6 @@ int FCELIB_OP_SetPartCenter(FcelibMesh *mesh, const int pidx,
 
   for (;;)
   {
-    if (!FCELIB_TYPES_ValidateMesh(*mesh))
-      break;
-
     internal_pidx = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, pidx);
     if (internal_pidx < 0)
     {
@@ -138,8 +131,7 @@ int FCELIB_OP_SetPartCenter(FcelibMesh *mesh, const int pidx,
 
 /* Returns mesh_dest new part index (order) on success, -1 on failure.
    Allows mesh_dest == mesh_src. */
-int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_dest,
-                             FcelibMesh *mesh_src, const int idx_src)
+int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_dest, FcelibMesh *mesh_src, const int idx_src)
 {
   int new_pid = -1;
   int i;
@@ -152,11 +144,6 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_dest,
   int internal_idx_src;
   FcelibPart *part_dest;
   FcelibPart *part_src;
-
-  if (!FCELIB_TYPES_ValidateMesh(*mesh_dest))
-    return -1;
-  if (!FCELIB_TYPES_ValidateMesh(*mesh_src))
-    return -1;
 
   internal_idx_src = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh_src, idx_src);
   if (internal_idx_src < 0)
@@ -347,12 +334,6 @@ int FCELIB_OP_DeletePart(FcelibMesh *mesh, const int idx)
 
   for (;;)
   {
-    if (!FCELIB_TYPES_ValidateMesh(*mesh))
-    {
-      fprintf(stderr, "DeletePart: invalid mesh\n");
-      break;
-    }
-
     internal_idx = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, idx);
     if (internal_idx < 0)
     {
@@ -394,8 +375,7 @@ int FCELIB_OP_DeletePart(FcelibMesh *mesh, const int idx)
 }
 
 /* Delete part triangles by order. */
-int FCELIB_OP_DeletePartTriags(FcelibMesh *mesh, const int pidx,
-                               const int *idxs, const int idxs_len)
+int FCELIB_OP_DeletePartTriags(FcelibMesh *mesh, const int pidx, const int *idxs, const int idxs_len)
 {
   int retv = 0;
   int i;
@@ -416,12 +396,6 @@ int FCELIB_OP_DeletePartTriags(FcelibMesh *mesh, const int pidx,
     if (!idxs)
     {
       fprintf(stderr, "DeletePartTriags: Unexpected NULL (idxs)\n");
-      break;
-    }
-
-    if (!FCELIB_TYPES_ValidateMesh(*mesh))
-    {
-      fprintf(stderr, "DeletePartTriags: invalid mesh\n");
       break;
     }
 
@@ -484,9 +458,6 @@ int FCELIB_OP_DeleteUnrefdVerts(FcelibMesh *mesh)
   int k;
   FcelibPart *part;
   int *map;
-
-  if (!FCELIB_TYPES_ValidateMesh(*mesh))
-    return 0;
 
   map = (int *)malloc((size_t)mesh->vertices_len * sizeof(*map));
   if (!map)
@@ -554,13 +525,6 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
     fprintf(stderr, "MergePartsToNew: Cannot merge part with itself\n");
     return -1;
   }
-
-  if (!FCELIB_TYPES_ValidateMesh(*mesh))
-    return -1;
-
-#if FCECVERBOSE == 1
-  fprintf(stdout, "validation done...\n");
-#endif
 
   idx1 = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, pid1);
   idx2 = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, pid2);
@@ -807,9 +771,6 @@ int FCELIB_OP_MoveUpPart(FcelibMesh *mesh, const int idx)
   int internal_index_idx;
   int internal_index_j;
 
-  if (!FCELIB_TYPES_ValidateMesh(*mesh))
-    return -1;
-
   internal_index_idx = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, idx);
   internal_index_j = FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, idx - 1);
 
@@ -832,8 +793,6 @@ int FCELIB_OP_MoveUpPart(FcelibMesh *mesh, const int idx)
 
   return idx - 1;
 }
-
-
 
 #ifdef __cplusplus
 }  /* extern "C" */

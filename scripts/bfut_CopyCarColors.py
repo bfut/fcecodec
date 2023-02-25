@@ -28,7 +28,6 @@ import argparse
 import pathlib
 
 import fcecodec
-import numpy
 
 CONFIG = {
     "fce_version"  : "keep",  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively

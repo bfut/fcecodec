@@ -150,7 +150,7 @@ def DeleteUnwantedParts(mesh, fce4m_fuse_map, chopped_roof, convertible, hood_sc
 
 
 def PrintMeshParts(mesh, fce4m_fuse_map):
-    print(f"pid  PART NAME                        FUSE TO PART")
+    print("pid  PART NAME                        FUSE TO PART")
     for pid in range(mesh.MNumParts):
         print(f"{pid:<4} {mesh.PGetName(pid):<32} {fce4m_fuse_map.get(mesh.PGetName(pid), ''):<24}")
 

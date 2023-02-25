@@ -1,13 +1,13 @@
 /*
   fcecodecmodule.c - Python module
-  fcecodec Copyright (C) 2021-2022 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  as published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,7 +15,8 @@
   GNU General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 #include <pybind11/pybind11.h>
@@ -74,10 +75,10 @@ public:
   py::bytes IoEncode_Fce4(const bool center_parts) const;
   py::bytes IoEncode_Fce4M(const bool center_parts) const;
   void IoExportObj(std::string &objpath, std::string &mtlpath,
-                    std::string &texture_name,
-                    const int print_damage, const int print_dummies,
-                    const int use_part_positions,
-                    const int print_part_positions) const;
+                   std::string &texture_name,
+                   const int print_damage, const int print_dummies,
+                   const int use_part_positions,
+                   const int print_part_positions) const;
   int IoGeomDataToNewPart(py::array_t<int, py::array::c_style | py::array::forcecast> vert_idxs,
                           py::array_t<float, py::array::c_style | py::array::forcecast> vert_texcoords,
                           py::array_t<float, py::array::c_style | py::array::forcecast> vert_pos,
