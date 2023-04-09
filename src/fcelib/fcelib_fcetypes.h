@@ -654,7 +654,7 @@ FceHeader3 FCELIB_FCETYPES_GetFceHeader3(const unsigned char *header)
   memcpy(&hdr.ZHalfSize, header + 0x0030, (size_t)4);
 
   memcpy(&hdr.NumDummies, header + 0x0034, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(16, hdr.NumDummies); ++i)
+  for (i = 0; i < FCELIB_UTIL_Min(16, hdr.NumDummies); ++i)
   {
     memcpy(&hdr.Dummies[i].x, header + 0x0038 + i * 12 + 0x0, (size_t)4);
     memcpy(&hdr.Dummies[i].y, header + 0x0038 + i * 12 + 0x4, (size_t)4);
@@ -662,7 +662,7 @@ FceHeader3 FCELIB_FCETYPES_GetFceHeader3(const unsigned char *header)
   }
 
   memcpy(&hdr.NumParts, header + 0x00F8, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(64, hdr.NumParts); ++i)
+  for (i = 0; i < FCELIB_UTIL_Min(64, hdr.NumParts); ++i)
   {
     memcpy(&hdr.PartPos[i].x, header + 0x00FC + i * 12 + 0x0, (size_t)4);
     memcpy(&hdr.PartPos[i].y, header + 0x00FC + i * 12 + 0x4, (size_t)4);
@@ -675,7 +675,7 @@ FceHeader3 FCELIB_FCETYPES_GetFceHeader3(const unsigned char *header)
   memcpy(&hdr.PNumTriangles, header + 0x06FC, (size_t)(64 * 4));
 
   memcpy(&hdr.NumPriColors, header + 0x07FC, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(16, hdr.NumPriColors); ++i)
+  for (i = 0; i < FCELIB_UTIL_Min(16, hdr.NumPriColors); ++i)
   {
     memcpy(&hdr.PriColors[i].hue,          header + 0x0800 + i * 16 + 0x00, (size_t)4);
     memcpy(&hdr.PriColors[i].saturation,   header + 0x0800 + i * 16 + 0x04, (size_t)4);
@@ -684,7 +684,7 @@ FceHeader3 FCELIB_FCETYPES_GetFceHeader3(const unsigned char *header)
   }
 
   memcpy(&hdr.NumSecColors, header + 0x0900, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(16, hdr.NumSecColors); ++i)
+  for (i = 0; i < FCELIB_UTIL_Min(16, hdr.NumSecColors); ++i)
   {
     memcpy(&hdr.SecColors[i].hue,          header + 0x0904 + i * 16 + 0x00, (size_t)4);
     memcpy(&hdr.SecColors[i].saturation,   header + 0x0904 + i * 16 + 0x04, (size_t)4);
@@ -737,7 +737,7 @@ FceHeader4 FCELIB_FCETYPES_GetFceHeader4(const unsigned char *header)
   memcpy(&hdr.ZHalfSize, header + 0x0054, (size_t)4);
 
   memcpy(&hdr.NumDummies, header + 0x0058, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(16, hdr.NumDummies); ++i)
+  for (i = 0; i < FCELIB_UTIL_Min(16, hdr.NumDummies); ++i)
   {
     memcpy(&hdr.Dummies[i].x, header + 0x005c + i * 12 + 0x0, (size_t)4);
     memcpy(&hdr.Dummies[i].y, header + 0x005c + i * 12 + 0x4, (size_t)4);
@@ -745,7 +745,7 @@ FceHeader4 FCELIB_FCETYPES_GetFceHeader4(const unsigned char *header)
   }
 
   memcpy(&hdr.NumParts, header + 0x011c, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(64, hdr.NumParts); ++i)
+  for (i = 0; i < FCELIB_UTIL_Min(64, hdr.NumParts); ++i)
   {
     memcpy(&hdr.PartPos[i].x, header + 0x0120 + i * 12 + 0x0, (size_t)4);
     memcpy(&hdr.PartPos[i].y, header + 0x0120 + i * 12 + 0x4, (size_t)4);
@@ -758,7 +758,7 @@ FceHeader4 FCELIB_FCETYPES_GetFceHeader4(const unsigned char *header)
   memcpy(&hdr.PNumTriangles, header + 0x0720, (size_t)(64 * 4));
 
   memcpy(&hdr.NumColors, header + 0x0820, (size_t)4);
-  for (i = 0; i < FCELIB_MISC_Min(16, hdr.NumColors); ++i)
+  for (i = 0; i < FCELIB_UTIL_Min(16, hdr.NumColors); ++i)
   {
     memcpy(&hdr.PriColors[i].hue,          header + 0x0824 + i * 4 + 0, (size_t)1);
     memcpy(&hdr.PriColors[i].saturation,   header + 0x0824 + i * 4 + 1, (size_t)1);
@@ -886,7 +886,7 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const void *header, const int infilesize)
     }
 
     /* Vertices, triangles counts */
-    for (i = 0; i < FCELIB_MISC_Min(64, hdr.NumParts); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(64, hdr.NumParts); ++i)
     {
       if ((hdr.PNumTriangles[i] > 0) && (hdr.PNumVertices[i] < 3))
       {
@@ -929,7 +929,7 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const void *header, const int infilesize)
 
     /* Vertices, triangles areas: parts non-overlapping, within bounds (do nothing
        when zero verts, triags) */
-    for (i = 0; i < FCELIB_MISC_Min(64, hdr.NumParts) - 1; ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(64, hdr.NumParts) - 1; ++i)
     {
       /* Combined with other checks, guarantees verts, triags stay within their
          areas, respectively */
@@ -1178,7 +1178,7 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const void *header, const int infilesize)
     }
 
     /* Vertices, triangles counts */
-    for (i = 0; i < FCELIB_MISC_Min(64, hdr.NumParts); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(64, hdr.NumParts); ++i)
     {
       if ((hdr.PNumTriangles[i] > 0) && (hdr.PNumVertices[i] < 3))
       {
@@ -1243,7 +1243,7 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const void *header, const int infilesize)
 
     /* Vertices, triangles areas: parts non-overlapping, within bounds (do nothing
        when zero verts, triags) */
-    for (i = 0; i < FCELIB_MISC_Min(64, hdr.NumParts) - 1; ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(64, hdr.NumParts) - 1; ++i)
     {
       /* Combined with other checks, guarantees verts, triags stay within their
          areas, respectively */
@@ -1526,7 +1526,7 @@ void FCELIB_FCETYPES_PrintHeaderFce3(const int fce_size, const void *header)
 
     printf("Parts:\n"
            "Idx  Verts       Triags      (PartPos)                         Description          Name\n");
-    for (i = 0; i < FCELIB_MISC_Min(kFceLibImplementedFce3Parts, hdr.NumParts); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(kFceLibImplementedFce3Parts, hdr.NumParts); ++i)
     {
       printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %20s %s\n",
              i,
@@ -1541,7 +1541,7 @@ void FCELIB_FCETYPES_PrintHeaderFce3(const int fce_size, const void *header)
       verts += hdr.PNumVertices[i];
       triags += hdr.PNumTriangles[i];
     }
-    for (i = FCELIB_MISC_Min(kFceLibImplementedFce3Parts, hdr.NumParts); i < FCELIB_MISC_Min(64, hdr.NumParts); ++i)
+    for (i = FCELIB_UTIL_Min(kFceLibImplementedFce3Parts, hdr.NumParts); i < FCELIB_UTIL_Min(64, hdr.NumParts); ++i)
     {
       printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %20s %s\n",
              i,
@@ -1565,7 +1565,7 @@ void FCELIB_FCETYPES_PrintHeaderFce3(const int fce_size, const void *header)
            fce_size - FCELIB_FCETYPES_Fce3ComputeSize(verts, triags));
 
     printf("DummyNames (Position):\n");
-    for (i = 0; i < FCELIB_MISC_Min(hdr.NumDummies, 16); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(hdr.NumDummies, 16); ++i)
     {
       printf(" (%9f, %9f, %9f) %s\n",
              hdr.Dummies[i].x, hdr.Dummies[i].y, hdr.Dummies[i].z,
@@ -1573,7 +1573,7 @@ void FCELIB_FCETYPES_PrintHeaderFce3(const int fce_size, const void *header)
     }
 
     printf("Car colors (hue, saturation, brightness, transparency):\n");
-    for (i = 0; i < FCELIB_MISC_Min(hdr.NumPriColors, 16); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(hdr.NumPriColors, 16); ++i)
     {
       printf("%2d  Primary     %3d, %3d, %3d, %3d\n", i,
              hdr.PriColors[i].hue, hdr.PriColors[i].saturation,
@@ -1637,7 +1637,7 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const int fce_size, const void *header)
 
     printf("Parts:\n"
                     "Idx  Verts       Triangles   (PartPos)                         Name\n");
-    for (i = 0; i < FCELIB_MISC_Min(hdr.NumParts, 64); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(hdr.NumParts, 64); ++i)
     {
       printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %s\n",
              i,
@@ -1664,7 +1664,7 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const int fce_size, const void *header)
            fce_size - FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, verts, triags));
 
     printf("DummyNames (Position):\n");
-    for (i = 0; i < FCELIB_MISC_Min(hdr.NumDummies, 16); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(hdr.NumDummies, 16); ++i)
     {
       printf(" (%9f, %9f, %9f) %s\n",
              hdr.Dummies[i].x, hdr.Dummies[i].y, hdr.Dummies[i].z,
@@ -1672,7 +1672,7 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const int fce_size, const void *header)
     }
 
     printf("Car colors (hue, saturation, brightness, transparency):\n");
-    for (i = 0; i < FCELIB_MISC_Min(hdr.NumColors, 16); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(hdr.NumColors, 16); ++i)
     {
       printf("%2d  Primary     %3d, %3d, %3d, %3d\n", i,
             hdr.PriColors[i].hue, hdr.PriColors[i].saturation,

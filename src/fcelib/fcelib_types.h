@@ -295,12 +295,6 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh mesh)
   int sum_verts = 0;
   FcelibPart *part = NULL;
 
-#if FCECVERBOSE >= 1
-  printf("ValidateMesh: mesh.parts_len=%d\n", mesh.parts_len);
-  printf("ValidateMesh: mesh.triangles_len=%d\n", mesh.triangles_len);
-  printf("ValidateMesh: mesh.vertices_len=%d\n", mesh.vertices_len);
-#endif
-
   if (mesh.parts_len == 0     && !mesh.parts     && !mesh.hdr.Parts &&
       mesh.triangles_len == 0 && !mesh.triangles &&
       mesh.vertices_len == 0  && !mesh.vertices)
@@ -454,33 +448,18 @@ int FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(const FcelibMesh *mesh)
 {
   int tidx = -1;
   int i;
+  int pid;
   FcelibPart *part;
 
-#if FCECVERBOSE >= 1
-    printf("GetFirstUnusedGlobalTriangleIdx: ");
-#endif
-
-  /* Get internally last part (has internally last verts) */
-  i = FCELIB_MISC_ArrMax(mesh->hdr.Parts, mesh->parts_len);
-#if FCECVERBOSE >= 1
-    printf("first unused triag index in part... %d", i);
-#endif
-
-  /* Get internally last triag */
-  if (i >= 0)
+  for (i = 0; i < mesh->parts_len; ++i)
   {
-    part = mesh->parts[i];
-#if FCECVERBOSE >= 1
-    printf(" %s (%d)", part->PartName, part->ptriangles_len);
-#endif
-
+    pid = mesh->hdr.Parts[i];
+    if (pid < 0)
+      continue;
+    part = mesh->parts[pid];
     if (part->ptriangles_len > 0)
-      tidx = FCELIB_MISC_ArrMax(part->PTriangles, part->ptriangles_len);
+      tidx = -FCELIB_UTIL_Min(-tidx, -FCELIB_UTIL_ArrMax(part->PTriangles, part->ptriangles_len));
   }
-#if FCECVERBOSE >= 1
-    printf("\n");
-    fflush(stdout);
-#endif
 
   return tidx + 1;
 }
@@ -490,33 +469,18 @@ int FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(const FcelibMesh *mesh)
 {
   int vidx = -1;
   int i;
+  int pid;
   FcelibPart *part;
 
-#if FCECVERBOSE >= 1
-    printf("GetFirstUnusedGlobalVertexIdx: ");
-#endif
-
-  /* Get internally last part (has internally last verts) */
-  i = FCELIB_MISC_ArrMax(mesh->hdr.Parts, mesh->parts_len);
-#if FCECVERBOSE >= 1
-    printf("first unused vert index in part... %d", i);
-#endif
-
-  /* Get internally last vert */
-  if (i >= 0)
+  for (i = 0; i < mesh->parts_len; ++i)
   {
-    part = mesh->parts[i];
-#if FCECVERBOSE >= 1
-    printf(" %s (%d)", part->PartName, part->pvertices_len);
-#endif
-
+    pid = mesh->hdr.Parts[i];
+    if (pid < 0)
+      continue;
+    part = mesh->parts[pid];
     if (part->pvertices_len > 0)
-      vidx = FCELIB_MISC_ArrMax(part->PVertices, part->pvertices_len);
+      vidx = -FCELIB_UTIL_Min(-vidx, -FCELIB_UTIL_ArrMax(part->PVertices, part->pvertices_len));
   }
-#if FCECVERBOSE >= 1
-    printf("\n");
-    fflush(stdout);
-#endif
 
   return vidx + 1;
 }
@@ -751,12 +715,6 @@ int FCELIB_TYPES_GetPartCentroid(FcelibMesh *mesh, FcelibPart *part, tVector *ce
   FcelibVertex *vert;
   int count_verts = 0;
 
-#if FCECVERBOSE >= 1
-  printf("FCELIB_TYPES_GetPartCentroid:\n");
-  printf("<%s> partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
-  printf("PNumVertices: %d\n", PNumVertices);
-#endif
-
   for (;;)
   {
     if (PNumVertices == 0)
@@ -799,20 +757,17 @@ int FCELIB_TYPES_GetPartCentroid(FcelibMesh *mesh, FcelibPart *part, tVector *ce
 
       ++count_verts;
     }
-#if FCECVERBOSE >= 1
-    printf("count_verts: %d\n", count_verts);
-#endif
 
-    qsort(x_arr, (size_t)count_verts, sizeof(*x_arr), FCELIB_MISC_CompareFloats);
-    qsort(y_arr, (size_t)count_verts, sizeof(*y_arr), FCELIB_MISC_CompareFloats);
-    qsort(z_arr, (size_t)count_verts, sizeof(*z_arr), FCELIB_MISC_CompareFloats);
-#if FCECVERBOSE >= 1
+    qsort(x_arr, (size_t)count_verts, sizeof(*x_arr), FCELIB_UTIL_CompareFloats);
+    qsort(y_arr, (size_t)count_verts, sizeof(*y_arr), FCELIB_UTIL_CompareFloats);
+    qsort(z_arr, (size_t)count_verts, sizeof(*z_arr), FCELIB_UTIL_CompareFloats);
+#if FCECVERBOSE >= 2
     printf("<%s> min: (%f, %f, %f) max: (%f, %f, %f)\n", part->PartName, x_arr[0], y_arr[0], z_arr[0], x_arr[count_verts - 1], y_arr[count_verts - 1], z_arr[count_verts - 1]);
 #endif
-    centroid->x = 0.5f * FCELIB_MISC_Abs(x_arr[count_verts - 1] - x_arr[0]) + x_arr[0];
-    centroid->y = 0.5f * FCELIB_MISC_Abs(y_arr[count_verts - 1] - y_arr[0]) + y_arr[0];
-    centroid->z = 0.5f * FCELIB_MISC_Abs(z_arr[count_verts - 1] - z_arr[0]) + z_arr[0];
-#if FCECVERBOSE >= 1
+    centroid->x = 0.5f * FCELIB_UTIL_Abs(x_arr[count_verts - 1] - x_arr[0]) + x_arr[0];
+    centroid->y = 0.5f * FCELIB_UTIL_Abs(y_arr[count_verts - 1] - y_arr[0]) + y_arr[0];
+    centroid->z = 0.5f * FCELIB_UTIL_Abs(z_arr[count_verts - 1] - z_arr[0]) + z_arr[0];
+#if FCECVERBOSE >= 2
     printf("centroid->x: %f (%f, %f)\n", centroid->x, x_arr[count_verts - 1], x_arr[0]);
     printf("centroid->y: %f (%f, %f)\n", centroid->y, y_arr[count_verts - 1], y_arr[0]);
     printf("centroid->z: %f (%f, %f)\n", centroid->z, z_arr[count_verts - 1], z_arr[0]);
@@ -827,11 +782,6 @@ int FCELIB_TYPES_GetPartCentroid(FcelibMesh *mesh, FcelibPart *part, tVector *ce
     break;
   }
 
-#if FCECVERBOSE >= 1
-  printf("centroid: (%f, %f, %f)\n", centroid->x, centroid->y, centroid->z);
-  printf("return %d\n", retv);
-  fflush(stdout);
-#endif
   return retv;
 }
 

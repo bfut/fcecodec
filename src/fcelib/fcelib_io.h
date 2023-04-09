@@ -1157,7 +1157,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     {
       tVector centroid;
       /* i - internal part index, j - part order */
-      for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(12, mesh->hdr.NumParts); ++i)
+      for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_UTIL_Min(12, mesh->hdr.NumParts); ++i)
       {
         if (mesh->hdr.Parts[i] < 0)
           continue;
@@ -1188,7 +1188,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
       z_array = y_array + mesh->vertices_len;
 
       /* i - internal part index, j - part order */
-      for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(12, mesh->hdr.NumParts); ++i)
+      for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_UTIL_Min(12, mesh->hdr.NumParts); ++i)
       {
         if (mesh->hdr.Parts[i] < 0 || (j > 4 && j != 12))
           continue;
@@ -1213,13 +1213,13 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
         ++j;
       }
 
-      qsort(x_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
-      qsort(y_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
-      qsort(z_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
+      qsort(x_array, (size_t)count_verts, (size_t)4, FCELIB_UTIL_CompareFloats);
+      qsort(y_array, (size_t)count_verts, (size_t)4, FCELIB_UTIL_CompareFloats);
+      qsort(z_array, (size_t)count_verts, (size_t)4, FCELIB_UTIL_CompareFloats);
 
-      x_array[0] = 0.5f * FCELIB_MISC_Abs(x_array[count_verts - 1] - x_array[0]);
-      y_array[0] = FCELIB_MISC_Abs(y_array[0]) - 0.02f;
-      z_array[0] = 0.5f * FCELIB_MISC_Abs(z_array[count_verts - 1] - z_array[0]);
+      x_array[0] = 0.5f * FCELIB_UTIL_Abs(x_array[count_verts - 1] - x_array[0]);
+      y_array[0] = FCELIB_UTIL_Abs(y_array[0]) - 0.02f;
+      z_array[0] = 0.5f * FCELIB_UTIL_Abs(z_array[count_verts - 1] - z_array[0]);
 
       memcpy(*outbuf + 0x0028, x_array, (size_t)4);
       memcpy(*outbuf + 0x002C, y_array, (size_t)4);
@@ -1229,9 +1229,9 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     }  /* Set HalfSizes */
 
     /* Dummies */
-    buf = FCELIB_MISC_Min(16, mesh->hdr.NumDummies);
+    buf = FCELIB_UTIL_Min(16, mesh->hdr.NumDummies);
     memcpy(*outbuf + 0x0034, &buf, (size_t)4);
-    for (i = 0; i < FCELIB_MISC_Min(16, mesh->hdr.NumDummies); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(16, mesh->hdr.NumDummies); ++i)
     {
       memcpy(*outbuf + 0x0038 + i * 12 + 0, &mesh->hdr.Dummies[i].x, (size_t)4);
       memcpy(*outbuf + 0x0038 + i * 12 + 4, &mesh->hdr.Dummies[i].y, (size_t)4);
@@ -1244,9 +1244,9 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     /* P1stTriangles */
     /* PNumTriangles */
     /* PartNames */
-    buf = FCELIB_MISC_Min(64, mesh->hdr.NumParts);
+    buf = FCELIB_UTIL_Min(64, mesh->hdr.NumParts);
     memcpy(*outbuf + 0x00F8, &buf, (size_t)4);
-    for (i = 0, j = 0; (i < mesh->parts_len) && (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)); ++i)
+    for (i = 0, j = 0; (i < mesh->parts_len) && (j < FCELIB_UTIL_Min(64, mesh->hdr.NumParts)); ++i)
     {
       if (mesh->hdr.Parts[i] < 0)
         continue;
@@ -1270,9 +1270,9 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     }
 
     /* PriColors */
-    buf = FCELIB_MISC_Min(16, mesh->hdr.NumColors);
+    buf = FCELIB_UTIL_Min(16, mesh->hdr.NumColors);
     memcpy(*outbuf + 0x07FC, &buf, (size_t)4);
-    for (i = 0; i < FCELIB_MISC_Min(16, mesh->hdr.NumColors); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(16, mesh->hdr.NumColors); ++i)
     {
       memcpy(*outbuf + 0x0800 + i * 16 +  0, &mesh->hdr.PriColors[i].hue, (size_t)1);
       memcpy(*outbuf + 0x0800 + i * 16 +  4, &mesh->hdr.PriColors[i].saturation, (size_t)1);
@@ -1281,9 +1281,9 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     }
 
     /* SecColors */
-    buf = FCELIB_MISC_Min(16, mesh->hdr.NumSecColors);
+    buf = FCELIB_UTIL_Min(16, mesh->hdr.NumSecColors);
     memcpy(*outbuf + 0x0900, &buf, (size_t)4);
-    for (i = 0; i < FCELIB_MISC_Min(16, mesh->hdr.NumSecColors); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(16, mesh->hdr.NumSecColors); ++i)
     {
       memcpy(*outbuf + 0x0904 + i * 16 +  0, &mesh->hdr.SecColors[i].hue, (size_t)1);
       memcpy(*outbuf + 0x0904 + i * 16 +  4, &mesh->hdr.SecColors[i].saturation, (size_t)1);
@@ -1297,7 +1297,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     /* Print vertices ------------------------------------------------------- */
     /* VertTblOffset = 0 */
     sum_verts = 0;
-    for (i = 0, j = 0; (i < mesh->parts_len) && (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)); ++i)
+    for (i = 0, j = 0; (i < mesh->parts_len) && (j < FCELIB_UTIL_Min(64, mesh->hdr.NumParts)); ++i)
     {
       if (mesh->hdr.Parts[i] < 0)
         continue;
@@ -1319,7 +1319,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     /* Print normals ------------------------------------------------------- */
     buf = 0x1F04 + 12 * mesh->hdr.NumVertices;  /* NormTblOffset */
     sum_verts = 0;
-    for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(64, mesh->hdr.NumParts); ++i)
+    for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_UTIL_Min(64, mesh->hdr.NumParts); ++i)
     {
       if (mesh->hdr.Parts[i] < 0)
         continue;
@@ -1341,7 +1341,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     tmp = 0xff00;
     sum_triags = 0;
     buf += 12 * mesh->hdr.NumVertices;  /* TriaTblOffset */
-    for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(64, mesh->hdr.NumParts); ++i)
+    for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_UTIL_Min(64, mesh->hdr.NumParts); ++i)
     {
       if (mesh->hdr.Parts[i] < 0)
         continue;
@@ -1404,10 +1404,6 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
   int n;
   int sum_verts = 0;
   int sum_triags = 0;
-
-#if FCECVERBOSE == 1
-  fprintf(stdout, "FCELIB_IO_EncodeFce4:\n");
-#endif
 
   for (;;)
   {
@@ -1478,17 +1474,17 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     {
       tVector centroid;
       /* i - internal part index, j - part order */
-      for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(12, mesh->hdr.NumParts); ++i)
+      for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_UTIL_Min(12, mesh->hdr.NumParts); ++i)
       {
         if (mesh->hdr.Parts[i] < 0)
           continue;
         part = mesh->parts[ mesh->hdr.Parts[i] ];
         FCELIB_TYPES_GetPartCentroid(mesh, part, &centroid);
-#if FCECVERBOSE == 1
+#if FCECVERBOSE >= 1
         fprintf(stdout, "<%s> centroid: (%f, %f, %f) partpos: (%f, %f, %f)\n", part->PartName, centroid.x, centroid.y, centroid.z, part->PartPos.x, part->PartPos.y, part->PartPos.z);
 #endif
         FCELIB_TYPES_ResetPartCenter(mesh, part, centroid);
-#if FCECVERBOSE == 1
+#if FCECVERBOSE >= 1
         fprintf(stdout, "<%s> new partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
 #endif
         ++j;
@@ -1503,10 +1499,6 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       FcelibVertex *vert;
       int count_verts = 0;
 
-#if FCECVERBOSE >= 1
-    fprintf(stdout, "Compute HalfSize from high body parts\n");
-#endif
-
       x_array = (float *)malloc((size_t)(3 * (mesh->vertices_len + 1)) * sizeof(*x_array));
       if (!x_array)
       {
@@ -1519,7 +1511,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       z_array = y_array + mesh->vertices_len;
 
       /* i - internal part index, j - part order */
-      for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(12, mesh->hdr.NumParts); ++i)
+      for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_UTIL_Min(12, mesh->hdr.NumParts); ++i)
       {
         if (mesh->hdr.Parts[i] < 0)
           continue;
@@ -1527,7 +1519,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
         part = mesh->parts[ mesh->hdr.Parts[i] ];
         if (fce_version == 0x00101014)  /* use all parts for Fce4M (experimental) */
         {
-          if (!FCELIB_MISC_StrIsInArray(part->PartName, kFce4HiBodyParts))
+          if (!FCELIB_UTIL_StrIsInArray(part->PartName, kFce4HiBodyParts))
             continue;
         }
 #if FCECVERBOSE >= 1
@@ -1551,15 +1543,13 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
 
         ++j;
       }
-#if FCECVERBOSE >= 1
-    fprintf(stdout, "HalfSize: count_verts: %d\n", count_verts);
-#endif
-      qsort(x_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
-      qsort(y_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
-      qsort(z_array, (size_t)count_verts, (size_t)4, FCELIB_MISC_CompareFloats);
-      x_array[0] = 0.5f * FCELIB_MISC_Abs(x_array[count_verts - 1] - x_array[0]);
-      y_array[0] = FCELIB_MISC_Abs(y_array[0]) - 0.02f;
-      z_array[0] = 0.5f * FCELIB_MISC_Abs(z_array[count_verts - 1] - z_array[0]);
+
+      qsort(x_array, (size_t)count_verts, (size_t)4, FCELIB_UTIL_CompareFloats);
+      qsort(y_array, (size_t)count_verts, (size_t)4, FCELIB_UTIL_CompareFloats);
+      qsort(z_array, (size_t)count_verts, (size_t)4, FCELIB_UTIL_CompareFloats);
+      x_array[0] = 0.5f * FCELIB_UTIL_Abs(x_array[count_verts - 1] - x_array[0]);
+      y_array[0] = FCELIB_UTIL_Abs(y_array[0]) - 0.02f;
+      z_array[0] = 0.5f * FCELIB_UTIL_Abs(z_array[count_verts - 1] - z_array[0]);
 
       memcpy(*outbuf + 0x004c, x_array, (size_t)4);
       memcpy(*outbuf + 0x0050, y_array, (size_t)4);
@@ -1569,9 +1559,9 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     }  /* Set HalfSizes */
 
     /* Dummies */
-    tmp = FCELIB_MISC_Min(16, mesh->hdr.NumDummies);
+    tmp = FCELIB_UTIL_Min(16, mesh->hdr.NumDummies);
     memcpy(*outbuf + 0x0058, &tmp, (size_t)4);
-    for (i = 0; i < FCELIB_MISC_Min(16, mesh->hdr.NumDummies); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(16, mesh->hdr.NumDummies); ++i)
     {
       memcpy(*outbuf + 0x005c + i * 12 + 0, &mesh->hdr.Dummies[i].x, (size_t)4);
       memcpy(*outbuf + 0x005c + i * 12 + 4, &mesh->hdr.Dummies[i].y, (size_t)4);
@@ -1584,9 +1574,9 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     /* P1stTriangles */
     /* PNumTriangles */
     /* PartNames */
-    tmp = FCELIB_MISC_Min(64, mesh->hdr.NumParts);
+    tmp = FCELIB_UTIL_Min(64, mesh->hdr.NumParts);
     memcpy(*outbuf + 0x011c, &tmp, (size_t)4);
-    for (i = 0, j = 0; (i < mesh->parts_len) && (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)); ++i)
+    for (i = 0, j = 0; (i < mesh->parts_len) && (j < FCELIB_UTIL_Min(64, mesh->hdr.NumParts)); ++i)
     {
       if (mesh->hdr.Parts[i] < 0)
         continue;
@@ -1614,9 +1604,9 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     /* IntColors */
     /* SecColors */
     /* DriColors */
-    tmp = FCELIB_MISC_Min(16, mesh->hdr.NumColors);
+    tmp = FCELIB_UTIL_Min(16, mesh->hdr.NumColors);
     memcpy(*outbuf + 0x0820, &tmp, (size_t)4);
-    for (i = 0; i < FCELIB_MISC_Min(16, mesh->hdr.NumColors); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(16, mesh->hdr.NumColors); ++i)
     {
       memcpy(*outbuf + 0x0824 + i * 4 + 0, &mesh->hdr.PriColors[i].hue, (size_t)1);
       memcpy(*outbuf + 0x0824 + i * 4 + 1, &mesh->hdr.PriColors[i].saturation, (size_t)1);
@@ -1648,7 +1638,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     /* Print vertices ------------------------------------------------------- */
     /* VertTblOffset = 0 */
     sum_verts = 0;
-    for (i = 0, j = 0; (i < mesh->parts_len) && (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)); ++i)
+    for (i = 0, j = 0; (i < mesh->parts_len) && (j < FCELIB_UTIL_Min(64, mesh->hdr.NumParts)); ++i)
     {
       if (mesh->hdr.Parts[i] < 0)
         continue;
@@ -1671,7 +1661,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
 
     memcpy(&tmp, *outbuf + 0x0034, 4);  /* DamgdVertTblOffset */
     sum_verts = 0;
-    for (i = 0, j = 0; (i < mesh->parts_len) && (j < FCELIB_MISC_Min(64, mesh->hdr.NumParts)); ++i)
+    for (i = 0, j = 0; (i < mesh->parts_len) && (j < FCELIB_UTIL_Min(64, mesh->hdr.NumParts)); ++i)
     {
       if (mesh->hdr.Parts[i] < 0)
         continue;
@@ -1693,7 +1683,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     /* Print normals -------------------------------------------------------- */
     memcpy(&tmp, *outbuf + 0x0018, 4);  /* NormTblOffset */
     sum_verts = 0;
-    for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(64, mesh->hdr.NumParts); ++i)
+    for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_UTIL_Min(64, mesh->hdr.NumParts); ++i)
     {
       if (mesh->hdr.Parts[i] < 0)
         continue;
@@ -1715,7 +1705,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
 
     memcpy(&tmp, *outbuf + 0x0038, 4);  /* DamgdNormTblOffset */
     sum_verts = 0;
-    for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(64, mesh->hdr.NumParts); ++i)
+    for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_UTIL_Min(64, mesh->hdr.NumParts); ++i)
     {
       if (mesh->hdr.Parts[i] < 0)
         continue;
@@ -1736,7 +1726,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     /* Print animation ------------------------------------------------------ */
     memcpy(&tmp, *outbuf + 0x0040, 4);  /* AnimationTblOffset */
     sum_verts = 0;
-    for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(64, mesh->hdr.NumParts); ++i)
+    for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_UTIL_Min(64, mesh->hdr.NumParts); ++i)
     {
       if (mesh->hdr.Parts[i] < 0)
         continue;
@@ -1760,7 +1750,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       float V_tmp[3];
       int h;
 
-      for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_MISC_Min(64, mesh->hdr.NumParts); ++i)
+      for (i = 0, j = 0; i < mesh->parts_len && j < FCELIB_UTIL_Min(64, mesh->hdr.NumParts); ++i)
       {
         if (mesh->hdr.Parts[i] < 0)
           continue;
@@ -1813,10 +1803,6 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
   if (global_mesh_to_local_fce_idxs)
     free(global_mesh_to_local_fce_idxs);
 
-#if FCECVERBOSE == 1
-    fprintf(stdout, "return %d\n", retv);
-    fflush(stdout);
-#endif
   return retv;
 }
 
@@ -1834,10 +1820,6 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
   int j;
   int vidx_1st;
   int tidx_1st;
-
-#if FCECVERBOSE == 1
-  fprintf(stdout, "GeomDataToNewPart:\n");
-#endif
 
   for (;;)
   {
@@ -1871,14 +1853,11 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       break;
     }
 
-    if (FCELIB_MISC_ArrMax(vert_idxs, vert_idxs_len) >= (int)(vert_pos_len / 3))  /* allow adding vertices not referenced by triangles */
+    if (FCELIB_UTIL_ArrMax(vert_idxs, vert_idxs_len) >= (int)(vert_pos_len / 3))  /* allow adding vertices not referenced by triangles */
     {
       fprintf(stderr, "GeomDataToNewPart: Triangle vertice index(es) out of range (assumes zero-indexed)\n");
       break;
     }
-#if FCECVERBOSE == 1
-    fprintf(stdout, "validation done...\n");
-#endif
 
     /* Lengthen part index map only if necessary */
     if (mesh->parts_len < 1 || mesh->hdr.Parts[mesh->parts_len - 1] >= 0)
@@ -1907,12 +1886,9 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       tidx_1st = 0;
       vidx_1st = 0;
     }
-#if FCECVERBOSE == 1
-    fprintf(stdout, "first unused indexes... (t %d, v %d)\n", tidx_1st, vidx_1st);
-#endif
 
     /* Add part */
-    mesh->hdr.Parts[new_pid] = 1 + FCELIB_MISC_ArrMax(mesh->hdr.Parts, mesh->parts_len);
+    mesh->hdr.Parts[new_pid] = 1 + FCELIB_UTIL_ArrMax(mesh->hdr.Parts, mesh->parts_len);
 
     part = (FcelibPart *)malloc(sizeof(FcelibPart));
     if (!part)
@@ -1926,9 +1902,6 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     part->ptriangles_len = 0;
 
     mesh->parts[ mesh->hdr.Parts[new_pid] ] = part;
-#if FCECVERBOSE == 1
-    fprintf(stdout, "created new part... (order %d, internal %d)\n", new_pid, mesh->hdr.Parts[new_pid]);
-#endif
 
     sprintf(part->PartName, "IoGeomDataToNewPart_%d", new_pid);  /* unlikely to exceed 63 characters */
     part->PartPos.x = 0.0f;
@@ -1946,9 +1919,6 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       new_pid = -1;
       break;
     }
-#if FCECVERBOSE == 1
-    fprintf(stdout, "add triangles to mesh? (excess: %d)\n", mesh->triangles_len - (tidx_1st + part->PNumTriangles));
-#endif
     if (mesh->triangles_len < tidx_1st + part->PNumTriangles)
     {
       if (!FCELIB_TYPES_AddTrianglesToMesh(mesh, tidx_1st + part->PNumTriangles - mesh->triangles_len))
@@ -1989,9 +1959,6 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       new_pid = -1;
       break;
     }
-#if FCECVERBOSE == 1
-    fprintf(stdout, "add vertices to mesh? (excess: %d)\n", mesh->vertices_len - (vidx_1st + part->PNumVertices));
-#endif
     if (mesh->vertices_len < vidx_1st + part->PNumVertices)
     {
       if (!FCELIB_TYPES_AddVerticesToMesh(mesh, vidx_1st + part->PNumVertices - mesh->vertices_len))
@@ -2042,10 +2009,6 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     break;
   }
 
-#if FCECVERBOSE == 1
-    fprintf(stdout, "return (new part order = %d)\n", new_pid);
-    fflush(stdout);
-#endif
   return new_pid;
 }
 

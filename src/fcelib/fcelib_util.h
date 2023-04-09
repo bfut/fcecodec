@@ -72,21 +72,21 @@ const int kTrianglesDiamond[8 * 3] = {
   4, 5, 1
 };
 
-int FCELIB_MISC_CompareFloats(const void *a, const void *b)
+int FCELIB_UTIL_CompareFloats(const void *a, const void *b)
 {
   const float arg1 = *(const float*)a;
   const float arg2 = *(const float*)b;
   return (arg1 > arg2) - (arg1 < arg2);
 }
 
-int FCELIB_MISC_CompareInts(const void *a, const void *b)
+int FCELIB_UTIL_CompareInts(const void *a, const void *b)
 {
   const int arg1 = *(const int*)a;
   const int arg2 = *(const int*)b;
   return (arg1 > arg2) - (arg1 < arg2);
 }
 
-int FCELIB_MISC_Min(const int a, const int b)
+int FCELIB_UTIL_Min(const int a, const int b)
 {
   if (a < b)
     return a;
@@ -94,7 +94,7 @@ int FCELIB_MISC_Min(const int a, const int b)
     return b;
 }
 
-float FCELIB_MISC_Abs(const float a)
+float FCELIB_UTIL_Abs(const float a)
 {
   if (a < 0)
     return -a;
@@ -103,7 +103,7 @@ float FCELIB_MISC_Abs(const float a)
 }
 
 /* Returns -100 on failure. */
-int FCELIB_MISC_ArrMax(const int *arr, const int arr_len)
+int FCELIB_UTIL_ArrMax(const int *arr, const int arr_len)
 {
   int retv = -100;
   for (;;)
@@ -111,11 +111,11 @@ int FCELIB_MISC_ArrMax(const int *arr, const int arr_len)
     int *sortedarr = (int *)malloc((size_t)arr_len * sizeof(*sortedarr));
     if (!sortedarr)
     {
-      fprintf(stderr, "Warning: FCELIB_MISC_ArrMax: Cannot allocate memory, return default -100");
+      fprintf(stderr, "Warning: FCELIB_UTIL_ArrMax: Cannot allocate memory, return default -100");
       break;
     }
     memcpy(sortedarr, arr, (size_t)arr_len * sizeof(*sortedarr));
-    qsort(sortedarr, (size_t)arr_len, sizeof(*sortedarr), FCELIB_MISC_CompareInts);
+    qsort(sortedarr, (size_t)arr_len, sizeof(*sortedarr), FCELIB_UTIL_CompareInts);
 
     retv = sortedarr[arr_len - 1];
     free(sortedarr);
@@ -124,7 +124,7 @@ int FCELIB_MISC_ArrMax(const int *arr, const int arr_len)
   return retv;
 }
 
-int FCELIB_MISC_StrIsInArray(char *str, const char **arr)
+int FCELIB_UTIL_StrIsInArray(char *str, const char **arr)
 {
   int retv = 0;
   int i;
