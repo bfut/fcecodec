@@ -30,7 +30,7 @@ import pathlib
 import fcecodec
 
 CONFIG = {
-    "fce_version"  : "keep",  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
+    "fce_version"  : "keep",  # # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
     "center_parts" : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
 }
 
@@ -47,8 +47,7 @@ filepath_fce_output = filepath_fce_input
 # -------------------------------------- wrappers
 def GetFceVersion(path):
     with open(path, "rb") as f:
-        buf = f.read(0x2038)
-        version = fcecodec.GetFceVersion(buf)
+        version = fcecodec.GetFceVersion(f.read(0x2038))
         assert version > 0
         return version
 
@@ -60,15 +59,14 @@ def PrintFceInfo(path):
 
 def LoadFce(mesh, path):
     with open(path, "rb") as f:
-        fce_buf = f.read()
-    assert fcecodec.ValidateFce(fce_buf) == 1
-    mesh.IoDecode(fce_buf)
-    assert mesh.MValid() is True
-    return mesh
+        mesh.IoDecode(f.read())
+        assert mesh.MValid() is True
+        return mesh
 
-def WriteFce(version, mesh, path, center_parts = 1):
+def WriteFce(version, mesh, path, center_parts=1, mesh_function=None):
+    if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
+        mesh = mesh_function(mesh, version)
     with open(path, "wb") as f:
-        # print(version == "3", version == "4", version)
         if version == "3":
             buf = mesh.IoEncode_Fce3(center_parts)
         elif version == "4":
@@ -91,15 +89,15 @@ def main():
     mesh = fcecodec.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
 
+    # copy colors
     mesh_source = fcecodec.Mesh()
     mesh_source = LoadFce(mesh_source, filepath_fce_input_source)
-
-    # copy colors
     mesh.MSetColors(mesh_source.MGetColors())
 
-    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"])
+    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"],
+             mesh_function=None)
     PrintFceInfo(filepath_fce_output)
-    print("FILE =", filepath_fce_output, flush=True)
+    print(f"FILE = {filepath_fce_output}", flush=True)
 
 
 if __name__ == "__main__":

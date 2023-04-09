@@ -54,7 +54,7 @@ if platform.system() == "Windows":
 else:
     extra_compile_args += [
         # # debug
-        # ("-g"),
+        # ("-g"), ("-O0"),
         ("-pedantic-errors"),
     ]
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2022 and later Benjamin Futasz <https://github.com/bfut>
+# Copyright (C) 2023 and later Benjamin Futasz <https://github.com/bfut>
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the authors be held liable for any damages
@@ -70,9 +70,10 @@ def main():
 
 
     ## done doing stuff
-    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"])
+    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"],
+             mesh_function=None)
     PrintFceInfo(filepath_fce_output)
-    print("FILE =", filepath_fce_output, flush=True)
+    print(f"FILE = {filepath_fce_output}", flush=True)
 
 if __name__ == "__main__":
     main()

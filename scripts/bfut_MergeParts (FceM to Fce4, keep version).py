@@ -33,7 +33,7 @@ import sys
 import fcecodec
 
 CONFIG = {
-    "fce_version"  : "keep",  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
+    "fce_version"  : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
     "center_parts" : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
     "chopped_roof" : "0",  # chopped roof parts or not (expects "0"|"1")
     "convertible" : "0",  # convertible or not, if "1" overrides chopped_roof (expects "0"|"1")
@@ -59,8 +59,7 @@ else:
 # -------------------------------------- wrappers
 def GetFceVersion(path):
     with open(path, "rb") as f:
-        buf = f.read(0x2038)
-        version = fcecodec.GetFceVersion(buf)
+        version = fcecodec.GetFceVersion(f.read(0x2038))
         assert version > 0
         return version
 
@@ -72,15 +71,14 @@ def PrintFceInfo(path):
 
 def LoadFce(mesh, path):
     with open(path, "rb") as f:
-        fce_buf = f.read()
-    assert fcecodec.ValidateFce(fce_buf) == 1
-    mesh.IoDecode(fce_buf)
-    assert mesh.MValid() is True
-    return mesh
+        mesh.IoDecode(f.read())
+        assert mesh.MValid() is True
+        return mesh
 
-def WriteFce(version, mesh, path, center_parts = 1):
+def WriteFce(version, mesh, path, center_parts=1, mesh_function=None):
+    if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
+        mesh = mesh_function(mesh, version)
     with open(path, "wb") as f:
-        # print(version == "3", version == "4", version)
         if version == "3":
             buf = mesh.IoEncode_Fce3(center_parts)
         elif version == "4":
@@ -89,6 +87,16 @@ def WriteFce(version, mesh, path, center_parts = 1):
             buf = mesh.IoEncode_Fce4M(center_parts)
         assert fcecodec.ValidateFce(buf) == 1
         f.write(buf)
+
+def GetMeshPartnames(mesh):
+    return [mesh.PGetName(pid) for pid in range(mesh.MNumParts)]
+
+def GetMeshPartnameIdx(mesh, partname):
+    for pid in range(mesh.MNumParts):
+        if mesh.PGetName(pid) == partname:
+            return pid
+    print(f"GetMeshPartnameIdx: Warning: cannot find \"{partname}\"")
+    return -1
 
 
 #
@@ -154,19 +162,11 @@ def PrintMeshParts(mesh, fce4m_fuse_map):
     for pid in range(mesh.MNumParts):
         print(f"{pid:<4} {mesh.PGetName(pid):<32} {fce4m_fuse_map.get(mesh.PGetName(pid), ''):<24}")
 
-def GetMeshPartnames(mesh):
-    partnames = []
-    for pid in range(mesh.MNumParts):
-        partnames += [ mesh.PGetName(pid) ]
-    return partnames
-
-def GetMeshPartnameIdx(mesh, partname):
-    for pid in range(mesh.MNumParts):
-        pn = mesh.PGetName(pid)
-        if pn == partname:
-            return pid
-    return -1
-
+# def AssertPartsOrder(mesh, part_names_sorted):
+#     for pid in range(mesh.MNumParts):
+#         if mesh.PGetName(pid) != part_names_sorted[pid]:
+#             PrintMeshParts(mesh, part_names_sorted)
+#             raise AssertionError (f"pid={pid} {mesh.PGetName(pid)} != {part_names_sorted[pid]}")
 
 def main():
     # Process configuration / parameters
@@ -330,10 +330,10 @@ def main():
             # PrintMeshParts(mesh, part_names_sorted)
 
 
-    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"])
+    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"],
+             mesh_function=None)
     PrintFceInfo(filepath_fce_output)
-    print("FILE =", filepath_fce_output, flush=True)
-
+    print(f"FILE = {filepath_fce_output}", flush=True)
 
 
 if __name__ == "__main__":

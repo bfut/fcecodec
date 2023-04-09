@@ -21,66 +21,39 @@
 import fcecodec
 import numpy as np
 
-def ReorderTriagsTransparentToLast(mesh, pid_opaq):
+def ReorderTriagsTransparentDetachedAndToLast(mesh, pid_opaq):
     """ Copy original part, delete semi-transparent triags in original,
-        delete opaque triags in copy, merge both, delete original & temporary,
-        move merged part to original index, clean-up """
-    print(mesh.PGetName(pid_opaq))
+        delete opaque triags in copy, clean-up unreferenced verts, merge parts,
+        delete temporary & original, move merged part to original index """
     pid_transp = mesh.OpCopyPart(pid_opaq)
-
-    # delete semi-transparent triags in original
-    flags = mesh.PGetTriagsFlags(pid_opaq)
-    triags_idxs = []
-    for i in range(flags.shape[0]):
-        if flags[i] & 0x8 == 0x8:
-            triags_idxs += [i]
-    print(f"{triags_idxs}")
-    mesh.OpDeletePartTriags(pid_opaq, triags_idxs)
-
-    # delete opaque triags in copy
-    flags = mesh.PGetTriagsFlags(pid_transp)
-    triags_idxs = []
-    for i in range(flags.shape[0]):
-        if flags[i] & 0x8 < 0x8:
-            triags_idxs += [i]
-    print(f"{triags_idxs}")
-    mesh.OpDeletePartTriags(pid_transp, triags_idxs)
-
-    # merge both & rename
-    new_pid = mesh.OpMergeParts(pid_opaq, pid_transp)
+    mesh.OpDeletePartTriags(pid_opaq, np.where(mesh.PGetTriagsFlags(pid_opaq) & 0x8 == 0x8)[0])
+    mesh.OpDeletePartTriags(pid_transp, np.where(mesh.PGetTriagsFlags(pid_transp) & 0x8 < 0x8)[0])
+    mesh.OpDelUnrefdVerts()
+    new_pid = mesh.OpMergeParts(pid_opaq, pid_transp)  # last part idx
     mesh.PSetName(new_pid, mesh.PGetName(pid_opaq))
-
-    # delete original & temporary
     mesh.OpDeletePart(pid_transp)
     mesh.OpDeletePart(pid_opaq)
-    new_pid -= 2
-
-    # move merged part to original index
+    new_pid -= 2  # last part idx is now smaller
     while new_pid > pid_opaq:
-        new_pid = mesh.OpMovePart(new_pid)
-        print("new_pid", new_pid)
-
-    # clean-up
-    mesh.OpDelUnrefdVerts()
+        new_pid = mesh.OpMovePart(new_pid)  # move merged part to original index
     return mesh
 
 def HiBody_ReorderTriagsTransparentToLast(mesh, version):
     """ Not implemented for FCE4M because windows are separate parts """
     if version == "3":
-        mesh = ReorderTriagsTransparentToLast(mesh, 0)  # high body
+        mesh = ReorderTriagsTransparentDetachedAndToLast(mesh, 0)  # high body
         if mesh.MNumParts >= 12:
-            mesh = ReorderTriagsTransparentToLast(mesh, 12)  # high headlights
+            mesh = ReorderTriagsTransparentDetachedAndToLast(mesh, 12)  # high headlights
     elif version == "4":
-        for pn in (":HB", ":OT", ":OL"):
-            pid = GetPartIdxFromName(mesh, pn)
+        for partname in (":HB", ":OT", ":OL"):
+            pid = GetMeshPartnameIdx(mesh, partname)
             if pid >= 0:
-                mesh = ReorderTriagsTransparentToLast(mesh, pid)
+                mesh = ReorderTriagsTransparentDetachedAndToLast(mesh, pid)
     return mesh
 
 def GetFceVersion(path):
     with open(path, "rb") as f:
-        buf = f.read(0x2038)
-        version = fcecodec.GetFceVersion(buf)
+        version = fcecodec.GetFceVersion(f.read(0x2038))
         assert version > 0
         return version
 
@@ -92,17 +65,14 @@ def PrintFceInfo(path):
 
 def LoadFce(mesh, path):
     with open(path, "rb") as f:
-        fce_buf = f.read()
-    assert fcecodec.ValidateFce(fce_buf) == 1
-    mesh.IoDecode(fce_buf)
-    assert mesh.MValid() is True
-    return mesh
+        mesh.IoDecode(f.read())
+        assert mesh.MValid() is True
+        return mesh
 
-def WriteFce(version, mesh, path, center_parts = 1, transparent_triags_to_last = 0):
-    if transparent_triags_to_last:
-        mesh = HiBody_ReorderTriagsTransparentToLast(mesh, version)
+def WriteFce(version, mesh, path, center_parts=1, mesh_function=None):
+    if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
+        mesh = mesh_function(mesh, version)
     with open(path, "wb") as f:
-        # print(version == "3", version == "4", version)
         if version == "3":
             buf = mesh.IoEncode_Fce3(center_parts)
         elif version == "4":
@@ -117,23 +87,15 @@ def ExportObj(mesh, objpath, mtlpath, texname, print_damage, print_dummies,
     mesh.IoExportObj(str(objpath), str(mtlpath), str(texname), print_damage,
                      print_dummies, use_part_positions, print_part_positions)
 
-def GetPartNames(mesh):
-    part_names = np.empty(shape=(mesh.MNumParts, ), dtype="U64")
-    for i in range(mesh.MNumParts):
-        part_names[i] = mesh.PGetName(i)
-        i += 1
-    return part_names
+def GetMeshPartnames(mesh):
+    return [mesh.PGetName(pid) for pid in range(mesh.MNumParts)]
 
-def GetPartIdxFromName(mesh, p_name):
-    retv = -1
-    pid = -1
-    for name in GetPartNames(mesh):
-        pid += 1
-        if p_name == name:
-            retv = pid
-            break
-    if retv < 0: print("GetPartIdxFromName: Warning: cannot find p_name")
-    return retv
+def GetMeshPartnameIdx(mesh, partname):
+    for pid in range(mesh.MNumParts):
+        if mesh.PGetName(pid) == partname:
+            return pid
+    print(f"GetMeshPartnameIdx: Warning: cannot find \"{partname}\"")
+    return -1
 
 def GetPartGlobalOrderVidxs(mesh, pid):
     map_verts = mesh.MVertsGetMap_idx2order

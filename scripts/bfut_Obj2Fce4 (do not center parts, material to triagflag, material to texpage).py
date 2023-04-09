@@ -1,5 +1,4 @@
 # Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
-# This file is distributed under: zlib License
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the authors be held liable for any damages
@@ -26,7 +25,7 @@ DESCRIPTION
     all faces must be triangles
 
 HOW TO USE
-    python 'bfut_Obj2Fce4 (do not center parts, material to triagflag, material to texpage).py' /path/to/model.obj
+    python "bfut_Obj2Fce4 (do not center parts, material to triagflag, material to texpage).py" /path/to/model.obj
 
 TUTORIAL
     check <doc_Obj2Fce.md> in fcecodec/scripts/
@@ -46,7 +45,7 @@ import numpy as np
 import tinyobjloader
 
 CONFIG = {
-    "fce_version"        : "4",  # output format version; expects 'keep' or '3'|'4'|'4M' for FCE3, FCE4, FCE4M, respectively
+    "fce_version"        : "4",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
     "center_parts"       : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
     "material2texpage"   : 1,  # maps OBJ face materials to FCE texpages (expects 0|1)
     "material2triagflag" : 1,  # maps OBJ face materials to FCE triangles flag (expects 0|1)
@@ -69,9 +68,10 @@ def PrintFceInfo(path):
         fcecodec.PrintFceInfo(buf)
         assert fcecodec.ValidateFce(buf) == 1
 
-def WriteFce(version, mesh, path, center_parts = 1):
+def WriteFce(version, mesh, path, center_parts=1, mesh_function=None):
+    if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
+        mesh = mesh_function(mesh, version)
     with open(path, "wb") as f:
-        # print(version == "3", version == "4", version)
         if version == "3":
             buf = mesh.IoEncode_Fce3(center_parts)
         elif version == "4":
@@ -81,12 +81,8 @@ def WriteFce(version, mesh, path, center_parts = 1):
         assert fcecodec.ValidateFce(buf) == 1
         f.write(buf)
 
-def GetPartNames(mesh):
-    part_names = np.empty(shape=(mesh.MNumParts,), dtype="U64")
-    for i in range(mesh.MNumParts):
-        part_names[i] = mesh.PGetName(i)
-        i += 1
-    return part_names
+def GetMeshPartnames(mesh):
+    return [mesh.PGetName(pid) for pid in range(mesh.MNumParts)]
 
 def GetPartGlobalOrderVidxs(mesh, pid):
     map_verts = mesh.MVertsGetMap_idx2order
@@ -329,7 +325,7 @@ def CopyDamagePartsVertsToPartsVerts(mesh):
     Copy verts/norms of DAMAGE_<partname> to damaged verts/norms of <partname>
     """
     damgd_pids = []
-    part_names = GetPartNames(mesh)
+    part_names = np.array(GetMeshPartnames(mesh), dtype="U64")
     mesh.PrintInfo()
     for damgd_pid in range(mesh.MNumParts):
         if part_names[damgd_pid][:7] == "DAMAGE_":
@@ -392,7 +388,7 @@ def SetAnimatedVerts(mesh):
     vpos = mesh.MVertsPos.reshape((-1, 3))
     animation_flags = mesh.MVertsAnimation
     anim_pids = []
-    part_names = GetPartNames(mesh)
+    part_names = GetMeshPartnames(mesh)
     r = re.compile("ANIMATED_[0-9][0-9]_", re.IGNORECASE)
     for i, part_name in zip(range(mesh.MNumParts), part_names):
         part_anim_pids = []
@@ -440,7 +436,7 @@ def CenterParts(mesh):
     Center part <partname> either to centroid, or if present to centroid of part POSITION_<partname>
     """
     pos_pids = []
-    part_names = GetPartNames(mesh)
+    part_names = GetMeshPartnames(mesh)
     pos_parts = {}
     for name, i in zip(part_names, range(mesh.MNumParts)):
         if name[:9] == "POSITION_":

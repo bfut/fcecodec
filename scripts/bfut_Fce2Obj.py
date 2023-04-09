@@ -56,11 +56,9 @@ CONFIG = {
 # -------------------------------------- wrappers
 def LoadFce(mesh, path):
     with open(path, "rb") as f:
-        fce_buf = f.read()
-    assert fcecodec.ValidateFce(fce_buf) == 1
-    mesh.IoDecode(fce_buf)
-    assert mesh.MValid() is True
-    return mesh
+        mesh.IoDecode(f.read())
+        assert mesh.MValid() is True
+        return mesh
 
 def ExportObj(mesh, objpath, mtlpath, texname, print_damage, print_dummies,
               use_part_positions, print_part_positions):
