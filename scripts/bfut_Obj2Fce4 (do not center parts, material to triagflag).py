@@ -419,8 +419,9 @@ def SetAnimatedVerts(mesh):
                     cuboid_min = np.amin(anim_vpos, axis=0)
                     cuboid_max = np.amax(anim_vpos, axis=0)
                     for n in range(part_vpos.shape[0]):
-                        if False not in (part_vpos[n] > cuboid_min) \
-                        and False not in (part_vpos[n] < cuboid_max):
+                        # part_vpos is ndarray, but make static analysis happy
+                        if False not in np.array(part_vpos[n] > cuboid_min) \
+                        and False not in np.array(part_vpos[n] < cuboid_max):
                             part_animation_flags[n] = 0x0
                             print(n, part_vpos[n], part_animation_flags[n])
                     animation_flags[part_vidxs] = part_animation_flags

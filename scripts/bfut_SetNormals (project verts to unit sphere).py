@@ -32,8 +32,9 @@ import numpy as np
 
 CONFIG = {
     "fce_version"  : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
-    "center_parts" : 1,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
+    "center_parts" : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
     "sphere_radius": 1.0,
+    "verbose": False,
 }
 
 script_path = pathlib.Path(__file__).parent
@@ -92,40 +93,34 @@ def main():
     mesh = fcecodec.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
 
-    ## do stuff here
     # Get vertices
-    print(f"mesh.MVertsNorms={np.reshape(mesh.MVertsNorms, (mesh.MNumVerts, 3))[:10]}")
-    norms_o = mesh.MVertsNorms
-    verts_o = mesh.MVertsPos
+    norms = mesh.MVertsPos  # replace old normals with calculation based on vertices
+    if CONFIG["verbose"]:
+        print(f"mesh.MVertsNorms={np.reshape(mesh.MVertsNorms, (-1, 3))[:10]}")
+        print(f"mesh.MVertsPos={np.reshape(norms, (-1, 3))[:10]}")
 
     # Project vertices to sphere surface
-    # https://stackoverflow.com/questions/9604132/how-to-project-a-point-on-to-a-sphere
     # FCE vertices positions are local, i.e., already centered around the origin point
-    norms = verts_o.copy()
-#    norms = np.roll(norms, 8)
-    print(f"mesh.MVertsPos={np.reshape(norms, (mesh.MNumVerts, 3))[:10]}")
     for i in range(mesh.MNumVerts):
         xyz = norms[i*3+0:i*3+3].copy()
-        # xyz[2] = -xyz[2]
-        # xyz = np.roll(xyz, 1)
         xyz_norm = np.linalg.norm(xyz, ord=None)
         xyz_sph = sphere_radius * (xyz_norm + np.finfo(float).eps)**-1 * xyz
         norms[i*3+0:i*3+3] = xyz_sph.copy()
 
-        if i < 3:
+        if i < 3 and CONFIG["verbose"]:
             print(f"{i}")
             print(f"xyz={xyz}")
             print(f"xyz_norm={xyz_norm}")
             print(f"sphere_radius={sphere_radius}")
             print(f"xyz_sph={xyz_sph} with norm {np.linalg.norm(xyz_sph, ord=None)}")
-    print(f"mesh.MVertsPos={np.reshape(norms, (mesh.MNumVerts, 3))[:10]}")
-    mesh.MVertsNorms = norms
-    print(f"mesh.MVertsNorms={np.reshape(mesh.MVertsNorms, (mesh.MNumVerts, 3))[:10]}")
 
-    ## done doing stuff
-    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"],
-             mesh_function=None)
-    print(f"FILE = {filepath_fce_output}", flush=True)
+    mesh.MVertsNorms = norms
+    if CONFIG["verbose"]:
+        print(f"mesh.MVertsPos={np.reshape(norms, (-1, 3))[:10]}")
+        print(f"mesh.MVertsNorms={np.reshape(mesh.MVertsNorms, (-1, 3))[:10]}")
+
+    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"])
+    print(f"OUTPUT = {filepath_fce_output}", flush=True)
 
 if __name__ == "__main__":
     main()

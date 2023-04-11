@@ -105,7 +105,7 @@ def main():
         mesh.PSetName(0, ":Hbody")
     WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"])
     PrintFceInfo(filepath_fce_output)
-    print(f"FILE = {filepath_fce_output}", flush=True)
+    print(f"OUTPUT = {filepath_fce_output}", flush=True)
 
 if __name__ == "__main__":
     main()

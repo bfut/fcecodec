@@ -127,12 +127,6 @@ def PrintMeshParts(mesh, fuse_map):
     for pid in range(mesh.MNumParts):
         print(f"{pid:<4} {mesh.PGetName(pid):<32} {fuse_map.get(mesh.PGetName(pid), ''):<24}")
 
-# def AssertPartsOrder(mesh, part_names_sorted):
-#     for pid in range(mesh.MNumParts):
-#         if mesh.PGetName(pid) != part_names_sorted[pid]:
-#             PrintMeshParts(mesh, part_names_sorted)
-#             raise AssertionError (f"pid={pid} {mesh.PGetName(pid)} != {part_names_sorted[pid]}")
-
 def RemoveSemiTransparencyTriagFlagFromWindows(mesh, pid):
     flags = mesh.PGetTriagsFlags(pid)
     for j in range(flags.shape[0]):
@@ -264,24 +258,6 @@ def main():
             print("RemoveSemiTransparencyTriagFlagFromWindows()")
             pid = GetMeshPartnameIdx(mesh, ":HB")
             RemoveSemiTransparencyTriagFlagFromWindows(mesh, pid)
-
-
-        if 0:
-
-            part_names = []
-            for pid in reversed(range(mesh.MNumParts)):
-                part_names += [mesh.PGetName(pid)]
-            part_names_sorted = sorted(part_names, key=lambda x: priority_dic.get(x, 64))
-
-            for target_idx in range(0, len(part_names_sorted)):
-                pname = part_names_sorted[target_idx]
-                current_idx = GetMeshPartnameIdx(mesh, pname)
-                # print(f" {pname} {current_idx} -> {target_idx}")
-                while current_idx > target_idx:
-                    current_idx = mesh.OpMovePart(current_idx)
-            AssertPartsOrder(mesh, part_names_sorted)
-            # PrintMeshParts(mesh, part_names_sorted)
-
 
     WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"],
              mesh_function=None)

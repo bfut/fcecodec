@@ -162,12 +162,6 @@ def PrintMeshParts(mesh, fce4m_fuse_map):
     for pid in range(mesh.MNumParts):
         print(f"{pid:<4} {mesh.PGetName(pid):<32} {fce4m_fuse_map.get(mesh.PGetName(pid), ''):<24}")
 
-# def AssertPartsOrder(mesh, part_names_sorted):
-#     for pid in range(mesh.MNumParts):
-#         if mesh.PGetName(pid) != part_names_sorted[pid]:
-#             PrintMeshParts(mesh, part_names_sorted)
-#             raise AssertionError (f"pid={pid} {mesh.PGetName(pid)} != {part_names_sorted[pid]}")
-
 def main():
     # Process configuration / parameters
     if CONFIG["fce_version"] == "keep":
@@ -213,6 +207,7 @@ def main():
         hood_scoop = hood_scoop_opt[args.path[2]]
     else:
         chopped_roof = int(CONFIG["chopped_roof"])
+        convertible = int(CONFIG["convertible"])
         hood_scoop = int(CONFIG["hood_scoop"])
 
     # Load FCE
@@ -311,24 +306,6 @@ def main():
         PrintMeshParts(mesh, fce4m_fuse_map)
 
         print(f"remaining fce4m_fuse_map={fce4m_fuse_map}")
-
-
-        if 0:
-
-            part_names = []
-            for pid in reversed(range(mesh.MNumParts)):
-                part_names += [mesh.PGetName(pid)]
-            part_names_sorted = sorted(part_names, key=lambda x: priority_dic.get(x, 64))
-
-            for target_idx in range(0, len(part_names_sorted)):
-                pname = part_names_sorted[target_idx]
-                current_idx = GetMeshPartnameIdx(mesh, pname)
-                # print(f" {pname} {current_idx} -> {target_idx}")
-                while current_idx > target_idx:
-                    current_idx = mesh.OpMovePart(current_idx)
-            AssertPartsOrder(mesh, part_names_sorted)
-            # PrintMeshParts(mesh, part_names_sorted)
-
 
     WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"],
              mesh_function=None)

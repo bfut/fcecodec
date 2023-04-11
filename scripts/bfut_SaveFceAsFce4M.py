@@ -19,7 +19,7 @@
     bfut_SaveFceAsFce4M.py - change file FCE version to FCE3 and overwrite input
 
 HOW TO USE
-    python "bfut_SaveFceAsFce4M.py" /path/to/model.obj
+    python "bfut_SaveFceAsFce4M.py" /path/to/model.fce
 
 REQUIRES
     installing fcecodec <https://github.com/bfut/fcecodec>
@@ -30,7 +30,6 @@ import fcecodec
 
 CONFIG = {
     "fce_version"        : "4M",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
-    "center_parts"       : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
 }
 
 # Parse command-line
@@ -47,7 +46,7 @@ def LoadFce(mesh, path):
         mesh.IoDecode(f.read())
         assert mesh.MValid() is True
         return mesh
-        
+
 def WriteFce(version, mesh, path, center_parts=1, mesh_function=None):
     if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
         mesh = mesh_function(mesh, version)
@@ -65,7 +64,7 @@ def WriteFce(version, mesh, path, center_parts=1, mesh_function=None):
 def main():
     mesh = fcecodec.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
-    WriteFce(CONFIG["fce_version"], mesh, filepath_fce_output, CONFIG["center_parts"], None)
+    WriteFce(CONFIG["fce_version"], mesh, filepath_fce_output)
     print(f"FILE = {filepath_fce_output}", flush=True)
 
 if __name__ == "__main__":
