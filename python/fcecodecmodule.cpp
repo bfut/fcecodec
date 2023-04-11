@@ -58,13 +58,13 @@ public:
   fcelib::FcelibMesh *Get_mesh_() { return &mesh_; }
 
   // Service
-  bool MValid() const { return fcelib::FCELIB_ValidateMesh(mesh_); }
+  bool MValid() const { return fcelib::FCELIB_ValidateMesh(&mesh_); }
 
   // Stats
-  void PrintInfo() const { fcelib::FCELIB_PrintMeshInfo(mesh_); }
-  void PrintParts(void) const { fcelib::FCELIB_PrintMeshParts(mesh_); }
-  void PrintTriags(void) const { fcelib::FCELIB_PrintMeshTriangles(mesh_); }
-  void PrintVerts(void) const { fcelib::FCELIB_PrintMeshVertices(mesh_); }
+  void PrintInfo() const { fcelib::FCELIB_PrintMeshInfo(&mesh_); }
+  void PrintParts(void) const { fcelib::FCELIB_PrintMeshParts(&mesh_); }
+  void PrintTriags(void) const { fcelib::FCELIB_PrintMeshTriangles(&mesh_); }
+  void PrintVerts(void) const { fcelib::FCELIB_PrintMeshVertices(&mesh_); }
   int MNumParts() const { return mesh_.hdr.NumParts; }
   int MNumTriags() const { return mesh_.hdr.NumTriangles; }
   int MNumVerts() const { return mesh_.hdr.NumVertices; }
@@ -417,7 +417,7 @@ void Mesh::MSetDummyPos(py::array_t<float, py::array::c_style | py::array::force
 
 int Mesh::PNumTriags(const int pid) const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PNumTriags: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
@@ -426,7 +426,7 @@ int Mesh::PNumTriags(const int pid) const
 }
 int Mesh::PNumVerts(const int pid) const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PNumVerts: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
@@ -436,7 +436,7 @@ int Mesh::PNumVerts(const int pid) const
 
 const std::string Mesh::PGetName(const int pid) const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetName: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
@@ -445,7 +445,7 @@ const std::string Mesh::PGetName(const int pid) const
 }
 void Mesh::PSetName(const int pid, const std::string &s)
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetName: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
@@ -456,7 +456,7 @@ void Mesh::PSetName(const int pid, const std::string &s)
 
 py::buffer Mesh::PGetPos(const int pid) const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetPos: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
@@ -471,7 +471,7 @@ py::buffer Mesh::PGetPos(const int pid) const
 }
 void Mesh::PSetPos(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetPos: failure");
   const int idx = fcelib::FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
@@ -495,7 +495,7 @@ void Mesh::PSetPos(const int pid, py::array_t<float, py::array::c_style | py::ar
 
 py::buffer Mesh::PGetTriagsVidx(const int pid) const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetTriagsVidx: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
     throw std::range_error("PGetTriagsVidx: pid");
@@ -526,7 +526,7 @@ py::buffer Mesh::PGetTriagsVidx(const int pid) const
 
 py::buffer Mesh::PGetTriagsFlags(const int pid) const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetTriagsFlags: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
     throw std::range_error("PGetTriagsFlags: pid");
@@ -548,7 +548,7 @@ py::buffer Mesh::PGetTriagsFlags(const int pid) const
 }
 void Mesh::PSetTriagsFlags(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetTriagsFlags: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
     throw std::range_error("PSetTriagsFlags: pid");
@@ -576,7 +576,7 @@ void Mesh::PSetTriagsFlags(const int pid, py::array_t<int, py::array::c_style | 
 
 py::buffer Mesh::PGetTriagsTexcoords(const int pid) const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetTriagsTexcoords: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
     throw std::range_error("PGetTriagsTexcoords: pid");
@@ -604,7 +604,7 @@ py::buffer Mesh::PGetTriagsTexcoords(const int pid) const
 }
 void Mesh::PSetTriagsTexcoords(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetTriagsTexcoords: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
     throw std::range_error("PSetTriagsTexcoords: pid");
@@ -635,7 +635,7 @@ void Mesh::PSetTriagsTexcoords(const int pid, py::array_t<float, py::array::c_st
 
 py::buffer Mesh::PGetTriagsTexpages(const int pid) const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetTriagsTexpages: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
     throw std::range_error("PGetTriagsTexpages: pid");
@@ -657,7 +657,7 @@ py::buffer Mesh::PGetTriagsTexpages(const int pid) const
 }
 void Mesh::PSetTriagsTexpages(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetTriagsTexpages: failure");
   if (pid < 0 || pid >= mesh_.hdr.NumParts)
     throw std::range_error("PSetTriagsTexpages: pid");
@@ -688,7 +688,7 @@ void Mesh::PSetTriagsTexpages(const int pid, py::array_t<int, py::array::c_style
 /* Via vector index (=global vert idx) map to global vert order. */
 py::buffer Mesh::MVertsGetMap_idx2order() const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MVertsGetMap_idx2order: failure");
   py::array_t<int> result = py::array_t<int>({ static_cast<py::ssize_t>(mesh_.vertices_len) }, {  });
   auto buf = result.request();
@@ -718,7 +718,7 @@ py::buffer Mesh::MVertsGetMap_idx2order() const
 
 py::buffer Mesh::MGetVertsPos() const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetVertsPos: failure");
   py::array_t<float> result = py::array_t<float>({ static_cast<py::ssize_t>(mesh_.hdr.NumVertices) * 3 }, {  });
   auto buf = result.mutable_unchecked<>();
@@ -748,7 +748,7 @@ py::buffer Mesh::MGetVertsPos() const
 }
 void Mesh::MSetVertsPos(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetVertsPos: failure");
   const py::ssize_t nrows = static_cast<py::ssize_t>(mesh_.hdr.NumVertices);
   py::buffer_info buf = arr.request();
@@ -783,7 +783,7 @@ void Mesh::MSetVertsPos(py::array_t<float, py::array::c_style | py::array::force
 
 py::buffer Mesh::MGetVertsNorms() const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetVertsNorms: failure");
   py::array_t<float> result = py::array_t<float>({ static_cast<py::ssize_t>(mesh_.hdr.NumVertices) * 3 }, {  });
   auto buf = result.mutable_unchecked<>();
@@ -813,7 +813,7 @@ py::buffer Mesh::MGetVertsNorms() const
 }
 void Mesh::MSetVertsNorms(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetVertsNorms: failure");
   const py::ssize_t nrows = static_cast<py::ssize_t>(mesh_.hdr.NumVertices);
   py::buffer_info buf = arr.request();
@@ -848,7 +848,7 @@ void Mesh::MSetVertsNorms(py::array_t<float, py::array::c_style | py::array::for
 
 py::buffer Mesh::MGetDamgdVertsPos() const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetDamgdVertsPos: failure");
   py::array_t<float> result = py::array_t<float>({ static_cast<py::ssize_t>(mesh_.hdr.NumVertices) * 3 }, {  });
   auto buf = result.mutable_unchecked<>();
@@ -878,7 +878,7 @@ py::buffer Mesh::MGetDamgdVertsPos() const
 }
 void Mesh::MSetDamgdVertsPos(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetDamgdVertsPos: failure");
   const py::ssize_t nrows = static_cast<py::ssize_t>(mesh_.hdr.NumVertices);
   py::buffer_info buf = arr.request();
@@ -913,7 +913,7 @@ void Mesh::MSetDamgdVertsPos(py::array_t<float, py::array::c_style | py::array::
 
 py::buffer Mesh::MGetDamgdVertsNorms() const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetDamgdVertsNorms: failure");
   py::array_t<float> result = py::array_t<float>({ static_cast<py::ssize_t>(mesh_.hdr.NumVertices) * 3 }, {  });
   auto buf = result.mutable_unchecked<>();
@@ -943,7 +943,7 @@ py::buffer Mesh::MGetDamgdVertsNorms() const
 }
 void Mesh::MSetDamgdVertsNorms(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetDamgdVertsNorms: failure");
   const py::ssize_t nrows = static_cast<py::ssize_t>(mesh_.hdr.NumVertices);
   py::buffer_info buf = arr.request();
@@ -978,7 +978,7 @@ void Mesh::MSetDamgdVertsNorms(py::array_t<float, py::array::c_style | py::array
 
 py::buffer Mesh::MGetVertsAnimation() const
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetVertsAnimation: failure");
   py::array_t<int> result = py::array_t<int>({ static_cast<py::ssize_t>(mesh_.hdr.NumVertices) }, {  });
   auto buf = result.mutable_unchecked<>();
@@ -1006,7 +1006,7 @@ py::buffer Mesh::MGetVertsAnimation() const
 }
 void Mesh::MSetVertsAnimation(py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
-  if (!fcelib::FCELIB_ValidateMesh(mesh_))
+  if (!fcelib::FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetVertsAnimation: failure");
   const py::ssize_t nrows = static_cast<py::ssize_t>(mesh_.hdr.NumVertices);
   py::buffer_info buf = arr.request();

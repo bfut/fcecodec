@@ -286,7 +286,7 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
 }
 
 /* Returns: 1 = valid mesh, -1 = empty valid mesh, 0 = invalid mesh */
-int FCELIB_TYPES_ValidateMesh(const FcelibMesh mesh)
+int FCELIB_TYPES_ValidateMesh(const FcelibMesh *mesh)
 {
   int i;
   int j;
@@ -295,48 +295,48 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh mesh)
   int sum_verts = 0;
   FcelibPart *part = NULL;
 
-  if (mesh.parts_len == 0     && !mesh.parts     && !mesh.hdr.Parts &&
-      mesh.triangles_len == 0 && !mesh.triangles &&
-      mesh.vertices_len == 0  && !mesh.vertices)
+  if (mesh->parts_len == 0     && !mesh->parts     && !mesh->hdr.Parts &&
+      mesh->triangles_len == 0 && !mesh->triangles &&
+      mesh->vertices_len == 0  && !mesh->vertices)
     return -1;
 
-  if (mesh.parts_len > 0 && !mesh.parts)
+  if (mesh->parts_len > 0 && !mesh->parts)
   {
-    fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.parts)\n");
+    fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh->parts)\n");
     return 0;
   }
-  if (mesh.parts_len > 0 && !mesh.hdr.Parts)
+  if (mesh->parts_len > 0 && !mesh->hdr.Parts)
   {
-    fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.hdr.Parts)\n");
+    fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh->hdr.Parts)\n");
     return 0;
   }
-  if (mesh.triangles_len > 0 && !mesh.triangles)
+  if (mesh->triangles_len > 0 && !mesh->triangles)
   {
-    fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.triangles)\n");
+    fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh->triangles)\n");
     return 0;
   }
-  if (mesh.vertices_len > 0 && !mesh.vertices)
+  if (mesh->vertices_len > 0 && !mesh->vertices)
   {
-    fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.vertices)\n");
+    fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh->vertices)\n");
     return 0;
   }
 
-  for (i = 0, count_parts = 0; i < mesh.parts_len; ++i)
+  for (i = 0, count_parts = 0; i < mesh->parts_len; ++i)
   {
-    if (mesh.hdr.Parts[i] >= mesh.parts_len)
+    if (mesh->hdr.Parts[i] >= mesh->parts_len)
     {
-      fprintf(stderr, "ValidateMesh: inconsistent list (mesh.hdr.Parts[i])\n");
+      fprintf(stderr, "ValidateMesh: inconsistent list (mesh->hdr.Parts[i])\n");
       return 0;
     }
 
-    if (mesh.hdr.Parts[i] < 0)
+    if (mesh->hdr.Parts[i] < 0)
       continue;
     ++count_parts;
 
-    part = mesh.parts[mesh.hdr.Parts[i]];
+    part = mesh->parts[mesh->hdr.Parts[i]];
     if (!part)
     {
-      fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.parts[mesh.hdr.Parts[i]]) %d %d\n", i, mesh.hdr.Parts[i]);
+      fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh->parts[mesh->hdr.Parts[i]]) %d %d\n", i, mesh->hdr.Parts[i]);
       return 0;
     }
 
@@ -344,27 +344,27 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh mesh)
     sum_verts += part->PNumVertices;
   }  /* for i */
 
-  if (count_parts != mesh.hdr.NumParts)
+  if (count_parts != mesh->hdr.NumParts)
   {
-    fprintf(stderr, "ValidateMesh: inconsistent list (%d != mesh.hdr.NumParts = %d)\n", count_parts, mesh.hdr.NumParts);
+    fprintf(stderr, "ValidateMesh: inconsistent list (%d != mesh->hdr.NumParts = %d)\n", count_parts, mesh->hdr.NumParts);
     return 0;
   }
-  if (sum_triags != mesh.hdr.NumTriangles)
+  if (sum_triags != mesh->hdr.NumTriangles)
   {
-    fprintf(stderr, "ValidateMesh: inconsistent list (%d != mesh.hdr.NumTriangles = %d)\n", sum_triags, mesh.hdr.NumTriangles);
+    fprintf(stderr, "ValidateMesh: inconsistent list (%d != mesh->hdr.NumTriangles = %d)\n", sum_triags, mesh->hdr.NumTriangles);
     return 0;
   }
-  if (sum_verts != mesh.hdr.NumVertices)
+  if (sum_verts != mesh->hdr.NumVertices)
   {
-    fprintf(stderr, "ValidateMesh: inconsistent list (%d != mesh.hdr.NumVertices = %d)\n", sum_verts, mesh.hdr.NumVertices);
+    fprintf(stderr, "ValidateMesh: inconsistent list (%d != mesh->hdr.NumVertices = %d)\n", sum_verts, mesh->hdr.NumVertices);
     return 0;
   }
 
-  for (i = 0; i < mesh.parts_len; ++i)
+  for (i = 0; i < mesh->parts_len; ++i)
   {
-    if (mesh.hdr.Parts[i] < 0)
+    if (mesh->hdr.Parts[i] < 0)
       continue;
-    part = mesh.parts[mesh.hdr.Parts[i]];
+    part = mesh->parts[mesh->hdr.Parts[i]];
     /* if (!part) - see above */
 
     if (!part->PTriangles)
@@ -379,17 +379,17 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh mesh)
         fprintf(stderr, "ValidateMesh: invalid count (part->PNumTriangles) i%d j%d %d>%d\n", i, j, sum_triags, part->PNumTriangles);
         return 0;
       }
-      if (part->PTriangles[j] >= mesh.triangles_len)
+      if (part->PTriangles[j] >= mesh->triangles_len)
       {
-        fprintf(stderr, "ValidateMesh: inconsistent list (part->PTriangles[j] = %d>=%d) %d %d\n", part->PTriangles[j], mesh.triangles_len, i, j);
+        fprintf(stderr, "ValidateMesh: inconsistent list (part->PTriangles[j] = %d>=%d) %d %d\n", part->PTriangles[j], mesh->triangles_len, i, j);
         return 0;
       }
       if (part->PTriangles[j] < 0)
         continue;
 
-      if (!mesh.triangles[part->PTriangles[j]])
+      if (!mesh->triangles[part->PTriangles[j]])
       {
-        fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.triangles[part->PTriangles[j]]) %d %d\n", i, j);
+        fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh->triangles[part->PTriangles[j]]) %d %d\n", i, j);
         return 0;
       }
 
@@ -413,7 +413,7 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh mesh)
         fprintf(stderr, "ValidateMesh: invalid count (part->PNumVertices) i%d j%d %d>%d\n", i, j, sum_verts, part->PNumVertices);
         return 0;
       }
-      if (part->PVertices[j] >= mesh.vertices_len)
+      if (part->PVertices[j] >= mesh->vertices_len)
       {
         fprintf(stderr, "ValidateMesh: inconsistent list (part->PVertices[j]) %d %d\n", i, j);
         return 0;
@@ -422,9 +422,9 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh mesh)
       if (part->PVertices[j] < 0)
         continue;
 
-      if (!mesh.vertices[part->PVertices[j]])
+      if (!mesh->vertices[part->PVertices[j]])
       {
-        fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh.vertices[part->PVertices[j]]) %d %d\n", i, j);
+        fprintf(stderr, "ValidateMesh: unexpected NULL pointer (mesh->vertices[part->PVertices[j]]) %d %d\n", i, j);
         return 0;
       }
 
@@ -703,7 +703,8 @@ void FCELIB_TYPES_VertAddPosition(FcelibVertex *vert, const tVector *pos)
   vert->DamgdNormPos.z += pos->z;
 }
 
-int FCELIB_TYPES_GetPartCentroid(FcelibMesh *mesh, FcelibPart *part, tVector *centroid)
+/* Assumes part belongs to mesh. Result in centroid. */
+int FCELIB_TYPES_GetPartCentroid(const FcelibMesh *mesh, const FcelibPart *part, tVector *centroid)
 {
   int retv = 0;
   int i;
@@ -785,8 +786,9 @@ int FCELIB_TYPES_GetPartCentroid(FcelibMesh *mesh, FcelibPart *part, tVector *ce
   return retv;
 }
 
-/* Does not move part w.r.t. to global coordinates */
-void FCELIB_TYPES_ResetPartCenter(FcelibMesh *mesh, FcelibPart *part, const tVector new_PartPos)
+/* Does not move part w.r.t. to global coordinates
+   Assumes part belongs to mesh. */
+void FCELIB_TYPES_ResetPartCenter(const FcelibMesh *mesh, FcelibPart *part, const tVector new_PartPos)
 {
   FcelibVertex *vert;
   int count_verts = 0;
@@ -818,47 +820,47 @@ void FCELIB_TYPES_ResetPartCenter(FcelibMesh *mesh, FcelibPart *part, const tVec
 
 /* stats -------------------------------------------------------------------- */
 
-void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh mesh)
+void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh *mesh)
 {
   int i;
   int j;
   int verts = 0;
   int triags = 0;
 
-  printf("NumTriangles (true) = %d\n", mesh.hdr.NumTriangles);
-  printf("triangles_len (alloc'd) = %d\n", mesh.triangles_len);
+  printf("NumTriangles (true) = %d\n", mesh->hdr.NumTriangles);
+  printf("triangles_len (alloc'd) = %d\n", mesh->triangles_len);
 
-  printf("NumVertices (true) = %d\n", mesh.hdr.NumVertices);
-  printf("vertices_len (alloc'd) = %d\n", mesh.vertices_len);
+  printf("NumVertices (true) = %d\n", mesh->hdr.NumVertices);
+  printf("vertices_len (alloc'd) = %d\n", mesh->vertices_len);
 
-  printf("NumParts (true) = %d\n", mesh.hdr.NumParts);
-  printf("parts_len (alloc'd) = %d\n", mesh.parts_len);
+  printf("NumParts (true) = %d\n", mesh->hdr.NumParts);
+  printf("parts_len (alloc'd) = %d\n", mesh->parts_len);
 
-  printf("NumArts = %d\n", mesh.hdr.NumArts);
-  printf("NumDummies = %d\n", mesh.hdr.NumDummies);
-  printf("NumColors = %d\n", mesh.hdr.NumColors);
-  printf("NumSecColors = %d\n", mesh.hdr.NumSecColors);
+  printf("NumArts = %d\n", mesh->hdr.NumArts);
+  printf("NumDummies = %d\n", mesh->hdr.NumDummies);
+  printf("NumColors = %d\n", mesh->hdr.NumColors);
+  printf("NumSecColors = %d\n", mesh->hdr.NumSecColors);
 
-  printf("Unknown3 (0x0924) = %d (0x%04x)\n", mesh.hdr.Unknown3, mesh.hdr.Unknown3);
+  printf("Unknown3 (0x0924) = %d (0x%04x)\n", mesh->hdr.Unknown3, mesh->hdr.Unknown3);
 
   printf("Parts:\n"
          "Ord Idx   Verts  Triangles  (PartPos)                          FCE3 role            Name\n");
-  for (i = 0, j = 0; i < mesh.parts_len; ++i)
+  for (i = 0, j = 0; i < mesh->parts_len; ++i)
   {
-    if (mesh.hdr.Parts[i] < 0)
+    if (mesh->hdr.Parts[i] < 0)
       continue;
 
     printf(" %2d  %2d   %5d      %5d  (%9f, %9f, %9f)  %20s %s\n",
            j,
-           mesh.hdr.Parts[i],
-           mesh.parts[mesh.hdr.Parts[i]]->PNumVertices,
-           mesh.parts[mesh.hdr.Parts[i]]->PNumTriangles,
-           mesh.parts[mesh.hdr.Parts[i]]->PartPos.x, mesh.parts[mesh.hdr.Parts[i]]->PartPos.y, mesh.parts[mesh.hdr.Parts[i]]->PartPos.z,
+           mesh->hdr.Parts[i],
+           mesh->parts[mesh->hdr.Parts[i]]->PNumVertices,
+           mesh->parts[mesh->hdr.Parts[i]]->PNumTriangles,
+           mesh->parts[mesh->hdr.Parts[i]]->PartPos.x, mesh->parts[mesh->hdr.Parts[i]]->PartPos.y, mesh->parts[mesh->hdr.Parts[i]]->PartPos.z,
            j < kFceLibImplementedFce3Parts ? kFce3PartsNames[j] : "",
-           mesh.parts[mesh.hdr.Parts[i]]->PartName);
+           mesh->parts[mesh->hdr.Parts[i]]->PartName);
 
-    verts  += mesh.parts[mesh.hdr.Parts[i]]->PNumVertices;
-    triags += mesh.parts[mesh.hdr.Parts[i]]->PNumTriangles;
+    verts  += mesh->parts[mesh->hdr.Parts[i]]->PNumVertices;
+    triags += mesh->parts[mesh->hdr.Parts[i]]->PNumTriangles;
 
     ++j;
   }
@@ -866,64 +868,64 @@ void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh mesh)
          verts, triags);
 
   printf("DummyNames (Position):\n");
-  for (i = 0; i < mesh.hdr.NumDummies; ++i)
+  for (i = 0; i < mesh->hdr.NumDummies; ++i)
   {
     printf(" %2d  (%9f, %9f, %9f) %.64s\n", i,
-           mesh.hdr.Dummies[i].x, mesh.hdr.Dummies[i].y, mesh.hdr.Dummies[i].z,
-           mesh.hdr.DummyNames + (i * 64));
+           mesh->hdr.Dummies[i].x, mesh->hdr.Dummies[i].y, mesh->hdr.Dummies[i].z,
+           mesh->hdr.DummyNames + (i * 64));
   }
 
   printf("Car colors (hue, saturation, brightness, transparency):\n");
-  for (i = 0; i < mesh.hdr.NumColors; ++i)
+  for (i = 0; i < mesh->hdr.NumColors; ++i)
   {
     printf(" %2d  Primary     %3d, %3d, %3d, %3d\n", i,
-          mesh.hdr.PriColors[i].hue, mesh.hdr.PriColors[i].saturation,
-          mesh.hdr.PriColors[i].brightness, mesh.hdr.PriColors[i].transparency);
+          mesh->hdr.PriColors[i].hue, mesh->hdr.PriColors[i].saturation,
+          mesh->hdr.PriColors[i].brightness, mesh->hdr.PriColors[i].transparency);
     printf(" %2d  Interior    %3d, %3d, %3d, %3d\n", i,
-          mesh.hdr.IntColors[i].hue, mesh.hdr.IntColors[i].saturation,
-          mesh.hdr.IntColors[i].brightness, mesh.hdr.IntColors[i].transparency);
+          mesh->hdr.IntColors[i].hue, mesh->hdr.IntColors[i].saturation,
+          mesh->hdr.IntColors[i].brightness, mesh->hdr.IntColors[i].transparency);
     printf(" %2d  Secondary   %3d, %3d, %3d, %3d\n", i,
-          mesh.hdr.SecColors[i].hue, mesh.hdr.SecColors[i].saturation,
-          mesh.hdr.SecColors[i].brightness, mesh.hdr.SecColors[i].transparency);
+          mesh->hdr.SecColors[i].hue, mesh->hdr.SecColors[i].saturation,
+          mesh->hdr.SecColors[i].brightness, mesh->hdr.SecColors[i].transparency);
     printf(" %2d  Driver hair %3d, %3d, %3d, %3d\n", i,
-          mesh.hdr.DriColors[i].hue, mesh.hdr.DriColors[i].saturation,
-          mesh.hdr.DriColors[i].brightness, mesh.hdr.DriColors[i].transparency);
+          mesh->hdr.DriColors[i].hue, mesh->hdr.DriColors[i].saturation,
+          mesh->hdr.DriColors[i].brightness, mesh->hdr.DriColors[i].transparency);
   }
   fflush(stdout);
 }
 
 /* Prints ref'ed global part indexes. */
-void FCELIB_TYPES_PrintMeshParts(const FcelibMesh mesh)
+void FCELIB_TYPES_PrintMeshParts(const FcelibMesh *mesh)
 {
   int j;
 
   printf("NumParts = %d, parts_len = %d, [\n",
-         mesh.hdr.NumParts, mesh.parts_len);
+         mesh->hdr.NumParts, mesh->parts_len);
 
-  for (j = 0; j < mesh.parts_len; ++j)
-    printf("%d, ", mesh.hdr.Parts[j]);
+  for (j = 0; j < mesh->parts_len; ++j)
+    printf("%d, ", mesh->hdr.Parts[j]);
 
   printf("\n]\n");
   fflush(stdout);
 }
 
 /* Prints ref'ed global triag indexes for each part. */
-void FCELIB_TYPES_PrintMeshTriangles(const FcelibMesh mesh)
+void FCELIB_TYPES_PrintMeshTriangles(const FcelibMesh *mesh)
 {
   int i;
   int j;
 
-  for (i = 0; i < mesh.parts_len; ++i)
+  for (i = 0; i < mesh->parts_len; ++i)
   {
-    if (mesh.hdr.Parts[i] < 0)
+    if (mesh->hdr.Parts[i] < 0)
       continue;
 
     printf("Part %d '%s', PNumTriangles = %d, ptriangles_len = %d, [\n",
-           i, mesh.parts[mesh.hdr.Parts[i]]->PartName,
-           mesh.parts[mesh.hdr.Parts[i]]->PNumTriangles, mesh.parts[mesh.hdr.Parts[i]]->ptriangles_len);
+           i, mesh->parts[mesh->hdr.Parts[i]]->PartName,
+           mesh->parts[mesh->hdr.Parts[i]]->PNumTriangles, mesh->parts[mesh->hdr.Parts[i]]->ptriangles_len);
 
-    for (j = 0; j < mesh.parts[mesh.hdr.Parts[i]]->ptriangles_len; ++j)
-      printf("%d, ", mesh.parts[mesh.hdr.Parts[i]]->PTriangles[j]);
+    for (j = 0; j < mesh->parts[mesh->hdr.Parts[i]]->ptriangles_len; ++j)
+      printf("%d, ", mesh->parts[mesh->hdr.Parts[i]]->PTriangles[j]);
 
     printf("\n]\n");
   }
@@ -931,22 +933,22 @@ void FCELIB_TYPES_PrintMeshTriangles(const FcelibMesh mesh)
 }
 
 /* Prints ref'ed global vert indexes for each part. */
-void FCELIB_TYPES_PrintMeshVertices(const FcelibMesh mesh)
+void FCELIB_TYPES_PrintMeshVertices(const FcelibMesh *mesh)
 {
   int i;
   int j;
 
-  for (i = 0; i < mesh.parts_len; ++i)
+  for (i = 0; i < mesh->parts_len; ++i)
   {
-    if (mesh.hdr.Parts[i] < 0)
+    if (mesh->hdr.Parts[i] < 0)
       continue;
 
     printf("Part %d '%s', PNumVertices = %d, pvertices_len = %d, [\n",
-           i, mesh.parts[mesh.hdr.Parts[i]]->PartName,
-           mesh.parts[mesh.hdr.Parts[i]]->PNumVertices, mesh.parts[mesh.hdr.Parts[i]]->pvertices_len);
+           i, mesh->parts[mesh->hdr.Parts[i]]->PartName,
+           mesh->parts[mesh->hdr.Parts[i]]->PNumVertices, mesh->parts[mesh->hdr.Parts[i]]->pvertices_len);
 
-    for (j = 0; j < mesh.parts[mesh.hdr.Parts[i]]->pvertices_len; ++j)
-      printf("%d, ", mesh.parts[mesh.hdr.Parts[i]]->PVertices[j]);
+    for (j = 0; j < mesh->parts[mesh->hdr.Parts[i]]->pvertices_len; ++j)
+      printf("%d, ", mesh->parts[mesh->hdr.Parts[i]]->PVertices[j]);
 
     printf("\n]\n");
   }

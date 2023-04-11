@@ -72,6 +72,7 @@ const int kTrianglesDiamond[8 * 3] = {
   4, 5, 1
 };
 
+/* Returns 0 if a==b, 1 if a>b, -1 if a<b */
 int FCELIB_UTIL_CompareFloats(const void *a, const void *b)
 {
   const float arg1 = *(const float*)a;
@@ -79,6 +80,7 @@ int FCELIB_UTIL_CompareFloats(const void *a, const void *b)
   return (arg1 > arg2) - (arg1 < arg2);
 }
 
+/* Returns 0 if a==b, 1 if a>b, -1 if a<b */
 int FCELIB_UTIL_CompareInts(const void *a, const void *b)
 {
   const int arg1 = *(const int*)a;
@@ -124,6 +126,7 @@ int FCELIB_UTIL_ArrMax(const int *arr, const int arr_len)
   return retv;
 }
 
+/* strncmp(), but for array of strings */
 int FCELIB_UTIL_StrIsInArray(char *str, const char **arr)
 {
   int retv = 0;

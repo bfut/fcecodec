@@ -62,27 +62,27 @@ void FCELIB_FreeMesh(FcelibMesh *mesh)
   FCELIB_TYPES_FreeMesh(mesh);
 }
 
-void FCELIB_PrintMeshInfo(FcelibMesh mesh)
+void FCELIB_PrintMeshInfo(const FcelibMesh *mesh)
 {
   FCELIB_TYPES_PrintMeshInfo(mesh);
 }
 
-void FCELIB_PrintMeshParts(FcelibMesh mesh)
+void FCELIB_PrintMeshParts(const FcelibMesh *mesh)
 {
   FCELIB_TYPES_PrintMeshParts(mesh);
 }
 
-void FCELIB_PrintMeshTriangles(FcelibMesh mesh)
+void FCELIB_PrintMeshTriangles(const FcelibMesh *mesh)
 {
   FCELIB_TYPES_PrintMeshTriangles(mesh);
 }
 
-void FCELIB_PrintMeshVertices(FcelibMesh mesh)
+void FCELIB_PrintMeshVertices(const FcelibMesh *mesh)
 {
   FCELIB_TYPES_PrintMeshVertices(mesh);
 }
 
-int FCELIB_ValidateMesh(FcelibMesh mesh)
+int FCELIB_ValidateMesh(const FcelibMesh *mesh)
 {
   return FCELIB_TYPES_ValidateMesh(mesh);
 }
@@ -142,21 +142,21 @@ int FCELIB_MeshMoveUpPart(FcelibMesh *mesh, const int idx)
 /* tools -------------------------------------------------------------------- */
 
 /* Returns size in bytes. target_fce_version: 3 (FCE3), 4 (FCE4), 5 (FCE4M) */
-int FCELIB_FceComputeSize(FcelibMesh mesh, const int target_fce_version)
+int FCELIB_FceComputeSize(const FcelibMesh *mesh, const int target_fce_version)
 {
   switch (target_fce_version)
   {
     case 4:
-      return FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, mesh.hdr.NumVertices,
-                                             mesh.hdr.NumTriangles);
+      return FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, mesh->hdr.NumVertices,
+                                             mesh->hdr.NumTriangles);
       break;
     case 5:
-      return FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, mesh.hdr.NumVertices,
-                                             mesh.hdr.NumTriangles);
+      return FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, mesh->hdr.NumVertices,
+                                             mesh->hdr.NumTriangles);
       break;
     default:
-      return FCELIB_FCETYPES_Fce3ComputeSize(mesh.hdr.NumVertices,
-                                             mesh.hdr.NumTriangles);
+      return FCELIB_FCETYPES_Fce3ComputeSize(mesh->hdr.NumVertices,
+                                             mesh->hdr.NumTriangles);
       break;
   }
 }
@@ -202,7 +202,7 @@ int FCELIB_DecodeFce(const void *buf, int buf_size, FcelibMesh *mesh)
   return FCELIB_IO_DecodeFce(buf, buf_size, mesh);
 }
 
-int FCELIB_ExportObj(FcelibMesh *mesh,
+int FCELIB_ExportObj(const FcelibMesh *mesh,
                      const char *objpath, const char *mtlpath,
                      const char *texture_name,
                      const int print_damage, const int print_dummies,
@@ -247,7 +247,7 @@ int FCELIB_GeomDataToNewPart(FcelibMesh *mesh,
 
 /* service (assumes valid FcelibMesh) --------------------------------------- */
 
-int FCELIB_GetInternalPartIdxByOrder(FcelibMesh *mesh, const int idx)
+int FCELIB_GetInternalPartIdxByOrder(const FcelibMesh *mesh, const int idx)
 {
   return FCELIB_TYPES_GetInternalPartIdxByOrder(mesh, idx);
 }

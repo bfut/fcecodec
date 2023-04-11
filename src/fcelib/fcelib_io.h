@@ -595,7 +595,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
 /* encode ------------------------------------------------------------------- */
 
 /* The FCE triangle flag is output as material name. Returns boolean. */
-int FCELIB_IO_ExportObj(FcelibMesh *mesh,
+int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
                         const void *objpath, const void *mtlpath,
                         const char *texture_name,
                         const int print_damage, const int print_dummies,
@@ -1095,7 +1095,10 @@ int FCELIB_IO_ExportObj(FcelibMesh *mesh,
   return retv;
 }
 
-/* Limited to 64 parts. Returns boolean. */
+/* Limited to 64 parts. Returns boolean.
+
+   If center_parts == 1, centroids and vert positions will be recalculated and reset for all parts. This changes *mesh.
+*/
 int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMesh *mesh, const int center_parts)
 {
   int retv = 0;
@@ -1389,7 +1392,10 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
 }
 
 /* Limited to 64 parts, 16 dummies, 16 colors. Returns boolean.
-   For FCE4M, call with fce_version = 0x00101015 */
+   For FCE4M, call with fce_version = 0x00101015
+
+   If center_parts == 1, centroids and vert positions will be recalculated and reset for all parts. This changes *mesh.
+*/
 int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh *mesh,
                          const int center_parts, const int fce_version)
 {
