@@ -18,8 +18,8 @@
 """
     bfut_SetHighChromeToTransparent.py - description
 
-HOW TO USE
-    python bfut_SetHighChromeToTransparent.py /path/to/model.fce
+USAGE
+    python bfut_SetHighChromeToTransparent.py /path/to/model.fce [/path/to/output.fce]
 
 REQUIRES
     installing <https://github.com/bfut/fcecodec>
@@ -32,16 +32,14 @@ import numpy as np
 
 CONFIG = {
     "fce_version"  : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
-    "center_parts" : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
 }
-
-script_path = pathlib.Path(__file__).parent
 
 # Parse command-line
 parser = argparse.ArgumentParser()
 parser.add_argument("path", nargs="+", help="file path")
 args = parser.parse_args()
 
+# Handle paths: mandatory inpath, optional outpath
 filepath_fce_input = pathlib.Path(args.path[0])
 if len(args.path) < 2:
     filepath_fce_output = filepath_fce_input.parent / (filepath_fce_input.stem + "_out" + filepath_fce_input.suffix)
@@ -98,13 +96,13 @@ def LoadFce(mesh, path):
         assert mesh.MValid() is True
         return mesh
 
-def WriteFce(version, mesh, path, center_parts=1, mesh_function=None):
+def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
     if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
         mesh = mesh_function(mesh, version)
     with open(path, "wb") as f:
-        if version == "3":
+        if version in ("3", 3):
             buf = mesh.IoEncode_Fce3(center_parts)
-        elif version == "4":
+        elif version in ("4", 4):
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)
@@ -117,6 +115,7 @@ def GetMeshPartnameIdx(mesh, partname):
             return pid
     print(f"GetMeshPartnameIdx: Warning: cannot find \"{partname}\"")
     return -1
+
 
 #
 def main():
@@ -143,8 +142,7 @@ def main():
         flags = np.where(flags & 0x2 == 0x2, flags + 0x8, flags)
         mesh.PSetTriagsFlags(pid, flags)
 
-    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"],
-             mesh_function=HiBody_ReorderTriagsTransparentToLast)
+    WriteFce(fce_outversion, mesh, filepath_fce_output, mesh_function=HiBody_ReorderTriagsTransparentToLast)
     PrintFceInfo(filepath_fce_output)
     print(f"FILE = {filepath_fce_output}", flush=True)
 

@@ -16,14 +16,16 @@
 #    misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 """
-    bfut_Fce2Obj.py
+    bfut_Fce2Obj.py - export FCE to Wavefront OBJ/MTL
 
 DESCRIPTION
-    export given FCE file to OBJ/MTL files in FCE file directory,
-    with triangles flag hex values as materials names
+    Exports given FCE file to OBJ/MTL files in FCE file directory,
+    with triangles flag hex values as materials names.
 
-HOW TO USE
-    python bfut_Fce2Obj.py /path/to/model.fce
+USAGE
+    python bfut_Fce2Obj.py /path/to/model.fce [/path/to/output.obj]
+
+    The output MTL path will differ from OBJ path by its extension ".mtl"
 
 REQUIRES
     installing <https://github.com/bfut/fcecodec>
@@ -39,10 +41,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument("path", nargs="+", help="file path")
 args = parser.parse_args()
 
+# Handle paths: mandatory inpath, optional outpath
 filepath_fce_input = pathlib.Path(args.path[0])
-output_path_stem = filepath_fce_input.parent / filepath_fce_input.stem
-filepath_obj_output = output_path_stem.with_suffix(".obj")
-filepath_mtl_output = output_path_stem.with_suffix(".mtl")
+if len(args.path) < 2:
+    filepath_obj_output = filepath_fce_input.with_suffix(".obj")
+else:
+    filepath_obj_output = pathlib.Path(args.path[1])
+
+filepath_mtl_output = filepath_obj_output.with_suffix(".mtl")
 
 CONFIG = {
     "objtexname"           : filepath_fce_input.stem + "00.png",  # texture file path in MTL file
@@ -51,7 +57,6 @@ CONFIG = {
     "use_part_positions"   : 1,
     "print_part_positions" : 1,  # prints shapes named PARTPOS_<partname> for each part, centered on part position
 }
-
 
 # -------------------------------------- wrappers
 def LoadFce(mesh, path):

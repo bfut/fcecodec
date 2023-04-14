@@ -18,7 +18,7 @@
 """
     bfut_CopyCarColors.py - copy car colors from source to target, overwriting target
 
-HOW TO USE
+USAGE
     python bfut_CopyCarColors.py /path/to/source.fce /path/to/target.fce
 
 REQUIRES
@@ -30,8 +30,7 @@ import pathlib
 import fcecodec
 
 CONFIG = {
-    "fce_version"  : "keep",  # # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
-    "center_parts" : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
+    "fce_version" : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
 }
 
 # Parse command-line
@@ -39,10 +38,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("path", nargs="+", help="file path")
 args = parser.parse_args()
 
+# Handle paths: mandatory source_path, mandatory target_path
 filepath_fce_input_source = pathlib.Path(args.path[0])
 filepath_fce_input = pathlib.Path(args.path[1])
 filepath_fce_output = filepath_fce_input
-# filepath_fce_output = filepath_fce_input.parent / (filepath_fce_input.stem + "_out" + filepath_fce_input.suffix)
 
 # -------------------------------------- wrappers
 def GetFceVersion(path):
@@ -63,13 +62,13 @@ def LoadFce(mesh, path):
         assert mesh.MValid() is True
         return mesh
 
-def WriteFce(version, mesh, path, center_parts=1, mesh_function=None):
+def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
     if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
         mesh = mesh_function(mesh, version)
     with open(path, "wb") as f:
-        if version == "3":
+        if version in ("3", 3):
             buf = mesh.IoEncode_Fce3(center_parts)
-        elif version == "4":
+        elif version in ("4", 4):
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)
@@ -89,13 +88,12 @@ def main():
     mesh = fcecodec.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
 
-    # copy colors
+    # Copy colors
     mesh_source = fcecodec.Mesh()
     mesh_source = LoadFce(mesh_source, filepath_fce_input_source)
     mesh.MSetColors(mesh_source.MGetColors())
 
-    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"],
-             mesh_function=None)
+    WriteFce(fce_outversion, mesh, filepath_fce_output)
     PrintFceInfo(filepath_fce_output)
     print(f"FILE = {filepath_fce_output}", flush=True)
 

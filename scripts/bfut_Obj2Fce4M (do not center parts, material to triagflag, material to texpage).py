@@ -24,15 +24,14 @@ DESCRIPTION
     make sure the OBJ has valid links to its MTL materials file
     all faces must be triangles
 
-HOW TO USE
-    python "bfut_Obj2Fce4M (do not center parts, material to triagflag, material to texpage).py" /path/to/model.obj
+USAGE
+    python "bfut_Obj2Fce4M (do not center parts, material to triagflag, material to texpage).py" /path/to/model.obj [/path/to/output.fce]
 
 TUTORIAL
     check <doc_Obj2Fce.md> in fcecodec/scripts/
 
 REQUIRES
     installing fcecodec <https://github.com/bfut/fcecodec>
-    installing numpy <https://numpy.org/install>
     installing tinyobjloader <https://github.com/tinyobjloader/tinyobjloader/tree/master/python>
 """
 import argparse
@@ -46,7 +45,7 @@ import tinyobjloader
 
 CONFIG = {
     "fce_version"        : "4M",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
-    "center_parts"       : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
+    "center_parts"       : False,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
     "material2texpage"   : 1,  # maps OBJ face materials to FCE texpages (expects 0|1)
     "material2triagflag" : 1,  # maps OBJ face materials to FCE triangles flag (expects 0|1)
 }
@@ -56,9 +55,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument("path", nargs="+", help="file path")
 args = parser.parse_args()
 
+# Handle paths: mandatory inpath, optional outpath
 filepath_obj_input = pathlib.Path(args.path[0])
-output_path_stem = filepath_obj_input.parent / filepath_obj_input.stem
-filepath_fce_output = output_path_stem.with_suffix(".fce")
+if len(args.path) < 2:
+    filepath_fce_output = (filepath_obj_input.parent / (filepath_obj_input.stem + "_out")).with_suffix(".fce")
+else:
+    filepath_fce_output = pathlib.Path(args.path[1])
 
 
 # -------------------------------------- fcecodec wrappers
@@ -68,13 +70,13 @@ def PrintFceInfo(path):
         fcecodec.PrintFceInfo(buf)
         assert fcecodec.ValidateFce(buf) == 1
 
-def WriteFce(version, mesh, path, center_parts=1, mesh_function=None):
+def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
     if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
         mesh = mesh_function(mesh, version)
     with open(path, "wb") as f:
-        if version == "3":
+        if version in ("3", 3):
             buf = mesh.IoEncode_Fce3(center_parts)
-        elif version == "4":
+        elif version in ("4", 4):
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)
@@ -499,8 +501,7 @@ def main():
         mesh = CenterParts(mesh)
 
     # Write FCE
-    # mesh.PrintInfo()
-    WriteFce(CONFIG["fce_version"], mesh, filepath_fce_output, center_parts=0)
+    WriteFce(CONFIG["fce_version"], mesh, filepath_fce_output, center_parts=False)
     print(flush=True)
     PrintFceInfo(filepath_fce_output)
     print(f"filepath_fce_output={filepath_fce_output}")

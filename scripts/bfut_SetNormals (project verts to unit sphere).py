@@ -18,7 +18,7 @@
 """
     bfut_SetNormals (project verts to unit sphere).py - description
 
-HOW TO USE
+USAGE
     python "bfut_SetNormals (project verts to unit sphere).py" /path/to/model.fce
 
 REQUIRES
@@ -32,18 +32,16 @@ import numpy as np
 
 CONFIG = {
     "fce_version"  : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
-    "center_parts" : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
     "sphere_radius": 1.0,
     "verbose": False,
 }
-
-script_path = pathlib.Path(__file__).parent
 
 # Parse command-line
 parser = argparse.ArgumentParser()
 parser.add_argument("path", nargs="+", help="file path")
 args = parser.parse_args()
 
+# Handle paths: mandatory inpath, optional outpath
 filepath_fce_input = pathlib.Path(args.path[0])
 if len(args.path) < 2:
     filepath_fce_output = filepath_fce_input.parent / (filepath_fce_input.stem + "_out" + filepath_fce_input.suffix)
@@ -64,13 +62,13 @@ def LoadFce(mesh, path):
         assert mesh.MValid() is True
         return mesh
 
-def WriteFce(version, mesh, path, center_parts=1, mesh_function=None):
+def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
     if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
         mesh = mesh_function(mesh, version)
     with open(path, "wb") as f:
-        if version == "3":
+        if version in ("3", 3):
             buf = mesh.IoEncode_Fce3(center_parts)
-        elif version == "4":
+        elif version in ("4", 4):
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)

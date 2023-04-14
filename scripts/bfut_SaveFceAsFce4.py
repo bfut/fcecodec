@@ -16,15 +16,16 @@
 #    misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 """
-    bfut_SaveFceAsFce4.py - change file FCE version to FCE3 and overwrite input
+    bfut_SaveFceAsFce4.py - change file FCE version to FCE4 and overwrite input
 
-HOW TO USE
-    python "bfut_SaveFceAsFce4.py" /path/to/model.fce
+USAGE
+    python "bfut_SaveFceAsFce4.py" /path/to/model.fce [/path/to/output.fce]
 
 REQUIRES
     installing fcecodec <https://github.com/bfut/fcecodec>
 """
 import argparse
+import pathlib
 
 import fcecodec
 
@@ -37,8 +38,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument("path", nargs="+", help="file path")
 args = parser.parse_args()
 
-filepath_fce_input = args.path[0]
-filepath_fce_output = filepath_fce_input
+# Handle paths: mandatory inpath, optional outpath
+filepath_fce_input = pathlib.Path(args.path[0])
+if len(args.path) < 2:
+    filepath_fce_output = filepath_fce_input.parent / (filepath_fce_input.stem + "_out" + filepath_fce_input.suffix)
+else:
+    filepath_fce_output = pathlib.Path(args.path[1])
+
 
 # -------------------------------------- wrappers
 def LoadFce(mesh, path):
@@ -47,13 +53,13 @@ def LoadFce(mesh, path):
         assert mesh.MValid() is True
         return mesh
 
-def WriteFce(version, mesh, path, center_parts=1, mesh_function=None):
+def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
     if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
         mesh = mesh_function(mesh, version)
     with open(path, "wb") as f:
-        if version == "3":
+        if version in ("3", 3):
             buf = mesh.IoEncode_Fce3(center_parts)
-        elif version == "4":
+        elif version in ("4", 4):
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)

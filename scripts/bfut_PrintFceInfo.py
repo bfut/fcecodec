@@ -16,7 +16,7 @@
 #    misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 """
-    bfut_PrintFceInfo.py - print given FCE file stats to console
+    bfut_PrintFceInfo.py - print FCE file stats to console
 
 HOW TO USE
     python bfut_PrintFceInfo.py /path/to/model.fce
@@ -33,6 +33,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("path", nargs="+", help="file path")
 args = parser.parse_args()
 
+# Handle paths: mandatory inpath
 filepath_fce_input = args.path[0]
 
 

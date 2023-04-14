@@ -18,10 +18,22 @@
 """
     bfut_MergeParts (Fce4 to Fce3, keep version).py - parts documented in fcelib_fcetypes.h
 
-HOW TO USE
-    python "bfut_MergeParts (Fce4 to Fce3, keep version).py" [0|1 0|1] /path/to/model.fce
+USAGE
+    python "bfut_MergeParts (Fce4 to Fce3, keep version).py" /path/to/model.fce [/path/to/output.fce]
+    python "bfut_MergeParts (Fce4 to Fce3, keep version).py" 0|1  0|1  /path/to/model.fce [/path/to/output.fce]
 
-    Note: Script assumes that partnames conform to Fce4
+    Call script with 0 or 2 integer parameters.
+    Assumes that partnames conform to FCE4.
+
+    Call script with 0 or 2 integer parameters.
+        arg0: 0|1 for No or Yes to delete or keep convertible part :OT
+        arg1: 0|1 for "opaque"|"transparent" to change semi-transparency flag of all triangles, "opaque" removes all transparency flags
+
+    Examples:
+        0 1
+        1 1
+        0 0
+        1 0
 
 REQUIRES
     installing <https://github.com/bfut/fcecodec>
@@ -31,12 +43,14 @@ import pathlib
 import sys
 
 import fcecodec
+import numpy as np
 
 CONFIG = {
     "fce_version"  : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
-    "center_parts" : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
-    "convertible" : "0",  # if "0", do not keep top (:OT)
-    "transparent_windows" : "0",  # if "0", do not keep interior (:OC), set all triangles to opaque
+    "center_parts" : True,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
+    "convertible" : "0",  # if "0", delete :OT (top)
+    "transparent_windows" : "1",  # default="1"; if "0", do not keep interior (:OC), set all triangles to opaque
+    "resize_factor" : 1.15,  # 1.1 and 1.2 give good results for vanilla FCE4/FCE4M models; unchanged of 1.0 or smaller than 0.1
 }
 
 # Parse command-line
@@ -44,15 +58,16 @@ parser = argparse.ArgumentParser()
 parser.add_argument("path", nargs="+", help="file path")
 args = parser.parse_args()
 
-i = 0
-if not pathlib.Path(args.path[i]).is_file():
-    i += 2
-filepath_fce_input = pathlib.Path(args.path[i + 0])
-
-if i + 1 >= len(args.path):
+# Handle paths: 0 or 2 parameters, mandatory inpath, optional outpath
+arg_ofs = 0
+if not pathlib.Path(args.path[arg_ofs]).is_file():
+    arg_ofs += 2
+filepath_fce_input = pathlib.Path(args.path[arg_ofs + 0])
+if len(args.path) < arg_ofs + 2:
     filepath_fce_output = filepath_fce_input.parent / (filepath_fce_input.stem + "_out" + filepath_fce_input.suffix)
 else:
-    filepath_fce_output = pathlib.Path(args.path[i + 1])
+    filepath_fce_output = pathlib.Path(args.path[arg_ofs + 1])
+
 
 # -------------------------------------- wrappers
 def GetFceVersion(path):
@@ -73,13 +88,13 @@ def LoadFce(mesh, path):
         assert mesh.MValid() is True
         return mesh
 
-def WriteFce(version, mesh, path, center_parts=1, mesh_function=None):
+def WriteFce(version, mesh, path, center_parts=True, mesh_function=None):
     if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
         mesh = mesh_function(mesh, version)
     with open(path, "wb") as f:
-        if version == "3":
+        if version in ("3", 3):
             buf = mesh.IoEncode_Fce3(center_parts)
-        elif version == "4":
+        elif version in ("4", 4):
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)
@@ -127,15 +142,28 @@ def PrintMeshParts(mesh, fuse_map):
     for pid in range(mesh.MNumParts):
         print(f"{pid:<4} {mesh.PGetName(pid):<32} {fuse_map.get(mesh.PGetName(pid), ''):<24}")
 
-def RemoveSemiTransparencyTriagFlagFromWindows(mesh, pid):
-    flags = mesh.PGetTriagsFlags(pid)
-    for j in range(flags.shape[0]):
-        if flags[j] & 0x7F0 > 0x010:  # only windows to opaque
-            # print(f"{hex(flags[i])} -> {hex(flags[i] & 0xFFFFFFF7)}")
-            flags[j] = flags[j] & 0xFFFFFFF7
-    mesh.PSetTriagsFlags(pid, flags)
+
+def FlipTriangleFlag(mesh: fcecodec.Mesh, pid: int, flag: int, on=False, condition: int=None, verbose=True):
+    """
+        Expects 'flag' is power of 2 (e.g., 2, 4, 8, ...)
+
+        If 'condition' is not None, flip only where triangle_flag & 0x7FFFFFFF >= condition
+    """
+    assert flag == int(np.sqrt(flag)**2)
+    if verbose:
+        print(f"FlipTriangleFlag: pid={pid} flag={bin(flag)} on={on} condition={bin(condition)}")
+    tflags = mesh.PGetTriagsFlags(pid)
+    if not on:
+        flag = ~flag
+    if condition is None:
+        tflags &= flag
+    else:
+        tflags = np.where(tflags & 0x7FFFFFFF >= condition, tflags & flag, tflags)
+    mesh.PSetTriagsFlags(pid, tflags)
+    return mesh
 
 
+#
 def main():
     # Process configuration / parameters
     if CONFIG["fce_version"] == "keep":
@@ -149,7 +177,7 @@ def main():
 
     print(args.path[1])
 
-    if i > 1:
+    if arg_ofs > 1:
         convertible_opt = {
             "0": 0,
             "1": 1,
@@ -159,7 +187,7 @@ def main():
             "0": 0,
             "1": 1,
             "opaque" : 0,
-            "transp" : 1,
+            "transparent" : 1,
         }
         if args.path[0] not in ["0", "1", "convertible"]:
             print(f"requires convertible = 0|1 (received {args.path[0]})")
@@ -178,6 +206,44 @@ def main():
     mesh = LoadFce(mesh, filepath_fce_input)
 
     if mesh.MNumParts > 1:
+        fce4_canonical_partnames = [
+            # car.fce
+            ":HB",
+            ":MB",
+            ":LB",
+            ":TB",
+            ":OT",
+            ":OL",
+            ":OS",
+            ":OLB",
+            ":ORB",
+            ":OLM",
+            ":ORM",
+            ":OC",
+            ":ODL",
+            ":OH",
+            ":OD",
+            ":OND",
+            ":HLFW",
+            ":HRFW",
+            ":HLMW",
+            ":HRMW",
+            ":HLRW",
+            ":HRRW",
+            ":MLFW",
+            ":MRFW",
+            ":MLMW",
+            ":MRMW",
+            ":MLRW",
+            ":MRRW",
+            # hel.fce
+            "'body'",
+            "'main'",
+            "'tail'",
+            ":LB",
+            ":Lmain",
+            ":Ltail",
+        ]
         fce4_fuse_map = {
             ":HB": ":HB",
             ":OT": ":HB",
@@ -224,7 +290,7 @@ def main():
         fce4_fuse_map.pop(Hbody_order[0], None)
         print(f"remaining fce4_fuse_map={fce4_fuse_map}")
 
-        if fce4_fuse_map:
+        if len(fce4_fuse_map) > 0:
             delete_parts = []
             pid = GetMeshPartnameIdx(mesh, Hbody_order[0])
             delete_parts += [pid]
@@ -245,22 +311,38 @@ def main():
             PrintMeshParts(mesh, fce4_fuse_map)
             print(f"renaming part {new_pid} {mesh.PGetName(new_pid)} to :HB")
             mesh.PSetName(new_pid, ":HB")
-            # cleanup
-            for idx in reversed(range(mesh.MNumParts)):
-                if idx in delete_parts:
-                    print(f"deleting part {idx} '{mesh.PGetName(idx)}'")
-                    mesh.OpDeletePart(idx)
         PrintMeshParts(mesh, fce4_fuse_map)
 
         print(f"remaining fce4_fuse_map={fce4_fuse_map}")
 
-        if not transparent_windows:
-            print("RemoveSemiTransparencyTriagFlagFromWindows()")
-            pid = GetMeshPartnameIdx(mesh, ":HB")
-            RemoveSemiTransparencyTriagFlagFromWindows(mesh, pid)
+        # Cleanup: delete
+        delete_parts = sorted(delete_parts, reverse=True)
+        print(f"delete_parts={delete_parts}")
+        assert delete_parts[0] < mesh.MNumParts
+        for pid in reversed(range(mesh.MNumParts)):
+            pn = mesh.PGetName(pid)
+            if pid in delete_parts or not pn in fce4_canonical_partnames:
+                print(f"deleting part {pid} '{pn}'")
+                mesh.OpDeletePart(pid)
 
-    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"],
-             mesh_function=None)
+        # Optionally remove all semi-transparency
+        if not transparent_windows:
+            print("Selected opaque: remove semi-transparency, if window")
+            pid = GetMeshPartnameIdx(mesh, ":HB")
+            mesh = FlipTriangleFlag(mesh, pid, flag=0x8, condition=0x010, on=False)  # remove semi-transparency, if window
+
+        # Resize
+        resize_factor = float(CONFIG["resize_factor"])
+        if resize_factor > 0.0 and abs(resize_factor) > 0.1:
+            # for pid in reversed(range(mesh.MNumParts)):
+            #     mesh.OpCenterPart(pid)
+            #     # mesh.PSetPos(pid, [0, 0, 0])
+            v = mesh.MVertsPos  # xyzxyzxyz...
+            mesh.MVertsPos = v * resize_factor
+            dv = mesh.MGetDummyPos()  # xyzxyzxyz...
+            mesh.MSetDummyPos(dv * resize_factor)
+
+    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"])
     PrintFceInfo(filepath_fce_output)
     print(f"FILE = {filepath_fce_output}", flush=True)
 

@@ -18,8 +18,8 @@
 """
     fcecodecScriptTemplate.py - description
 
-HOW TO USE
-    python fcecodecScriptTemplate.py /path/to/model.fce
+USAGE
+    python fcecodecScriptTemplate.py /path/to/model.fce [/path/to/output.fce]
 
 REQUIRES
     installing <https://github.com/bfut/fcecodec>
@@ -33,7 +33,7 @@ import numpy as np
 
 CONFIG = {
     "fce_version"  : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
-    "center_parts" : 0,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
+    "center_parts" : False,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
 }
 
 script_path = pathlib.Path(__file__).parent
@@ -43,6 +43,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("path", nargs="+", help="file path")
 args = parser.parse_args()
 
+# Handle paths: mandatory inpath, optional outpath
 filepath_fce_input = pathlib.Path(args.path[0])
 if len(args.path) < 2:
     filepath_fce_output = filepath_fce_input.parent / (filepath_fce_input.stem + "_out" + filepath_fce_input.suffix)
