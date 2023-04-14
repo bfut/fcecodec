@@ -26,22 +26,20 @@ import setuptools
 # Available at setup time due to pyproject.toml
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 
-
-# ------------------------------------------------------------------------------
-
 if os.environ.get("FCECVERBOSE") is not None:
     print(f'FCECVERBOSE={os.environ["FCECVERBOSE"]}')
 
 script_path = pathlib.Path(__file__).parent.resolve()
 os.chdir(script_path)
+
 print("try reading VERSION_INFO from fcelib.h...")
-with open(script_path / "../src/fcelib/fcelib.h", mode="r", encoding="utf8") as f:
+with open(script_path / "./src/fcelib/fcelib.h", mode="r", encoding="utf8") as f:
     for _ in range(36 - 1):
         next(f)
     __version__ = f.readline().rstrip().split("\"")[-2]
     print(f"VERSION_INFO={__version__}")
 
-long_description = (script_path / "../README.md").read_text(encoding="utf-8")
+long_description = (script_path / "./README.md").read_text(encoding="utf-8")
 
 extra_compile_args = []
 if "PYMEM_MALLOC" in os.environ:
@@ -107,7 +105,7 @@ else:
 ext_modules = [
     Pybind11Extension(
         "fcecodec",
-        sorted(["fcecodecmodule.cpp"]),
+        sorted(["python/fcecodecmodule.cpp"]),
         # Example: passing in the version to the compiled code
         define_macros=[
             # https://github.com/pybind/python_example/issues/12
@@ -128,11 +126,22 @@ setuptools.setup(
     description="FCE decoder/encoder",
     long_description=long_description,
     long_description_content_type="text/markdown",
+    classifiers=[
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: End Users/Desktop",
+        "Intended Audience :: Developers",
+        "Topic :: Artistic Software",
+        "Topic :: Games/Entertainment",
+        "Topic :: Multimedia :: Graphics :: 3D Modeling",
+        "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python :: 3",
+    ],
     ext_modules=ext_modules,
-    python_requires=">=3.8",
     # extras_require={"test": "pytest"},
     # # Currently, build_ext only provides an optional "highest supported C++
     # # level" feature, but in the future it may provide more features.
     cmdclass={"build_ext": build_ext},
     zip_safe=False,
+    python_requires=">=3.8",
 )

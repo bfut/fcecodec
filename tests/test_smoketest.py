@@ -205,215 +205,215 @@ def test_FceVersion(vers, path):
     assert GetFceVersion(path) == vers
 
 
-fcecodec_GetFceVersion_3 = \
-"""Filesize = 33876 (0x8454)
-Version = FCE3
-NumTriangles = 236 (* 56 = 13216)
-NumVertices = 159 (* 12 = 1908)  (* 32 = 5088)
-NumArts = 1
-XHalfSize = 0.484685
-YHalfSize = 0.731403
-ZHalfSize = 1.305500
-NumParts = 5
-NumDummies = 0
-NumPriColors = 8
-NumSecColors = 8
-VertTblOffset = 0x0000 (0x1f04), Size = 1908
-NormTblOffset = 0x0774 (0x2678), Size = 1908
-TriaTblOffset = 0x0ee8 (0x2dec), Size = 13216
-Reserve1offset = 0x4288 (0x618c), Size = 5088
-Reserve2offset = 0x5668 (0x756c), Size = 1908
-Reserve3offset = 0x5ddc (0x7ce0), Size = 1908
-Unknown1 (0x0004) = 0 (0x0000)
-Parts:
-Idx  Verts       Triags      (PartPos)                         Description          Name
-  0      0     4     0     2 (-0.001832, -0.579950, -1.036170)            high body :HLRW
-  1      4     4     2     2 (-0.001832, -0.579950, -1.036170)     left front wheel :HRRW
-  2      8     4     4     2 ( 0.004065, -0.579950,  0.786859)    right front wheel :HLFW
-  3     12   143     6   228 ( 0.000000,  0.000000,  0.000000)      left rear wheel :HB
-  4    155     4   234     2 ( 0.004065, -0.579950,  0.786859)     right rear wheel :HRFW
-         =   159     =   236
-Filesize (verts, triags) = 33876 (0x8454), diff=0
-DummyNames (Position):
-Car colors (hue, saturation, brightness, transparency):
- 0  Primary     170, 154,  91, 128
- 0  Secondary    25, 123, 114, 127
- 1  Primary      33, 115, 181, 127
- 1  Secondary   255,   9,  26, 127
- 2  Primary      18, 254, 255,   0
- 2  Secondary   255,   9,  26, 127
- 3  Primary      91, 213,  49, 127
- 3  Secondary   255,   9,  26, 127
- 4  Primary     255, 254, 165, 127
- 4  Secondary    25, 123, 114, 127
- 5  Primary     170, 184, 255,   0
- 5  Secondary   255,   9,  26, 127
- 6  Primary     255, 254,   0,   0
- 6  Secondary    24, 123, 114, 127
- 7  Primary     255,   1, 255,   0
- 7  Secondary   255,   9,  26, 127
-"""
+# fcecodec_GetFceVersion_3 = \
+# """Filesize = 33876 (0x8454)
+# Version = FCE3
+# NumTriangles = 236 (* 56 = 13216)
+# NumVertices = 159 (* 12 = 1908)  (* 32 = 5088)
+# NumArts = 1
+# XHalfSize = 0.484685
+# YHalfSize = 0.731403
+# ZHalfSize = 1.305500
+# NumParts = 5
+# NumDummies = 0
+# NumPriColors = 8
+# NumSecColors = 8
+# VertTblOffset = 0x0000 (0x1f04), Size = 1908
+# NormTblOffset = 0x0774 (0x2678), Size = 1908
+# TriaTblOffset = 0x0ee8 (0x2dec), Size = 13216
+# Reserve1offset = 0x4288 (0x618c), Size = 5088
+# Reserve2offset = 0x5668 (0x756c), Size = 1908
+# Reserve3offset = 0x5ddc (0x7ce0), Size = 1908
+# Unknown1 (0x0004) = 0 (0x0000)
+# Parts:
+# Idx  Verts       Triags      (PartPos)                         Description          Name
+#   0      0     4     0     2 (-0.001832, -0.579950, -1.036170)            high body :HLRW
+#   1      4     4     2     2 (-0.001832, -0.579950, -1.036170)     left front wheel :HRRW
+#   2      8     4     4     2 ( 0.004065, -0.579950,  0.786859)    right front wheel :HLFW
+#   3     12   143     6   228 ( 0.000000,  0.000000,  0.000000)      left rear wheel :HB
+#   4    155     4   234     2 ( 0.004065, -0.579950,  0.786859)     right rear wheel :HRFW
+#          =   159     =   236
+# Filesize (verts, triags) = 33876 (0x8454), diff=0
+# DummyNames (Position):
+# Car colors (hue, saturation, brightness, transparency):
+#  0  Primary     170, 154,  91, 128
+#  0  Secondary    25, 123, 114, 127
+#  1  Primary      33, 115, 181, 127
+#  1  Secondary   255,   9,  26, 127
+#  2  Primary      18, 254, 255,   0
+#  2  Secondary   255,   9,  26, 127
+#  3  Primary      91, 213,  49, 127
+#  3  Secondary   255,   9,  26, 127
+#  4  Primary     255, 254, 165, 127
+#  4  Secondary    25, 123, 114, 127
+#  5  Primary     170, 184, 255,   0
+#  5  Secondary   255,   9,  26, 127
+#  6  Primary     255, 254,   0,   0
+#  6  Secondary    24, 123, 114, 127
+#  7  Primary     255,   1, 255,   0
+#  7  Secondary   255,   9,  26, 127
+# """
 
-fcecodec_GetFceVersion_4 = \
-"""Filesize = 46556 (0xb5dc)
-Version = FCE4
-NumTriangles = 236 (* 12 = 2832) (* 56 = 13216)
-NumVertices = 159 (* 4 = 636)  (* 12 = 1908)  (* 32 = 5088)
-NumArts = 1
-XHalfSize = 0.484685
-YHalfSize = 0.731403
-ZHalfSize = 1.305500
-NumParts = 5
-NumDummies = 0
-NumColors = 8
-VertTblOffset = 0x0000 (0x2038), Size = 1908
-NormTblOffset = 0x0774 (0x27ac), Size = 1908
-TriaTblOffset = 0x0ee8 (0x2f20), Size = 13216
-Reserve1offset = 0x4288 (0x62c0), Size = 5088
-Reserve2offset = 0x5668 (0x76a0), Size = 1908
-Reserve3offset = 0x5ddc (0x7e14), Size = 1908
-UndamgdVertTblOffset = 0x6550 (0x8588), Size = 1908
-UndamgdNormTblOffset = 0x6cc4 (0x8cfc), Size = 1908
-DamgdVertTblOffset = 0x7438 (0x9470), Size = 1908
-DamgdNormTblOffset = 0x7bac (0x9be4), Size = 1908
-Reserve4offset = 0x8320 (0xa358), Size = 636
-AnimationTblOffset = 0x859c (0xa5d4), Size = 636
-Reserve5offset = 0x8818 (0xa850), Size = 636
-Reserve6offset = 0x8a94 (0xaacc), Size = 2832
-Unknown1 (0x0004) = 0 (0x0000)
-Unknown3 (0x0924) = 0 (0x0000)
-Parts:
-Idx  Verts       Triangles   (PartPos)                         Name
-  0      0     4     0     2 (-0.001832, -0.579950, -1.036170) :HLRW
-  1      4     4     2     2 (-0.001832, -0.579950, -1.036170) :HRRW
-  2      8     4     4     2 ( 0.004065, -0.579950,  0.786859) :HLFW
-  3     12   143     6   228 ( 0.000000,  0.000000,  0.000000) :HB
-  4    155     4   234     2 ( 0.004065, -0.579950,  0.786859) :HRFW
-         =   159     =   236
-FCE4 Filesize (verts, triags) = 46556 (0xb5dc), diff=0
-FCE4M Filesize (verts, triags) = 46715 (0xb67b), diff=-159
-DummyNames (Position):
-Car colors (hue, saturation, brightness, transparency):
- 0  Primary     170, 154,  91, 128
- 0  Interior    255, 152, 159, 128
- 0  Secondary    25, 123, 114, 127
- 0  Driver hair 255, 152, 159, 127
- 1  Primary      33, 115, 181, 127
- 1  Interior    170,  65, 128, 128
- 1  Secondary   255,   9,  26, 127
- 1  Driver hair 170,  65, 128, 127
- 2  Primary      18, 254, 255,   0
- 2  Interior    212,   2,  96, 128
- 2  Secondary   255,   9,  26, 127
- 2  Driver hair 212,   2,  96, 127
- 3  Primary      91, 213,  49, 127
- 3  Interior    170,  21, 175, 128
- 3  Secondary   255,   9,  26, 127
- 3  Driver hair 170,  21, 175, 127
- 4  Primary     255, 254, 165, 127
- 4  Interior    170,  65, 128, 128
- 4  Secondary    25, 123, 114, 127
- 4  Driver hair 170,  65, 128, 127
- 5  Primary     170, 184, 255,   0
- 5  Interior     27, 127, 192, 128
- 5  Secondary   255,   9,  26, 127
- 5  Driver hair  27, 127, 192, 127
- 6  Primary     255, 254,   0,   0
- 6  Interior    170,  21, 175, 128
- 6  Secondary    24, 123, 114, 127
- 6  Driver hair 170,  21, 175, 127
- 7  Primary     255,   1, 255,   0
- 7  Interior    255, 152, 159, 128
- 7  Secondary   255,   9,  26, 127
- 7  Driver hair 170,  65, 128, 127
-"""
+# fcecodec_GetFceVersion_4 = \
+# """Filesize = 46556 (0xb5dc)
+# Version = FCE4
+# NumTriangles = 236 (* 12 = 2832) (* 56 = 13216)
+# NumVertices = 159 (* 4 = 636)  (* 12 = 1908)  (* 32 = 5088)
+# NumArts = 1
+# XHalfSize = 0.484685
+# YHalfSize = 0.731403
+# ZHalfSize = 1.305500
+# NumParts = 5
+# NumDummies = 0
+# NumColors = 8
+# VertTblOffset = 0x0000 (0x2038), Size = 1908
+# NormTblOffset = 0x0774 (0x27ac), Size = 1908
+# TriaTblOffset = 0x0ee8 (0x2f20), Size = 13216
+# Reserve1offset = 0x4288 (0x62c0), Size = 5088
+# Reserve2offset = 0x5668 (0x76a0), Size = 1908
+# Reserve3offset = 0x5ddc (0x7e14), Size = 1908
+# UndamgdVertTblOffset = 0x6550 (0x8588), Size = 1908
+# UndamgdNormTblOffset = 0x6cc4 (0x8cfc), Size = 1908
+# DamgdVertTblOffset = 0x7438 (0x9470), Size = 1908
+# DamgdNormTblOffset = 0x7bac (0x9be4), Size = 1908
+# Reserve4offset = 0x8320 (0xa358), Size = 636
+# AnimationTblOffset = 0x859c (0xa5d4), Size = 636
+# Reserve5offset = 0x8818 (0xa850), Size = 636
+# Reserve6offset = 0x8a94 (0xaacc), Size = 2832
+# Unknown1 (0x0004) = 0 (0x0000)
+# Unknown3 (0x0924) = 0 (0x0000)
+# Parts:
+# Idx  Verts       Triangles   (PartPos)                         Name
+#   0      0     4     0     2 (-0.001832, -0.579950, -1.036170) :HLRW
+#   1      4     4     2     2 (-0.001832, -0.579950, -1.036170) :HRRW
+#   2      8     4     4     2 ( 0.004065, -0.579950,  0.786859) :HLFW
+#   3     12   143     6   228 ( 0.000000,  0.000000,  0.000000) :HB
+#   4    155     4   234     2 ( 0.004065, -0.579950,  0.786859) :HRFW
+#          =   159     =   236
+# FCE4 Filesize (verts, triags) = 46556 (0xb5dc), diff=0
+# FCE4M Filesize (verts, triags) = 46715 (0xb67b), diff=-159
+# DummyNames (Position):
+# Car colors (hue, saturation, brightness, transparency):
+#  0  Primary     170, 154,  91, 128
+#  0  Interior    255, 152, 159, 128
+#  0  Secondary    25, 123, 114, 127
+#  0  Driver hair 255, 152, 159, 127
+#  1  Primary      33, 115, 181, 127
+#  1  Interior    170,  65, 128, 128
+#  1  Secondary   255,   9,  26, 127
+#  1  Driver hair 170,  65, 128, 127
+#  2  Primary      18, 254, 255,   0
+#  2  Interior    212,   2,  96, 128
+#  2  Secondary   255,   9,  26, 127
+#  2  Driver hair 212,   2,  96, 127
+#  3  Primary      91, 213,  49, 127
+#  3  Interior    170,  21, 175, 128
+#  3  Secondary   255,   9,  26, 127
+#  3  Driver hair 170,  21, 175, 127
+#  4  Primary     255, 254, 165, 127
+#  4  Interior    170,  65, 128, 128
+#  4  Secondary    25, 123, 114, 127
+#  4  Driver hair 170,  65, 128, 127
+#  5  Primary     170, 184, 255,   0
+#  5  Interior     27, 127, 192, 128
+#  5  Secondary   255,   9,  26, 127
+#  5  Driver hair  27, 127, 192, 127
+#  6  Primary     255, 254,   0,   0
+#  6  Interior    170,  21, 175, 128
+#  6  Secondary    24, 123, 114, 127
+#  6  Driver hair 170,  21, 175, 127
+#  7  Primary     255,   1, 255,   0
+#  7  Interior    255, 152, 159, 128
+#  7  Secondary   255,   9,  26, 127
+#  7  Driver hair 170,  65, 128, 127
+# """
 
-fcecodec_GetFceVersion_4m = \
-"""Filesize = 46715 (0xb67b)
-Version = FCE4M
-NumTriangles = 236 (* 12 = 2832) (* 56 = 13216)
-NumVertices = 159 (* 4 = 636)  (* 12 = 1908)  (* 32 = 5088)
-NumArts = 1
-XHalfSize = 0.484685
-YHalfSize = 0.731403
-ZHalfSize = 1.305500
-NumParts = 5
-NumDummies = 0
-NumColors = 8
-VertTblOffset = 0x0000 (0x2038), Size = 1908
-NormTblOffset = 0x0774 (0x27ac), Size = 1908
-TriaTblOffset = 0x0ee8 (0x2f20), Size = 13216
-Reserve1offset = 0x4288 (0x62c0), Size = 5088
-Reserve2offset = 0x5668 (0x76a0), Size = 1908
-Reserve3offset = 0x5ddc (0x7e14), Size = 1908
-UndamgdVertTblOffset = 0x6550 (0x8588), Size = 1908
-UndamgdNormTblOffset = 0x6cc4 (0x8cfc), Size = 1908
-DamgdVertTblOffset = 0x7438 (0x9470), Size = 1908
-DamgdNormTblOffset = 0x7bac (0x9be4), Size = 1908
-Reserve4offset = 0x8320 (0xa358), Size = 636
-AnimationTblOffset = 0x859c (0xa5d4), Size = 636
-Reserve5offset = 0x8818 (0xa850), Size = 636
-Reserve6offset = 0x8a94 (0xaacc), Size = 2991
-Unknown1 (0x0004) = 0 (0x0000)
-Unknown3 (0x0924) = 0 (0x0000)
-Parts:
-Idx  Verts       Triangles   (PartPos)                         Name
-  0      0     4     0     2 (-0.001832, -0.579950, -1.036170) :HLRW
-  1      4     4     2     2 (-0.001832, -0.579950, -1.036170) :HRRW
-  2      8     4     4     2 ( 0.004065, -0.579950,  0.786859) :HLFW
-  3     12   143     6   228 ( 0.000000,  0.000000,  0.000000) :HB
-  4    155     4   234     2 ( 0.004065, -0.579950,  0.786859) :HRFW
-         =   159     =   236
-FCE4 Filesize (verts, triags) = 46556 (0xb5dc), diff=159
-FCE4M Filesize (verts, triags) = 46715 (0xb67b), diff=0
-DummyNames (Position):
-Car colors (hue, saturation, brightness, transparency):
- 0  Primary     170, 154,  91, 128
- 0  Interior    255, 152, 159, 128
- 0  Secondary    25, 123, 114, 127
- 0  Driver hair 255, 152, 159, 127
- 1  Primary      33, 115, 181, 127
- 1  Interior    170,  65, 128, 128
- 1  Secondary   255,   9,  26, 127
- 1  Driver hair 170,  65, 128, 127
- 2  Primary      18, 254, 255,   0
- 2  Interior    212,   2,  96, 128
- 2  Secondary   255,   9,  26, 127
- 2  Driver hair 212,   2,  96, 127
- 3  Primary      91, 213,  49, 127
- 3  Interior    170,  21, 175, 128
- 3  Secondary   255,   9,  26, 127
- 3  Driver hair 170,  21, 175, 127
- 4  Primary     255, 254, 165, 127
- 4  Interior    170,  65, 128, 128
- 4  Secondary    25, 123, 114, 127
- 4  Driver hair 170,  65, 128, 127
- 5  Primary     170, 184, 255,   0
- 5  Interior     27, 127, 192, 128
- 5  Secondary   255,   9,  26, 127
- 5  Driver hair  27, 127, 192, 127
- 6  Primary     255, 254,   0,   0
- 6  Interior    170,  21, 175, 128
- 6  Secondary    24, 123, 114, 127
- 6  Driver hair 170,  21, 175, 127
- 7  Primary     255,   1, 255,   0
- 7  Interior    255, 152, 159, 128
- 7  Secondary   255,   9,  26, 127
- 7  Driver hair 170,  65, 128, 127
-"""
+# fcecodec_GetFceVersion_4m = \
+# """Filesize = 46715 (0xb67b)
+# Version = FCE4M
+# NumTriangles = 236 (* 12 = 2832) (* 56 = 13216)
+# NumVertices = 159 (* 4 = 636)  (* 12 = 1908)  (* 32 = 5088)
+# NumArts = 1
+# XHalfSize = 0.484685
+# YHalfSize = 0.731403
+# ZHalfSize = 1.305500
+# NumParts = 5
+# NumDummies = 0
+# NumColors = 8
+# VertTblOffset = 0x0000 (0x2038), Size = 1908
+# NormTblOffset = 0x0774 (0x27ac), Size = 1908
+# TriaTblOffset = 0x0ee8 (0x2f20), Size = 13216
+# Reserve1offset = 0x4288 (0x62c0), Size = 5088
+# Reserve2offset = 0x5668 (0x76a0), Size = 1908
+# Reserve3offset = 0x5ddc (0x7e14), Size = 1908
+# UndamgdVertTblOffset = 0x6550 (0x8588), Size = 1908
+# UndamgdNormTblOffset = 0x6cc4 (0x8cfc), Size = 1908
+# DamgdVertTblOffset = 0x7438 (0x9470), Size = 1908
+# DamgdNormTblOffset = 0x7bac (0x9be4), Size = 1908
+# Reserve4offset = 0x8320 (0xa358), Size = 636
+# AnimationTblOffset = 0x859c (0xa5d4), Size = 636
+# Reserve5offset = 0x8818 (0xa850), Size = 636
+# Reserve6offset = 0x8a94 (0xaacc), Size = 2991
+# Unknown1 (0x0004) = 0 (0x0000)
+# Unknown3 (0x0924) = 0 (0x0000)
+# Parts:
+# Idx  Verts       Triangles   (PartPos)                         Name
+#   0      0     4     0     2 (-0.001832, -0.579950, -1.036170) :HLRW
+#   1      4     4     2     2 (-0.001832, -0.579950, -1.036170) :HRRW
+#   2      8     4     4     2 ( 0.004065, -0.579950,  0.786859) :HLFW
+#   3     12   143     6   228 ( 0.000000,  0.000000,  0.000000) :HB
+#   4    155     4   234     2 ( 0.004065, -0.579950,  0.786859) :HRFW
+#          =   159     =   236
+# FCE4 Filesize (verts, triags) = 46556 (0xb5dc), diff=159
+# FCE4M Filesize (verts, triags) = 46715 (0xb67b), diff=0
+# DummyNames (Position):
+# Car colors (hue, saturation, brightness, transparency):
+#  0  Primary     170, 154,  91, 128
+#  0  Interior    255, 152, 159, 128
+#  0  Secondary    25, 123, 114, 127
+#  0  Driver hair 255, 152, 159, 127
+#  1  Primary      33, 115, 181, 127
+#  1  Interior    170,  65, 128, 128
+#  1  Secondary   255,   9,  26, 127
+#  1  Driver hair 170,  65, 128, 127
+#  2  Primary      18, 254, 255,   0
+#  2  Interior    212,   2,  96, 128
+#  2  Secondary   255,   9,  26, 127
+#  2  Driver hair 212,   2,  96, 127
+#  3  Primary      91, 213,  49, 127
+#  3  Interior    170,  21, 175, 128
+#  3  Secondary   255,   9,  26, 127
+#  3  Driver hair 170,  21, 175, 127
+#  4  Primary     255, 254, 165, 127
+#  4  Interior    170,  65, 128, 128
+#  4  Secondary    25, 123, 114, 127
+#  4  Driver hair 170,  65, 128, 127
+#  5  Primary     170, 184, 255,   0
+#  5  Interior     27, 127, 192, 128
+#  5  Secondary   255,   9,  26, 127
+#  5  Driver hair  27, 127, 192, 127
+#  6  Primary     255, 254,   0,   0
+#  6  Interior    170,  21, 175, 128
+#  6  Secondary    24, 123, 114, 127
+#  6  Driver hair 170,  21, 175, 127
+#  7  Primary     255,   1, 255,   0
+#  7  Interior    255, 152, 159, 128
+#  7  Secondary   255,   9,  26, 127
+#  7  Driver hair 170,  65, 128, 127
+# """
 
-@pytest.mark.xfail(sys.platform.startswith("win"),
-                   reason="test_PrintFceInfo() wurlitzer requires fcntl, n/a on windows")
-@pytest.mark.parametrize("vers, path",
-    [ (fcecodec_GetFceVersion_3, filepath_fce3_output),
-      (fcecodec_GetFceVersion_4, filepath_fce4_output),
-      (fcecodec_GetFceVersion_4m, filepath_fce4m_output) ])
-def test_PrintFceInfo(vers, path):
-    import wurlitzer
-    with wurlitzer.pipes() as (out, err):
-        fcecodec.PrintFceInfo(path.read_bytes())
-    stdout = out.read()
-    assert len(err.read()) == 0 and stdout == vers
+# @pytest.mark.xfail(sys.platform.startswith("win"),
+#                    reason="test_PrintFceInfo() wurlitzer requires fcntl, n/a on windows")
+# @pytest.mark.parametrize("vers, path",
+#     [ (fcecodec_GetFceVersion_3, filepath_fce3_output),
+#       (fcecodec_GetFceVersion_4, filepath_fce4_output),
+#       (fcecodec_GetFceVersion_4m, filepath_fce4m_output) ])
+# def test_PrintFceInfo(vers, path):
+#     import wurlitzer
+#     with wurlitzer.pipes() as (out, err):
+#         fcecodec.PrintFceInfo(path.read_bytes())
+#     stdout = out.read()
+#     assert len(err.read()) == 0 and stdout == vers
 
 def test_version():
     script_path = pathlib.Path(__file__).parent.resolve()

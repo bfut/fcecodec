@@ -40,11 +40,11 @@ def ReorderTriagsTransparentDetachedAndToLast(mesh, pid_opaq):
 
 def HiBody_ReorderTriagsTransparentToLast(mesh, version):
     """ Not implemented for FCE4M because windows are separate parts """
-    if version == "3":
+    if version in ("3", 3):
         mesh = ReorderTriagsTransparentDetachedAndToLast(mesh, 0)  # high body
         if mesh.MNumParts >= 12:
             mesh = ReorderTriagsTransparentDetachedAndToLast(mesh, 12)  # high headlights
-    elif version == "4":
+    elif version in ("4", 4):
         for partname in (":HB", ":OT", ":OL"):
             pid = GetMeshPartnameIdx(mesh, partname)
             if pid >= 0:
@@ -69,13 +69,13 @@ def LoadFce(mesh, path):
         assert mesh.MValid() is True
         return mesh
 
-def WriteFce(version, mesh, path, center_parts=1, mesh_function=None):
+def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
     if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
         mesh = mesh_function(mesh, version)
     with open(path, "wb") as f:
-        if version == "3":
+        if version in ("3", 3):
             buf = mesh.IoEncode_Fce3(center_parts)
-        elif version == "4":
+        elif version in ("4", 4):
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)

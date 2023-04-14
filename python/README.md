@@ -5,9 +5,10 @@ module.
 ## Installation
 Requires Python 3.8+
 
-        python -m pip install --upgrade numpy pip wheel setuptools pybind11
+        python -m pip install --upgrade pip numpy setuptools wheel pybind11
         git clone https://github.com/bfut/fcecodec.git
-        python -m pip install fcecodec/python
+        cd fcecodec
+        python -m pip install .
 
 #### Windows
 Install `Visual Studio` with the Python Development workload. For a detailed
