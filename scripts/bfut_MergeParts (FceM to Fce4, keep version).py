@@ -49,8 +49,13 @@ CONFIG = {
     "chopped_roof" : "0",  # chopped roof parts or not (expects "0"|"1")
     "convertible" : "0",  # convertible or not, if "1" overrides chopped_roof (expects "0"|"1")
     "hood_scoop" : "0",  # no hood scoop, small hood scoop or big hood scoop (expects "0"|"1"|"2")
-    "merge_side_windows" : 0,  # if 1, merge :Hswin or :Hswinchop to :Hbody
+    "merge_side_windows" : 0,  # if 1, merge :Hswin and :Hswinchop to :Hconvertible|:Htopchop and :Htopchop
     "delete_multi_texpage_triags" : True,  # default=True; delete triangles that have texpage > 0x00, will appear textureless in car.fce in FCE3 and FCE4
+    "keep_rollcage" : False,  # default=False; keep or delete :Hcage and :Hcagechop
+    "running_boards" : True,  # default=True; keep :Hboards (part.fce), if present
+    "fender_skirts" : False,  # default=False; keep :Hskirt and :Hskirtwell (part.fce), if present
+    "fenderlight" : True,  # default=True; keep :Hfenderlight (part.fce), if present
+    "fenders" : True,  # default=True; if True, overrides 'fenderlight' to False and 'running_boards' to True
 }
 
 
@@ -97,8 +102,8 @@ def GetMeshPartnameIdx(mesh, partname):
     return -1
 
 
-# -------------------------------------- more functions
-def FlipTriangleFlag(mesh: fcecodec.Mesh, pid: int, flag: int, on=False, condition: int=None, verbose=True):
+# -------------------------------------- script functions
+def FlipTriangleFlag(mesh: fcecodec.Mesh, pid: int, flag: int, on=False, condition=-1, verbose=True):
     """
         Expects 'flag' is power of 2 (e.g., 2, 4, 8, ...)
 
@@ -108,25 +113,28 @@ def FlipTriangleFlag(mesh: fcecodec.Mesh, pid: int, flag: int, on=False, conditi
     if verbose:
         print(f"FlipTriangleFlag: pid={pid} flag={bin(flag)} on={on} condition={bin(condition)}")
     tflags = mesh.PGetTriagsFlags(pid)
+    if on:
+        if condition <= 0:
+            tflags |= flag
+        else:
+            tflags = np.where(tflags & 0x7FFFFFFF >= condition, tflags | flag, tflags)
     if not on:
-        flag = ~flag
-    if condition is None:
-        tflags &= flag
-    else:
-        tflags = np.where(tflags & 0x7FFFFFFF >= condition, tflags & flag, tflags)
+        if condition <= 0:
+            tflags &= ~flag
+        else:
+            tflags = np.where(tflags & 0x7FFFFFFF >= condition, tflags & ~flag, tflags)
     mesh.PSetTriagsFlags(pid, tflags)
     return mesh
 
-def DeleteUnwantedParts(mesh, fce4m_merge_map, chopped_roof, convertible, hood_scoop, side_windows: bool):
+def DeleteUnwantedParts(mesh, fce4m_merge_map,
+                        chopped_roof, convertible, hood_scoop, keep_rollcage,
+                        running_boards, fender_skirts, fenderlight, fenders):
     to_be_deleted_parts = []
 
-    if convertible == 1 and chopped_roof == 0:
+    if convertible == 1:  # overrides chopped_roof
         print("Convertible selected (hence no chopped roof, no cage)")
         to_be_deleted_parts = [
-            ":Hcage",
-            ":Hcagechop",
             ":Hshieldchop",
-            # ":Hswin",
             ":Hswinchop",
             ":Htop",
             ":Htopchop"
@@ -134,7 +142,6 @@ def DeleteUnwantedParts(mesh, fce4m_merge_map, chopped_roof, convertible, hood_s
     elif convertible == 0 and chopped_roof == 0:
         print("Default roof selected")
         to_be_deleted_parts = [
-            ":Hcagechop",
             ":Hshieldchop",
             ":Hswinchop",
             ":Htopchop",
@@ -143,14 +150,11 @@ def DeleteUnwantedParts(mesh, fce4m_merge_map, chopped_roof, convertible, hood_s
     elif convertible == 0 and chopped_roof == 1:
         print("Chopped roof selected")
         to_be_deleted_parts = [
-            ":Hcage",
             ":Hshield",
             ":Hswin",
             ":Htop",
             ":Hconvertible"
         ]
-    elif chopped_roof == 1 and convertible == 1:
-        raise ValueError("chopped_roof == 1 and convertible == 1")
     else:
         raise ValueError("chopped_roof or convertible, not in [0, 1]")
 
@@ -176,14 +180,38 @@ def DeleteUnwantedParts(mesh, fce4m_merge_map, chopped_roof, convertible, hood_s
     else:
         raise ValueError("chopped_roof not in [0, 1, 2]")
 
-    if side_windows == 1:
-        print("Keep side-windows selected")
-    elif side_windows == 0:
-        print("No side-windows selected")
+    if keep_rollcage == 1 and convertible == 0:
+        print("Keep rollcage selected")
+        if chopped_roof == 1:
+            to_be_deleted_parts += [ ":Hcage" ]
+        elif chopped_roof == 0:
+            to_be_deleted_parts += [ ":Hcagechop" ]
+    else:
+        print("No rollcage selected")
         to_be_deleted_parts += [
-            ":Hswin",
-            ":Hswinchop",
+            ":Hcage",
+            ":Hcagechop",
         ]
+    if running_boards == 1:
+        print("Keep running boards selected")
+    else:
+        print("No running boards selected")
+        to_be_deleted_parts += [ ":Hboards" ]
+    if fender_skirts == 1:
+        print("Keep fender skirts selected")
+    else:
+        print("No fender skirts selected")
+        to_be_deleted_parts += [ ":Hskirt" ]
+    if fenderlight == 1:
+        print("Keep fenderlight selected")
+    else:
+        print("No fenderlight selected")
+        to_be_deleted_parts += [ ":Hfenderlight" ]
+    if fenders == 1:
+        print("Keep front and rear fenders selected")
+    else:
+        print("No front and rear fenders selected")
+        to_be_deleted_parts += [ ":Hffender", ":Hrfender" ]
 
     to_be_deleted_parts = set(to_be_deleted_parts)
 
@@ -223,7 +251,7 @@ def main():
         print(f"args={args}")
 
 
-    # Process configuration / parameters
+    # Process args
     if CONFIG["fce_version"] == "keep":
         fce_outversion = str(GetFceVersion(filepath_fce_input))
         if fce_outversion == "5":
@@ -258,9 +286,6 @@ def main():
             print(f"requires convertible = 0|1 (received {args.path[1]})")
             sys.exit()
         convertible = convertible_opt[args.path[1]]
-        if convertible == 1:
-            print("main: Convertible selected (hence no chopped roof)")
-            chopped_roof = 0
         if args.path[2] not in ["0", "1", "2", "none", "small", "big"]:
             print(f"requires hood_scoop = 0|1|2 (received {args.path[2]})")
             sys.exit()
@@ -269,6 +294,12 @@ def main():
         chopped_roof = int(CONFIG["chopped_roof"])
         convertible = int(CONFIG["convertible"])
         hood_scoop = int(CONFIG["hood_scoop"])
+    merge_side_windows = CONFIG["merge_side_windows"]
+    keep_rollcage = CONFIG["keep_rollcage"]
+    running_boards = CONFIG["running_boards"]
+    fender_skirts = CONFIG["fender_skirts"]
+    fenderlight = CONFIG["fenderlight"]
+    fenders = CONFIG["fenders"]
 
     # Load FCE
     mesh = fcecodec.Mesh()
@@ -287,23 +318,58 @@ def main():
                 mesh.MSetDummyPos(dv)
             mesh.MSetDummyNames(dmn)
 
+        # Process script parameters
+        if GetMeshPartnameIdx(mesh, ":Hconvertible") < 0:
+            print("Convertible top (:Hconvertible) not found, fall back to chooped_roof parameter")
+            convertible = 0
+        if convertible == 1:
+            print("Convertible selected (hence no chopped roof)")
+            chopped_roof = 0
+        if chopped_roof == 1 and GetMeshPartnameIdx(mesh, ":Htopchop") < 0:
+            print("Chopped roof top (:Htopchop) not found, fall back to  default roof")
+            chopped_roof = 0
+        if hood_scoop > 0 and GetMeshPartnameIdx(mesh, ":Hhoodhole") < 0:
+            print("Hood with hole (:Hhoodhole) not found, fall back default hood and no hood scoop")
+            hood_scoop = 0
+        if hood_scoop == 2 and GetMeshPartnameIdx(mesh, ":Hscooplarge") < 0:
+            print("Big hood scoop (:Hscooplarge) not found, fall back to small hood scoop")
+            hood_scoop = 1
+        if hood_scoop == 1 and GetMeshPartnameIdx(mesh, ":Hscoopsmall") < 0:
+            print("Small hood scoop (:Hscoopsmall) not found, fall back default hood")
+            hood_scoop = 0
+        if fenders == 1 and GetMeshPartnameIdx(mesh, ":Hffender") < 0:
+            print("Fenders (:Hffender) not found")
+            fenders = 0
+        if fenders == 1:
+            print("Fenders (:Hffender) found, overrides 'fenderlight' and 'running_boards' parameters")
+            running_boards = 1
+            fenderlight = 0
+
         fce4m_rename_map = {
             ":Hbody": ":HB",
             ":Hdashlight" : ":ODL",
             ":Hinterior": ":OC",
             ":Hheadlight": ":OL",
-            ":Hconvertible": ":OT",
             ":Hsteer": ":OD",
             ":Hlbrake" : ":OLB",
             ":Hrbrake" : ":ORB",
             ":Hlmirror" : ":OLM",
             ":Hrmirror" : ":ORM",
         }
+        if convertible == 1:
+            fce4m_rename_map.update({
+                ":Hconvertible": ":OT",
+            })
+
         fce4m_merge_map = {
+            ":Hboards": ":Hbody",
             ":Hbody": ":Hbody",
+            ":Hbumper": ":Hbody",
             ":Hconvertible": ":Hconvertible",
             # ":Hdashlight": ":Hdashlight",
-            # ":Hfenderlight": ,  ?????????????????
+            ":Hfenderlight": ":Hbody",
+            ":Hffender": ":Hbody",
+            ":Hrfender": ":Hbody",
             ":Hfirewall": ":Hinterior",
             # ":Hheadlight": ":Hheadlight",
             ":Hhood": ":Hbody",
@@ -316,28 +382,38 @@ def main():
             ":Hscoopsmall": ":Hbody",
             ":Hscooplarge": ":Hbody",
             ":Hskirt": ":Hbody",
-            ":Hskirtwell": ":Hbody",
+            # ":Hskirtwell": ":Hbody",  # useless
             ":Hsteer": ":Hsteer",
             ":Htrans": ":Hinterior",
             ":Hwheelwell": ":Hbody",
-            # ":Mwheelwell": ,  # useless
             ":Hcage": ":Hinterior",
             ":Hcagechop": ":Hinterior",
             ":Hshield": ":Hbody",
             ":Hshieldchop": ":Hbody",
-            ":Hswin": ":Hbody",
-            ":Hswinchop": ":Hbody",
             ":Htop": ":Htop",
             ":Htopchop": ":Htopchop",
         }
+        if merge_side_windows == 1:
+            print("Merge side_windows selected (merge to top)")
+            if convertible == 1:
+                fce4m_merge_map.update({
+                    ":Hswin": ":Hconvertible",
+                })
+            else:
+                fce4m_merge_map.update({
+                    ":Hswin": ":Htop",
+                    ":Hswinchop": ":Htopchop",
+                })
 
-        mesh, fce4m_merge_map = DeleteUnwantedParts(mesh, fce4m_merge_map, chopped_roof, convertible, hood_scoop, CONFIG["merge_side_windows"])
+        # Delete unnecessary parts
+        mesh, fce4m_merge_map = DeleteUnwantedParts(mesh, fce4m_merge_map,
+            chopped_roof, convertible, hood_scoop, keep_rollcage,
+            running_boards, fender_skirts, fenderlight, fenders)
         print(f"fce4m_merge_map={fce4m_merge_map}")
         PrintMeshParts(mesh, fce4m_merge_map)
 
-
-        # mesh = FlipTriangleFlag(mesh, GetMeshPartnameIdx(mesh, ":Hbody"), flag=0x8, on=True)
         # mesh = FlipTriangleFlag(mesh, GetMeshPartnameIdx(mesh, ":Hbody"), flag=0x2, on=False)
+        # mesh = FlipTriangleFlag(mesh, GetMeshPartnameIdx(mesh, ":Hbody"), flag=0x8, on=True)
 
         # mesh, fce4m_merge_map = ApplyMergeMap(mesh, fce4m_merge_map)
         print("Special case: merge :Hbody parts such that semi-transparent triangles have largest indexes")
@@ -347,8 +423,12 @@ def main():
             ":Hhoodhole",
             ":Hscoopsmall",
             ":Hscooplarge",
+            ":Hboards",
+            ":Hbumper",
+            ":Hfenderlight",
+            ":Hffender",
+            ":Hrfender",
             ":Hskirt",
-            ":Hskirtwell",
             ":Hwheelwell",
             ":Htop",
             ":Htopchop",
@@ -366,10 +446,11 @@ def main():
 
         print(f"Hbody_order={Hbody_order}")
 
-        fce4m_merge_map.pop(Hbody_order[0], None)
+        if len(Hbody_order) > 1:
+            fce4m_merge_map.pop(Hbody_order[0], None)
 
-        if len(fce4m_merge_map) > 0:
-            delete_parts = []
+        delete_parts = []
+        if len(fce4m_merge_map) > 0 and len(Hbody_order) > 1:
             pid = GetMeshPartnameIdx(mesh, Hbody_order[0])
             delete_parts += [pid]
             new_pid = mesh.OpCopyPart(pid)
@@ -380,9 +461,10 @@ def main():
                 fce4m_merge_map.pop(Hbody_order[idx], None)
 
                 pid = GetMeshPartnameIdx(mesh, Hbody_order[idx])
-                new_pid = mesh.OpMergeParts(new_pid, pid)
-                delete_parts += [pid, new_pid]
-                print(f"idx={idx} partname={Hbody_order[idx]} pid={pid} new_pid={new_pid}")
+                if pid != new_pid:
+                    new_pid = mesh.OpMergeParts(new_pid, pid)
+                    delete_parts += [pid, new_pid]
+                    print(f"idx={idx} partname={Hbody_order[idx]} pid={pid} new_pid={new_pid}")
             print(f"delete_parts={delete_parts}")
             delete_parts.pop()  # last part is our target and must be kept
             print(f"delete_parts={delete_parts}")
@@ -390,7 +472,11 @@ def main():
             # print(f"rename {mesh.PGetName(new_pid)} to :HB")
             mesh.PSetName(new_pid, ":Hbody")
             PrintMeshParts(mesh, fce4m_merge_map)
+        else:
+            new_pid = GetMeshPartnameIdx(mesh, ":Hbody")
+            mesh.PSetName(new_pid, ":Hbody")
 
+        if len(fce4m_merge_map) > 0:
             print(f"remaining fce4m_merge_map={fce4m_merge_map}")
             def ApplyMergeMap_Not_HB(mesh: fcecodec.Mesh, fce4m_merge_map: dict, delete_parts: list):
                 """
@@ -403,6 +489,7 @@ def main():
                     if original_pid < 0:
                         continue
                     for pname, target in fce4m_merge_map.items():
+                        pop_last = False
                         if target == target_part:
                             pid = GetMeshPartnameIdx(mesh, pname)
                             if pid < 0:
@@ -414,9 +501,11 @@ def main():
                                 delete_parts += [pid, new_pid]
                                 print(f"merged partname={pname} target={target} pid={pid} new_pid={new_pid}")
                                 print(f"delete_parts={delete_parts} + [{pid}, {new_pid}]")
+                                pop_last = True
                     mesh.PSetName(new_pid, target_part)
-                    delete_parts.pop()  # last part is our target and must be kept
-                    print(f"delete_parts={delete_parts}")
+                    if pop_last and len(delete_parts) > 0:
+                        delete_parts.pop()  # last part is our target and must be kept
+                        print(f"delete_parts={delete_parts}")
                 return delete_parts, {}
             delete_parts, fce4m_merge_map = ApplyMergeMap_Not_HB(mesh, fce4m_merge_map, delete_parts)
             PrintMeshParts(mesh, fce4m_merge_map)
@@ -424,7 +513,6 @@ def main():
             # Cleanup: delete and rename
             delete_parts = sorted(set(delete_parts), reverse=True)
             print(f"delete_parts={delete_parts}")
-            assert delete_parts[0] < mesh.MNumParts
             for pid in reversed(range(mesh.MNumParts)):
                 if pid in delete_parts:
                     print(f"deleting part {pid} '{mesh.PGetName(pid)}'")

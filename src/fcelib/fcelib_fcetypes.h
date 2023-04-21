@@ -350,6 +350,7 @@ const char *kFce4HiBodyParts[kFceLibNumFce4HiBodyParts] = {
 
 /*
 car.fce (FCE4)
+High body is the only mandatory part
 Name    Description              Damage  FallOf  UsesFlag  Light  Animated   Pursuit
 :HB     high body                Y       N       Y         N      N          N
 :MB     mid body                 Y       N       Y         N      N          N
@@ -390,25 +391,29 @@ Name    Description               UsesFlag  Animated
 :Ltail  low tail rotor            Y
 
 part.fce (FCE4M) - car
-Name              Description                   Damage  FallOf  UsesFlag  Light  Animated   Pursuit
-:Hbody            high body                     Y       N       Y         N      N          N
+Name              Description                   Damage  FallOf  UsesFlag  Light  Animated
+:Hboards          running boards                Y       N       Y         N      N
+:Hbody            high body                     Y       N       Y         N      N
+:Hbumper          front & rear bumpers          Y       N       Y         N      N
 :Hconvertible     top
 :Hdashlight       dashboard lights
-:Hfenderlight
+:Hfenderlight     lights, no fender             Y       N       Y         N      N
+:Hffender         lights & front fender         Y       N       Y         N      N
+:Hrfender         rear fender                   Y       N       Y         N      N
 :Hfirewall
-:Hheadlight       hidden lights
+:Hheadlight       hidden lights                                           Y
 :Hhood            engine hood
 :Hhoodhole        engine hood w/ hole
 :Hinterior        interior
-:Hlbrake          left brake front
-:Hrbrake          right brake front
-:Hlmirror         left mirror                   N       Y       Y         N      N          N
-:Hrmirror         right mirror                  N       Y       Y         N      N          N
+:Hlbrake          left front brake
+:Hrbrake          right front brake
+:Hlmirror         left mirror                   N       Y       Y         N      N
+:Hrmirror         right mirror                  N       Y       Y         N      N
 :Hscoopsmall      hood scoop small
 :Hscooplarge      hood scoop large
-:Hskirt
-:Hskirtwell
-:Hsteer           steering wheel                N       N       N         N      Y          N
+:Hskirt           rear wheel fender skirt
+:Hskirtwell       rear wheel skirt enclosing
+:Hsteer           steering wheel                N       N       N         N      Y
 :Htrans           transmission (underbody)
 :Hwheelwell       wheel wells (HB)
 :Mwheelwell       wheel wells (MB)
@@ -449,7 +454,8 @@ Name              Description                                         FoundIn   
 :PPRpipetip       right rear exhaust pipe                             *.viv/part.fce
 :PPLsidepipe      left side exhaust pipe                              *.viv/part.fce
 :PPRsidepipe      right side exhaust pipe                             *.viv/part.fce
-:PPspot           spotlight                                           *.viv/part.fce
+:PPsiren          roof siren (from cancelled pursuit mode)            *.viv/part.fce  siren.viv/part.fce
+:PPspot           spotlight (from cancelled pursuit mode)             *.viv/part.fce  spotlite.viv/part.fce
 :PPspoiler        rear spoiler                                        *.viv/part.fce  *.viv/spoiler.fce
 :PPwheelie        wheelie bar                                         *.viv/part.fce
 

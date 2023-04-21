@@ -49,24 +49,9 @@ CONFIG = {
     "fce_version"  : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
     "center_parts" : True,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
     "convertible" : "0",  # if "0", delete :OT (top)
-    "transparent_windows" : "1",  # default="1"; if "0", do not keep interior (:OC), set all triangles to opaque
-    "resize_factor" : 1.15,  # 1.1 and 1.2 give good results for vanilla FCE4/FCE4M models; unchanged of 1.0 or smaller than 0.1
+    "transparent_windows" : "1",  # default="1"; if "0", do not keep interior (:OC), high body window triangles are not semi-transparent
+    "resize_factor" : 1.1,  # 1.1 and 1.2 give good results for vanilla FCE4/FCE4M models; unchanged if 1.0 or smaller than 0.1
 }
-
-# Parse command-line
-parser = argparse.ArgumentParser()
-parser.add_argument("path", nargs="+", help="file path")
-args = parser.parse_args()
-
-# Handle paths: 0 or 2 parameters, mandatory inpath, optional outpath
-arg_ofs = 0
-if not pathlib.Path(args.path[arg_ofs]).is_file():
-    arg_ofs += 2
-filepath_fce_input = pathlib.Path(args.path[arg_ofs + 0])
-if len(args.path) < arg_ofs + 2:
-    filepath_fce_output = filepath_fce_input.parent / (filepath_fce_input.stem + "_out" + filepath_fce_input.suffix)
-else:
-    filepath_fce_output = pathlib.Path(args.path[arg_ofs + 1])
 
 
 # -------------------------------------- wrappers
@@ -112,7 +97,7 @@ def GetMeshPartnameIdx(mesh, partname):
     return -1
 
 
-#
+# -------------------------------------- script functions
 def DeleteUnwantedParts4(mesh, fce_part_fuse_map, convertible, transparent_windows):
     to_be_deleted_parts = []
 
@@ -136,12 +121,10 @@ def DeleteUnwantedParts4(mesh, fce_part_fuse_map, convertible, transparent_windo
             print(f"deleting part {mesh.PGetName(pid)}")
     return mesh, fce_part_fuse_map
 
-
 def PrintMeshParts(mesh, fuse_map):
     print("pid  PART NAME                        FUSE TO PART")
     for pid in range(mesh.MNumParts):
         print(f"{pid:<4} {mesh.PGetName(pid):<32} {fuse_map.get(mesh.PGetName(pid), ''):<24}")
-
 
 def FlipTriangleFlag(mesh: fcecodec.Mesh, pid: int, flag: int, on=False, condition: int=None, verbose=True):
     """
@@ -165,6 +148,21 @@ def FlipTriangleFlag(mesh: fcecodec.Mesh, pid: int, flag: int, on=False, conditi
 
 #
 def main():
+    # Parse command-line
+    parser = argparse.ArgumentParser()
+    parser.add_argument("path", nargs="+", help="file path")
+    args = parser.parse_args()
+
+    # Handle paths: 0 or 2 parameters, mandatory inpath, optional outpath
+    arg_ofs = 0
+    if not pathlib.Path(args.path[arg_ofs]).is_file():
+        arg_ofs += 2
+    filepath_fce_input = pathlib.Path(args.path[arg_ofs + 0])
+    if len(args.path) < arg_ofs + 2:
+        filepath_fce_output = filepath_fce_input.parent / (filepath_fce_input.stem + "_out" + filepath_fce_input.suffix)
+    else:
+        filepath_fce_output = pathlib.Path(args.path[arg_ofs + 1])
+
     # Process configuration / parameters
     if CONFIG["fce_version"] == "keep":
         fce_outversion = str(GetFceVersion(filepath_fce_input))
@@ -172,10 +170,6 @@ def main():
             fce_outversion = "4M"
     else:
         fce_outversion = CONFIG["fce_version"]
-
-    print("len", len(args.path) )
-
-    print(args.path[1])
 
     if arg_ofs > 1:
         convertible_opt = {
@@ -273,16 +267,17 @@ def main():
             ":OT",                 # hardtop / convertible top
         ]
         mesh_partnames = GetMeshPartnames(mesh)
-        for idx in reversed(range(len(Hbody_order))):
-            if Hbody_order[idx] not in fce4_fuse_map or Hbody_order[idx] not in mesh_partnames:
-                print("Hbody_order: delete", Hbody_order[idx])
-                fce4_fuse_map.pop(Hbody_order[idx], None)
+        if len(Hbody_order) > 0:
+            for idx in reversed(range(len(Hbody_order))):
+                if Hbody_order[idx] not in fce4_fuse_map or Hbody_order[idx] not in mesh_partnames:
+                    print("Hbody_order: delete", Hbody_order[idx])
+                    fce4_fuse_map.pop(Hbody_order[idx], None)
 
-                pid = GetMeshPartnameIdx(mesh, Hbody_order[idx])
-                if pid >= 0:
-                    print(f"delete part from mesh: {Hbody_order[idx]} ({pid})")
-                    mesh.OpDeletePart(pid)
-                Hbody_order.pop(idx)
+                    pid = GetMeshPartnameIdx(mesh, Hbody_order[idx])
+                    if pid >= 0:
+                        print(f"delete part from mesh: {Hbody_order[idx]} ({pid})")
+                        mesh.OpDeletePart(pid)
+                    Hbody_order.pop(idx)
 
 
         print(f"Hbody_order={Hbody_order}")
@@ -290,8 +285,8 @@ def main():
         fce4_fuse_map.pop(Hbody_order[0], None)
         print(f"remaining fce4_fuse_map={fce4_fuse_map}")
 
+        delete_parts = []
         if len(fce4_fuse_map) > 0:
-            delete_parts = []
             pid = GetMeshPartnameIdx(mesh, Hbody_order[0])
             delete_parts += [pid]
             new_pid = mesh.OpCopyPart(pid)

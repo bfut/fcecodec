@@ -94,7 +94,7 @@ def GetMeshPartnameIdx(mesh, partname):
     for pid in range(mesh.MNumParts):
         if mesh.PGetName(pid) == partname:
             return pid
-    print(f"GetMeshPartnameIdx: Warning: cannot find \"{partname}\"")
+    print(f"GetMeshPartnameIdx: Warning: cannot find '{partname}'")
     return -1
 
 def GetPartGlobalOrderVidxs(mesh, pid):

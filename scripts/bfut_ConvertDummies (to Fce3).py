@@ -16,10 +16,10 @@
 #    misrepresented as being the original software.
 # 3. This notice may not be removed or altered from any source distribution.
 """
-    bfut_ConvertDummiesToFce3.py - convert dummy names from FCE4 / FCE4M to FCE3
+    bfut_ConvertDummies (to Fce3).py - convert dummy names from FCE4 / FCE4M to FCE3
 
 USAGE
-    python bfut_ConvertDummiesToFce3.py /path/to/model.fce [/path/to/output.fce]
+    python bfut_ConvertDummies (to Fce3).py /path/to/model.fce [/path/to/output.fce]
 
 REQUIRES
     installing <https://github.com/bfut/fcecodec>

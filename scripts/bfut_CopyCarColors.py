@@ -33,15 +33,6 @@ CONFIG = {
     "fce_version" : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
 }
 
-# Parse command-line
-parser = argparse.ArgumentParser()
-parser.add_argument("path", nargs="+", help="file path")
-args = parser.parse_args()
-
-# Handle paths: mandatory source_path, mandatory target_path
-filepath_fce_input_source = pathlib.Path(args.path[0])
-filepath_fce_input = pathlib.Path(args.path[1])
-filepath_fce_output = filepath_fce_input
 
 # -------------------------------------- wrappers
 def GetFceVersion(path):
@@ -78,6 +69,16 @@ def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
 
 #
 def main():
+    # Parse command-line
+    parser = argparse.ArgumentParser()
+    parser.add_argument("path", nargs=2, help="file path")
+    args = parser.parse_args()
+
+    # Handle paths: mandatory source_path, mandatory target_path
+    filepath_fce_input_source = pathlib.Path(args.path[0])
+    filepath_fce_input = pathlib.Path(args.path[1])
+    filepath_fce_output = filepath_fce_input
+
     if CONFIG["fce_version"] == "keep":
         fce_outversion = str(GetFceVersion(filepath_fce_input))
         if fce_outversion == "5":
@@ -85,6 +86,7 @@ def main():
     else:
         fce_outversion = CONFIG["fce_version"]
 
+    # Load FCE
     mesh = fcecodec.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
 
@@ -93,6 +95,7 @@ def main():
     mesh_source = LoadFce(mesh_source, filepath_fce_input_source)
     mesh.MSetColors(mesh_source.MGetColors())
 
+    # Output FCE
     WriteFce(fce_outversion, mesh, filepath_fce_output)
     PrintFceInfo(filepath_fce_output)
     print(f"FILE = {filepath_fce_output}", flush=True)

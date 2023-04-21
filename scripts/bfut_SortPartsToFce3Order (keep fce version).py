@@ -85,8 +85,8 @@ def GetMeshPartnameIdx(mesh, partname):
     return -1
 
 
-#
-def PrintMeshParts(mesh, part_names_sorted):
+# -------------------------------------- script functions
+def PrintMeshParts_order(mesh, part_names_sorted):
     print("pid  IS                          SHOULD")
     for pid in range(mesh.MNumParts):
         print(f"{pid:<2} {mesh.PGetName(pid):<12} {part_names_sorted[pid]:<12}")
@@ -94,9 +94,11 @@ def PrintMeshParts(mesh, part_names_sorted):
 def AssertPartsOrder(mesh, part_names_sorted):
     for pid in range(mesh.MNumParts):
         if mesh.PGetName(pid) != part_names_sorted[pid]:
-            PrintMeshParts(mesh, part_names_sorted)
+            PrintMeshParts_order(mesh, part_names_sorted)
             raise AssertionError (f"pid={pid} {mesh.PGetName(pid)} != {part_names_sorted[pid]}")
 
+
+#
 def main():
     if CONFIG["fce_version"] == "keep":
         fce_outversion = str(GetFceVersion(filepath_fce_input))
@@ -158,7 +160,7 @@ def main():
 
     WriteFce(fce_outversion, mesh, filepath_fce_output)
     PrintFceInfo(filepath_fce_output)
-    print(f"FILE = {filepath_fce_output}", flush=True)
+    print(f"OUTPUT = {filepath_fce_output}", flush=True)
 
 
 if __name__ == "__main__":
