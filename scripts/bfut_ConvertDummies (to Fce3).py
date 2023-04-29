@@ -102,7 +102,10 @@ def DummiesToFce3(dms_pos, dms_names):
             print(x, "->", dms_names[i])
             continue
         # """
-        if x[0] == "B":
+        if x[:4] in ["HFLO", "HFRE", "HFLN", "HFRN", "TRLO", "TRRE", "TRLN",
+                     "TRRN", "SMLN", "SMRN"]:
+            pass  # keep canonical FCE3 names
+        elif x[0] == "B":
             # dms_names[i] = "TRLO"  # convert brake lights to taillights?
             pass
         elif x[0] in ["H", "I"]:

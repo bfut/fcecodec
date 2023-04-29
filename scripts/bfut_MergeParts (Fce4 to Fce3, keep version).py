@@ -50,7 +50,6 @@ CONFIG = {
     "center_parts" : True,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
     "convertible" : "0",  # if "0", delete :OT (top)
     "transparent_windows" : "1",  # default="1"; if "0", do not keep interior (:OC), high body window triangles are not semi-transparent
-    "resize_factor" : 1.1,  # 1.1 and 1.2 give good results for vanilla FCE4/FCE4M models; unchanged if 1.0 or smaller than 0.1
 }
 
 
@@ -73,7 +72,7 @@ def LoadFce(mesh, path):
         assert mesh.MValid() is True
         return mesh
 
-def WriteFce(version, mesh, path, center_parts=True, mesh_function=None):
+def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
     if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
         mesh = mesh_function(mesh, version)
     with open(path, "wb") as f:
@@ -313,7 +312,8 @@ def main():
         # Cleanup: delete
         delete_parts = sorted(delete_parts, reverse=True)
         print(f"delete_parts={delete_parts}")
-        assert delete_parts[0] < mesh.MNumParts
+        if len(delete_parts) > 0:
+            assert delete_parts[0] < mesh.MNumParts
         for pid in reversed(range(mesh.MNumParts)):
             pn = mesh.PGetName(pid)
             if pid in delete_parts or not pn in fce4_canonical_partnames:
@@ -325,17 +325,6 @@ def main():
             print("Selected opaque: remove semi-transparency, if window")
             pid = GetMeshPartnameIdx(mesh, ":HB")
             mesh = FlipTriangleFlag(mesh, pid, flag=0x8, condition=0x010, on=False)  # remove semi-transparency, if window
-
-        # Resize
-        resize_factor = float(CONFIG["resize_factor"])
-        if resize_factor > 0.0 and abs(resize_factor) > 0.1:
-            # for pid in reversed(range(mesh.MNumParts)):
-            #     mesh.OpCenterPart(pid)
-            #     # mesh.PSetPos(pid, [0, 0, 0])
-            v = mesh.MVertsPos  # xyzxyzxyz...
-            mesh.MVertsPos = v * resize_factor
-            dv = mesh.MGetDummyPos()  # xyzxyzxyz...
-            mesh.MSetDummyPos(dv * resize_factor)
 
     WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"])
     PrintFceInfo(filepath_fce_output)
