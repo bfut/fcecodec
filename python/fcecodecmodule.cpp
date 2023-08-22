@@ -275,7 +275,7 @@ py::buffer Mesh::MGetColors() const
     buf(i, 3, 3) = mesh_.hdr.DriColors[i].transparency;
   }
 
-  return std::move(result);
+  return result;
 }
 
 void Mesh::MSetColors(py::array_t<unsigned char, py::array::c_style | py::array::forcecast> arr)
@@ -381,7 +381,7 @@ py::buffer Mesh::MGetDummyPos() const
     buf(i * 3 + 1) = mesh_.hdr.Dummies[i].y;
     buf(i * 3 + 2) = mesh_.hdr.Dummies[i].z;
   }
-  return std::move(result);
+  return result;
 }
 
 void Mesh::MSetDummyPos(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
@@ -467,7 +467,7 @@ py::buffer Mesh::PGetPos(const int pid) const
   memcpy(&buf(0), &mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.x, sizeof(float));
   memcpy(&buf(1), &mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.y, sizeof(float));
   memcpy(&buf(2), &mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.z, sizeof(float));
-  return std::move(result);
+  return result;
 }
 void Mesh::PSetPos(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
@@ -520,7 +520,7 @@ py::buffer Mesh::PGetTriagsVidx(const int pid) const
     ++j;
   }
 
-  return std::move(result);
+  return result;
 }
 
 
@@ -544,7 +544,7 @@ py::buffer Mesh::PGetTriagsFlags(const int pid) const
     buf(j) = mesh_.triangles[ part->PTriangles[i] ]->flag;
     ++j;
   }
-  return std::move(result);
+  return result;
 }
 void Mesh::PSetTriagsFlags(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
@@ -600,7 +600,7 @@ py::buffer Mesh::PGetTriagsTexcoords(const int pid) const
     ++j;
   }
 
-  return std::move(result);
+  return result;
 }
 void Mesh::PSetTriagsTexcoords(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
@@ -653,7 +653,7 @@ py::buffer Mesh::PGetTriagsTexpages(const int pid) const
     buf(j) = mesh_.triangles[ part->PTriangles[i] ]->tex_page;
     ++j;
   }
-  return std::move(result);
+  return result;
 }
 void Mesh::PSetTriagsTexpages(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
@@ -712,7 +712,7 @@ py::buffer Mesh::MVertsGetMap_idx2order() const
     }  // for m
   }  // for k
 
-  return std::move(result);
+  return result;
 }
 
 
@@ -744,7 +744,7 @@ py::buffer Mesh::MGetVertsPos() const
     }  // for i
   }  // for k
 
-  return std::move(result);
+  return result;
 }
 void Mesh::MSetVertsPos(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
@@ -809,7 +809,7 @@ py::buffer Mesh::MGetVertsNorms() const
     }  // for i
   }  // for k
 
-  return std::move(result);
+  return result;
 }
 void Mesh::MSetVertsNorms(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
@@ -874,7 +874,7 @@ py::buffer Mesh::MGetDamgdVertsPos() const
     }  // for i
   }  // for k
 
-  return std::move(result);
+  return result;
 }
 void Mesh::MSetDamgdVertsPos(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
@@ -939,7 +939,7 @@ py::buffer Mesh::MGetDamgdVertsNorms() const
     }  // for i
   }  // for k
 
-  return std::move(result);
+  return result;
 }
 void Mesh::MSetDamgdVertsNorms(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
@@ -1002,7 +1002,7 @@ py::buffer Mesh::MGetVertsAnimation() const
     }  // for i
   }  // for k
 
-  return std::move(result);
+  return result;
 }
 void Mesh::MSetVertsAnimation(py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
