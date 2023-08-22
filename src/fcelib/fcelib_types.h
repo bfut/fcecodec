@@ -61,38 +61,34 @@ typedef struct {
 } FcelibTriangle;
 
 typedef struct {
-  char    PartName[64];
-  tVector PartPos;
-
   int     PNumVertices;    /* true count for this part */
   int     pvertices_len;   /* array length */
-  int    *PVertices;       /* ordered list of global vert idxs, -1 for unused */
-
   int     PNumTriangles;   /* true count for this part */
   int     ptriangles_len;  /* array length */
+  char    PartName[64];
+
+  tVector PartPos;
+  int    *PVertices;       /* ordered list of global vert idxs, -1 for unused */
   int    *PTriangles;      /* ordered list of global triag idxs, -1 for unused */
 } FcelibPart;
 
 typedef struct {
+  int      Unknown3;       /* FCE4M experimental */
   int      NumTriangles;
   int      NumVertices;
   int      NumArts;
-
-  int      Unknown3;       /* FCE4M experimental */
-
   int      NumParts;       /* true count */
-  int      *Parts;         /* ordered list of part indexes, -1 for unused */
-
   int      NumDummies;     /* <= 16 */
-  tVector  Dummies[16];
-  char     DummyNames[16 * 64];
-
   int      NumColors;      /* <= 16 */
   int      NumSecColors;   /* <= 16, FCE3 only */
+
   tColor4  PriColors[16];
   tColor4  IntColors[16];  /* FCE4 only */
   tColor4  SecColors[16];
   tColor4  DriColors[16];  /* FCE4 only */
+  tVector  Dummies[16];
+  char     DummyNames[16 * 64];
+  int      *Parts;         /* ordered list of part indexes, -1 for unused */
 } FcelibHeader;
 
 #ifdef __cplusplus
@@ -105,15 +101,15 @@ typedef struct {
   int              freed;          /* has instance been destroyed before? */
 #endif
 
+  int              parts_len;      /* array length */
+  int              triangles_len;  /* array length */
+  int              vertices_len;   /* array length */
+
   FcelibHeader     hdr;
 
-  int              parts_len;      /* array length */
   FcelibPart     **parts;          /* may contain NULL elements */
-
   /* Each vert and triag belongs to exactly one part, respectively. */
-  int              triangles_len;  /* array length */
   FcelibTriangle **triangles;      /* may contain NULL elements */
-  int              vertices_len;   /* array length */
   FcelibVertex   **vertices;       /* may contain NULL elements */
 } FcelibMesh;
 

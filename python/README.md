@@ -5,7 +5,6 @@ module.
 ## Installation
 Requires Python 3.8+
 
-        python -m pip install --upgrade pip setuptools wheel pybind11
         git clone https://github.com/bfut/fcecodec.git
         cd fcecodec
         python -m pip install .
