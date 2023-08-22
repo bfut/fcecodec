@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest ]
-        python-version: [ "3.8", "3.9", "3.10", "3.11" ]
+        python-version: [ "3.8", "3.11" ]
 
     name: Python ${{ matrix.python-version }} (${{ matrix.os }})
     steps:
@@ -46,7 +46,9 @@ jobs:
     - name: "Install numpy pytest wurlitzer"
       shell: bash
       run: |
-        python -m pip install numpy pytest wurlitzer
+        python -m pip install numpy
+        python -m pip install pytest
+        python -m pip install wurlitzer
 
     - name: "pytest"
       shell: bash
