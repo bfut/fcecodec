@@ -58,15 +58,29 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
   if (!mesh)
   {
     fprintf(stderr, "DecodeFce: mesh is NULL\n");
-    return 0;
+    return retv;
   }
 
+#ifdef FCELIB_PREVIEW_MESH2
+  if (!mesh->release || mesh->internal_consumed == 1)
+  {
+    fprintf(stderr, "DecodeFce: mesh is already consumed. Use another or a new mesh object.\n");
+    return retv;
+  }
+  if (mesh->release != &FCELIB_TYPES_FreeMesh)
+  {
+    fprintf(stderr, "DecodeFce: mesh is not initialized.\n");
+    return retv;
+  }
+  mesh->internal_consumed = 1;
+#else
   if (mesh->freed != 1)
   {
     fprintf(stderr, "DecodeFce: mesh is not free'd or initialized)\n");
-    return 0;
+    return retv;
   }
   mesh->freed = 0;
+#endif  /* FCELIB_PREVIEW_MESH2 */
 
   for (;;)
   {
@@ -76,7 +90,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
       break;
     }
 
-    memcpy(&fce_version, buf, (size_t)4);
+    memcpy(&fce_version, buf, 4);
 
     switch (fce_version)
     {
@@ -106,19 +120,19 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
         mesh->hdr.NumParts = header.NumParts;
         mesh->parts_len = mesh->hdr.NumParts;
 
-        mesh->hdr.Parts = (int *)malloc((size_t)mesh->parts_len * sizeof(int));
-        memset(mesh->hdr.Parts, -1, (size_t)mesh->parts_len * sizeof(int));
+        mesh->hdr.Parts = (int *)malloc(mesh->parts_len * sizeof(int));
+        memset(mesh->hdr.Parts, 0xFF, mesh->parts_len * sizeof(int));
         for (i = 0; i < header.NumParts; ++i)
           mesh->hdr.Parts[i] = i;
 
         mesh->hdr.NumDummies = header.NumDummies;
         for (i = 0; i < mesh->hdr.NumDummies; ++i)
         {
-          memcpy(&mesh->hdr.Dummies[i].x, buf + 0x005c + i * 12 + 0x0, (size_t)4);
-          memcpy(&mesh->hdr.Dummies[i].y, buf + 0x005c + i * 12 + 0x4, (size_t)4);
-          memcpy(&mesh->hdr.Dummies[i].z, buf + 0x005c + i * 12 + 0x8, (size_t)4);
+          memcpy(&mesh->hdr.Dummies[i].x, buf + 0x005c + i * 12 + 0x0, 4);
+          memcpy(&mesh->hdr.Dummies[i].y, buf + 0x005c + i * 12 + 0x4, 4);
+          memcpy(&mesh->hdr.Dummies[i].z, buf + 0x005c + i * 12 + 0x8, 4);
         }
-        memcpy(&mesh->hdr.DummyNames, buf + 0x0a28, (size_t)(16 * 64));
+        memcpy(&mesh->hdr.DummyNames, buf + 0x0a28, 16 * 64);
         for (i = 0; i < 15; ++i)
           mesh->hdr.DummyNames[(i + 1) * 64 - 1] = '\0';  /* ensure string */
 
@@ -133,25 +147,25 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
         mesh->hdr.NumSecColors = mesh->hdr.NumColors;
         for (i = 0; i < mesh->hdr.NumColors; ++i)
         {
-          memcpy(&mesh->hdr.PriColors[i].hue,          buf + 0x0824 + i * 4 + 0x0, (size_t)1);
-          memcpy(&mesh->hdr.PriColors[i].saturation,   buf + 0x0824 + i * 4 + 0x1, (size_t)1);
-          memcpy(&mesh->hdr.PriColors[i].brightness,   buf + 0x0824 + i * 4 + 0x2, (size_t)1);
-          memcpy(&mesh->hdr.PriColors[i].transparency, buf + 0x0824 + i * 4 + 0x3, (size_t)1);
+          memcpy(&mesh->hdr.PriColors[i].hue,          buf + 0x0824 + i * 4 + 0x0, 1);
+          memcpy(&mesh->hdr.PriColors[i].saturation,   buf + 0x0824 + i * 4 + 0x1, 1);
+          memcpy(&mesh->hdr.PriColors[i].brightness,   buf + 0x0824 + i * 4 + 0x2, 1);
+          memcpy(&mesh->hdr.PriColors[i].transparency, buf + 0x0824 + i * 4 + 0x3, 1);
 
-          memcpy(&mesh->hdr.IntColors[i].hue,          buf + 0x0864 + i * 4 + 0x0, (size_t)1);
-          memcpy(&mesh->hdr.IntColors[i].saturation,   buf + 0x0864 + i * 4 + 0x1, (size_t)1);
-          memcpy(&mesh->hdr.IntColors[i].brightness,   buf + 0x0864 + i * 4 + 0x2, (size_t)1);
-          memcpy(&mesh->hdr.IntColors[i].transparency, buf + 0x0864 + i * 4 + 0x3, (size_t)1);
+          memcpy(&mesh->hdr.IntColors[i].hue,          buf + 0x0864 + i * 4 + 0x0, 1);
+          memcpy(&mesh->hdr.IntColors[i].saturation,   buf + 0x0864 + i * 4 + 0x1, 1);
+          memcpy(&mesh->hdr.IntColors[i].brightness,   buf + 0x0864 + i * 4 + 0x2, 1);
+          memcpy(&mesh->hdr.IntColors[i].transparency, buf + 0x0864 + i * 4 + 0x3, 1);
 
-          memcpy(&mesh->hdr.SecColors[i].hue,          buf + 0x08a4 + i * 4 + 0x0, (size_t)1);
-          memcpy(&mesh->hdr.SecColors[i].saturation,   buf + 0x08a4 + i * 4 + 0x1, (size_t)1);
-          memcpy(&mesh->hdr.SecColors[i].brightness,   buf + 0x08a4 + i * 4 + 0x2, (size_t)1);
-          memcpy(&mesh->hdr.SecColors[i].transparency, buf + 0x08a4 + i * 4 + 0x3, (size_t)1);
+          memcpy(&mesh->hdr.SecColors[i].hue,          buf + 0x08a4 + i * 4 + 0x0, 1);
+          memcpy(&mesh->hdr.SecColors[i].saturation,   buf + 0x08a4 + i * 4 + 0x1, 1);
+          memcpy(&mesh->hdr.SecColors[i].brightness,   buf + 0x08a4 + i * 4 + 0x2, 1);
+          memcpy(&mesh->hdr.SecColors[i].transparency, buf + 0x08a4 + i * 4 + 0x3, 1);
 
-          memcpy(&mesh->hdr.DriColors[i].hue,          buf + 0x08e4 + i * 4 + 0x0, (size_t)1);
-          memcpy(&mesh->hdr.DriColors[i].saturation,   buf + 0x08e4 + i * 4 + 0x1, (size_t)1);
-          memcpy(&mesh->hdr.DriColors[i].brightness,   buf + 0x08e4 + i * 4 + 0x2, (size_t)1);
-          memcpy(&mesh->hdr.DriColors[i].transparency, buf + 0x08e4 + i * 4 + 0x3, (size_t)1);
+          memcpy(&mesh->hdr.DriColors[i].hue,          buf + 0x08e4 + i * 4 + 0x0, 1);
+          memcpy(&mesh->hdr.DriColors[i].saturation,   buf + 0x08e4 + i * 4 + 0x1, 1);
+          memcpy(&mesh->hdr.DriColors[i].brightness,   buf + 0x08e4 + i * 4 + 0x2, 1);
+          memcpy(&mesh->hdr.DriColors[i].transparency, buf + 0x08e4 + i * 4 + 0x3, 1);
         }
 
         /* Parts ------------------------------------------------------------ */
@@ -161,13 +175,13 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           break;
         }
 
-        mesh->parts = (FcelibPart **)malloc((size_t)mesh->parts_len * sizeof(FcelibPart *));
+        mesh->parts = (FcelibPart **)malloc(mesh->parts_len * sizeof(FcelibPart *));
         if (!mesh->parts)
         {
           fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
           break;
         }
-        memset(mesh->parts, 0, (size_t)mesh->parts_len * sizeof(FcelibPart *));
+        memset(mesh->parts, 0, mesh->parts_len * sizeof(FcelibPart *));
 
         for (i = 0; i < mesh->hdr.NumParts; ++i)
         {
@@ -178,7 +192,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
             break;
           }
 
-          memcpy(mesh->parts[i]->PartName, header.PartNames + i * 64, (size_t)64);
+          memcpy(mesh->parts[i]->PartName, header.PartNames + i * 64, 64);
           mesh->parts[i]->PartName[63] = '\0';  /* ensure string */
 
           mesh->parts[i]->PartPos.x = header.PartPos[i].x;
@@ -197,21 +211,21 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           mesh->vertices_len += mesh->parts[i]->pvertices_len;
           mesh->triangles_len += mesh->parts[i]->ptriangles_len;
 
-          mesh->parts[i]->PVertices = (int *)malloc((size_t)(mesh->parts[i]->pvertices_len * sizeof(int)));
+          mesh->parts[i]->PVertices = (int *)malloc(mesh->parts[i]->pvertices_len * sizeof(int));
           if (!mesh->parts[i]->PVertices)
           {
             fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
             break;
           }
-          memset(mesh->parts[i]->PVertices, -1, (size_t)(mesh->parts[i]->pvertices_len * sizeof(int)));
+          memset(mesh->parts[i]->PVertices, 0xFF, mesh->parts[i]->pvertices_len * sizeof(int));
 
-          mesh->parts[i]->PTriangles = (int *)malloc((size_t)(mesh->parts[i]->ptriangles_len * sizeof(int)));
+          mesh->parts[i]->PTriangles = (int *)malloc(mesh->parts[i]->ptriangles_len * sizeof(int));
           if (!mesh->parts[i]->PTriangles)
           {
             fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
             break;
           }
-          memset(mesh->parts[i]->PTriangles, -1, (size_t)(mesh->parts[i]->ptriangles_len) * sizeof(int));
+          memset(mesh->parts[i]->PTriangles, 0xFF, mesh->parts[i]->ptriangles_len * sizeof(int));
         }  /* for i */
         for (i = mesh->hdr.NumParts; i < mesh->parts_len; ++i)
           mesh->parts[i] = NULL;
@@ -224,13 +238,13 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           break;
         }
 
-        mesh->triangles = (FcelibTriangle **)malloc((size_t)mesh->triangles_len * sizeof(FcelibTriangle *));
+        mesh->triangles = (FcelibTriangle **)malloc(mesh->triangles_len * sizeof(FcelibTriangle *));
         if (!mesh->triangles)
         {
           fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
           break;
         }
-        memset(mesh->triangles, '\0', (size_t)mesh->triangles_len * sizeof(FcelibTriangle *));
+        memset(mesh->triangles, 0, mesh->triangles_len * sizeof(FcelibTriangle *));
 
         mesh->hdr.NumTriangles = 0;
         mesh->hdr.NumVertices = 0;
@@ -248,16 +262,16 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
               break;
             }
 
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->tex_page, buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x00, (size_t)4);
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->vidx,     buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x04, (size_t)12);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->tex_page, buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x00, 4);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->vidx,     buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x04, 12);
 
             /* Globalize vert index references */
             for (n = 0; n < 3; ++n)
               mesh->triangles[mesh->hdr.NumTriangles]->vidx[n] += mesh->hdr.NumVertices;
 
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->flag, buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x1C, (size_t)4);
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->U,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x20, (size_t)12);
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->V,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x2C, (size_t)12);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->flag, buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x1C, 4);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->U,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x20, 12);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->V,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x2C, 12);
 
             /* if (fce_version == 0x00101014) */
             {
@@ -281,13 +295,13 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           break;
         }
 
-        mesh->vertices = (FcelibVertex **)malloc((size_t)(mesh->vertices_len * sizeof(FcelibVertex *)));
+        mesh->vertices = (FcelibVertex **)malloc(mesh->vertices_len * sizeof(FcelibVertex *));
         if (!mesh->vertices)
         {
           fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
           break;
         }
-        memset(mesh->vertices, '\0', (size_t)mesh->vertices_len * sizeof(FcelibVertex *));
+        memset(mesh->vertices, 0, mesh->vertices_len * sizeof(FcelibVertex *));
 
         mesh->hdr.NumVertices = 0;
 
@@ -305,23 +319,23 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
               break;
             }
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.x, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.y, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.z, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, (size_t)4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.x, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.y, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.z, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.x, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.y, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.z, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, (size_t)4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.x, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.y, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.z, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.x, buf + kHdrSize + header.DamgdVertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.y, buf + kHdrSize + header.DamgdVertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.z, buf + kHdrSize + header.DamgdVertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, (size_t)4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.x, buf + kHdrSize + header.DamgdVertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.y, buf + kHdrSize + header.DamgdVertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.z, buf + kHdrSize + header.DamgdVertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.x, buf + kHdrSize + header.DamgdNormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.y, buf + kHdrSize + header.DamgdNormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.z, buf + kHdrSize + header.DamgdNormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, (size_t)4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.x, buf + kHdrSize + header.DamgdNormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.y, buf + kHdrSize + header.DamgdNormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.z, buf + kHdrSize + header.DamgdNormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->Animation, buf + kHdrSize + header.AnimationTblOffset + (j + header.P1stVertices[i]) * 4, (size_t)4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->Animation, buf + kHdrSize + header.AnimationTblOffset + (j + header.P1stVertices[i]) * 4, 4);
 
             ++mesh->hdr.NumVertices;
           }
@@ -350,19 +364,19 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
         mesh->hdr.NumParts = header.NumParts;
         mesh->parts_len = mesh->hdr.NumParts;
 
-        mesh->hdr.Parts = (int *)malloc((size_t)mesh->parts_len * sizeof(int));
-        memset(mesh->hdr.Parts, -1, (size_t)mesh->parts_len * sizeof(int));
+        mesh->hdr.Parts = (int *)malloc(mesh->parts_len * sizeof(int));
+        memset(mesh->hdr.Parts, 0xFF, mesh->parts_len * sizeof(int));
         for (i = 0; i < header.NumParts; ++i)
           mesh->hdr.Parts[i] = i;
 
         mesh->hdr.NumDummies = header.NumDummies;
         for (i = 0; i < mesh->hdr.NumDummies; ++i)
         {
-          memcpy(&mesh->hdr.Dummies[i].x, buf + 0x0038 + i * 12 + 0x0, (size_t)4);
-          memcpy(&mesh->hdr.Dummies[i].y, buf + 0x0038 + i * 12 + 0x4, (size_t)4);
-          memcpy(&mesh->hdr.Dummies[i].z, buf + 0x0038 + i * 12 + 0x8, (size_t)4);
+          memcpy(&mesh->hdr.Dummies[i].x, buf + 0x0038 + i * 12 + 0x0, 4);
+          memcpy(&mesh->hdr.Dummies[i].y, buf + 0x0038 + i * 12 + 0x4, 4);
+          memcpy(&mesh->hdr.Dummies[i].z, buf + 0x0038 + i * 12 + 0x8, 4);
         }
-        memcpy(&mesh->hdr.DummyNames, buf + 0x0A04, (size_t)(16 * 64));
+        memcpy(&mesh->hdr.DummyNames, buf + 0x0A04, 16 * 64);
         for (i = 0; i < 15; ++i)
           mesh->hdr.DummyNames[(i + 1) * 64 - 1] = '\0';  /* ensure string */
 
@@ -370,30 +384,30 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
         for (i = 0; i < mesh->hdr.NumColors; ++i)
         {
           /* unsigned char from little-endian int */
-          memcpy(&mesh->hdr.PriColors[i].hue,          buf + 0x0800 + i * 16 + 0x0, (size_t)1);
-          memcpy(&mesh->hdr.PriColors[i].saturation,   buf + 0x0800 + i * 16 + 0x4, (size_t)1);
-          memcpy(&mesh->hdr.PriColors[i].brightness,   buf + 0x0800 + i * 16 + 0x8, (size_t)1);
-          memcpy(&mesh->hdr.PriColors[i].transparency, buf + 0x0800 + i * 16 + 0xC, (size_t)1);
+          memcpy(&mesh->hdr.PriColors[i].hue,          buf + 0x0800 + i * 16 + 0x0, 1);
+          memcpy(&mesh->hdr.PriColors[i].saturation,   buf + 0x0800 + i * 16 + 0x4, 1);
+          memcpy(&mesh->hdr.PriColors[i].brightness,   buf + 0x0800 + i * 16 + 0x8, 1);
+          memcpy(&mesh->hdr.PriColors[i].transparency, buf + 0x0800 + i * 16 + 0xC, 1);
 
-          memcpy(&mesh->hdr.DriColors[i].hue,          buf + 0x0800 + i * 16 + 0x0, (size_t)1);
-          memcpy(&mesh->hdr.DriColors[i].saturation,   buf + 0x0800 + i * 16 + 0x4, (size_t)1);
-          memcpy(&mesh->hdr.DriColors[i].brightness,   buf + 0x0800 + i * 16 + 0x8, (size_t)1);
-          memcpy(&mesh->hdr.DriColors[i].transparency, buf + 0x0800 + i * 16 + 0xC, (size_t)1);
+          memcpy(&mesh->hdr.DriColors[i].hue,          buf + 0x0800 + i * 16 + 0x0, 1);
+          memcpy(&mesh->hdr.DriColors[i].saturation,   buf + 0x0800 + i * 16 + 0x4, 1);
+          memcpy(&mesh->hdr.DriColors[i].brightness,   buf + 0x0800 + i * 16 + 0x8, 1);
+          memcpy(&mesh->hdr.DriColors[i].transparency, buf + 0x0800 + i * 16 + 0xC, 1);
         }
 
         mesh->hdr.NumSecColors = header.NumSecColors;
         for (i = 0; i < mesh->hdr.NumSecColors; ++i)
         {
           /* unsigned char from little-endian int */
-          memcpy(&mesh->hdr.SecColors[i].hue,          buf + 0x0904 + i * 16 + 0x0, (size_t)1);
-          memcpy(&mesh->hdr.SecColors[i].saturation,   buf + 0x0904 + i * 16 + 0x4, (size_t)1);
-          memcpy(&mesh->hdr.SecColors[i].brightness,   buf + 0x0904 + i * 16 + 0x8, (size_t)1);
-          memcpy(&mesh->hdr.SecColors[i].transparency, buf + 0x0904 + i * 16 + 0xC, (size_t)1);
+          memcpy(&mesh->hdr.SecColors[i].hue,          buf + 0x0904 + i * 16 + 0x0, 1);
+          memcpy(&mesh->hdr.SecColors[i].saturation,   buf + 0x0904 + i * 16 + 0x4, 1);
+          memcpy(&mesh->hdr.SecColors[i].brightness,   buf + 0x0904 + i * 16 + 0x8, 1);
+          memcpy(&mesh->hdr.SecColors[i].transparency, buf + 0x0904 + i * 16 + 0xC, 1);
 
-          memcpy(&mesh->hdr.IntColors[i].hue,          buf + 0x0904 + i * 16 + 0x0, (size_t)1);
-          memcpy(&mesh->hdr.IntColors[i].saturation,   buf + 0x0904 + i * 16 + 0x4, (size_t)1);
-          memcpy(&mesh->hdr.IntColors[i].brightness,   buf + 0x0904 + i * 16 + 0x8, (size_t)1);
-          memcpy(&mesh->hdr.IntColors[i].transparency, buf + 0x0904 + i * 16 + 0xC, (size_t)1);
+          memcpy(&mesh->hdr.IntColors[i].hue,          buf + 0x0904 + i * 16 + 0x0, 1);
+          memcpy(&mesh->hdr.IntColors[i].saturation,   buf + 0x0904 + i * 16 + 0x4, 1);
+          memcpy(&mesh->hdr.IntColors[i].brightness,   buf + 0x0904 + i * 16 + 0x8, 1);
+          memcpy(&mesh->hdr.IntColors[i].transparency, buf + 0x0904 + i * 16 + 0xC, 1);
         }
 
 
@@ -404,13 +418,13 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           break;
         }
 
-        mesh->parts = (FcelibPart **)malloc((size_t)mesh->parts_len * sizeof(FcelibPart *));
+        mesh->parts = (FcelibPart **)malloc(mesh->parts_len * sizeof(FcelibPart *));
         if (!mesh->parts)
         {
           fprintf(stderr, "Cannot allocate memory\n");
           break;
         }
-        memset(mesh->parts, '\0', (size_t)mesh->parts_len * sizeof(FcelibPart *));
+        memset(mesh->parts, 0, mesh->parts_len * sizeof(FcelibPart *));
 
         for (i = 0; i < mesh->hdr.NumParts; ++i)
         {
@@ -420,7 +434,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
             fprintf(stderr, "Cannot allocate memory\n");
             break;
           }
-          memcpy(mesh->parts[i]->PartName, header.PartNames + i * 64, (size_t)64);
+          memcpy(mesh->parts[i]->PartName, header.PartNames + i * 64, 64);
           mesh->parts[i]->PartName[63] = '\0';  /* ensure string */
 
           mesh->parts[i]->PartPos.x = header.PartPos[i].x;
@@ -439,21 +453,21 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           mesh->vertices_len += mesh->parts[i]->pvertices_len;
           mesh->triangles_len += mesh->parts[i]->ptriangles_len;
 
-          mesh->parts[i]->PVertices = (int *)malloc((size_t)(mesh->parts[i]->pvertices_len * sizeof(int)));
+          mesh->parts[i]->PVertices = (int *)malloc(mesh->parts[i]->pvertices_len * sizeof(int));
           if (!mesh->parts[i]->PVertices)
           {
             fprintf(stderr, "Cannot allocate memory\n");
             break;
           }
-          memset(mesh->parts[i]->PVertices, -1, (size_t)(mesh->parts[i]->pvertices_len * sizeof(int)));
+          memset(mesh->parts[i]->PVertices, 0xFF, mesh->parts[i]->pvertices_len * sizeof(int));
 
-          mesh->parts[i]->PTriangles = (int *)malloc((size_t)(mesh->parts[i]->ptriangles_len * sizeof(int)));
+          mesh->parts[i]->PTriangles = (int *)malloc(mesh->parts[i]->ptriangles_len * sizeof(int));
           if (!mesh->parts[i]->PTriangles)
           {
             fprintf(stderr, "Cannot allocate memory\n");
             break;
           }
-          memset(mesh->parts[i]->PTriangles, -1, (size_t)(mesh->parts[i]->ptriangles_len * sizeof(int)));
+          memset(mesh->parts[i]->PTriangles, 0xFF, mesh->parts[i]->ptriangles_len * sizeof(int));
         }  /* for i */
         for (i = mesh->hdr.NumParts; i < mesh->parts_len; ++i)
           mesh->parts[i] = NULL;
@@ -466,13 +480,13 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           break;
         }
 
-        mesh->triangles = (FcelibTriangle **)malloc((size_t)mesh->triangles_len * sizeof(FcelibTriangle *));
+        mesh->triangles = (FcelibTriangle **)malloc(mesh->triangles_len * sizeof(FcelibTriangle *));
         if (!mesh->triangles)
         {
           fprintf(stderr, "Cannot allocate memory\n");
           break;
         }
-        memset(mesh->triangles, '\0', (size_t)mesh->triangles_len * sizeof(FcelibTriangle *));
+        memset(mesh->triangles, 0, mesh->triangles_len * sizeof(FcelibTriangle *));
 
         mesh->hdr.NumTriangles = 0;
         mesh->hdr.NumVertices = 0;
@@ -490,16 +504,16 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
               break;
             }
 
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->tex_page, buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x00, (size_t)4);
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->vidx,     buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x04, (size_t)12);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->tex_page, buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x00, 4);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->vidx,     buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x04, 12);
 
             /* Globalize vert index references */
             for (n = 0; n < 3; ++n)
               mesh->triangles[mesh->hdr.NumTriangles]->vidx[n] += mesh->hdr.NumVertices;
 
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->flag, buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x1C, (size_t)4);
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->U,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x20, (size_t)12);
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->V,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x2C, (size_t)12);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->flag, buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x1C, 4);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->U,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x20, 12);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->V,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x2C, 12);
 
             ++mesh->hdr.NumTriangles;
           }
@@ -517,13 +531,13 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           break;
         }
 
-        mesh->vertices = (FcelibVertex **)malloc((size_t)(mesh->vertices_len * sizeof(FcelibVertex *)));
+        mesh->vertices = (FcelibVertex **)malloc(mesh->vertices_len * sizeof(FcelibVertex *));
         if (!mesh->vertices)
         {
           fprintf(stderr, "Cannot allocate memory\n");
           break;
         }
-        memset(mesh->vertices, '\0', (size_t)mesh->vertices_len * sizeof(FcelibVertex *));
+        memset(mesh->vertices, 0, mesh->vertices_len * sizeof(FcelibVertex *));
 
         mesh->hdr.NumVertices = 0;
 
@@ -541,21 +555,21 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
               break;
             }
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.x, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.y, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.z, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, (size_t)4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.x, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.y, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.z, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.x, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.y, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.z, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, (size_t)4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.x, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.y, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.z, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.x, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.y, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.z, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, (size_t)4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.x, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.y, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.z, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.x, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.y, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, (size_t)4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.z, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, (size_t)4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.x, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.y, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.z, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
 
             mesh->vertices[mesh->hdr.NumVertices]->Animation = 0x0;
 
@@ -570,13 +584,13 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
       for (i = 0; i < mesh->hdr.NumDummies; i++)
       {
         n = strlen(mesh->hdr.DummyNames + i * 64);
-        memset(mesh->hdr.DummyNames + i * 64 + n, '\0', (size_t)(64 - n));
+        memset(mesh->hdr.DummyNames + i * 64 + n, '\0', 64 - n);
       }
-      memset(mesh->hdr.DummyNames + mesh->hdr.NumDummies * 64, '\0', (size_t)((16 - mesh->hdr.NumDummies) * 64));
+      memset(mesh->hdr.DummyNames + mesh->hdr.NumDummies * 64, '\0', (16 - mesh->hdr.NumDummies) * 64);
       for (i = 0; i < mesh->hdr.NumParts; ++i)
       {
         n = strlen(mesh->parts[i]->PartName);
-        memset(mesh->parts[i]->PartName + n, '\0', (size_t)(64 - n));
+        memset(mesh->parts[i]->PartName + n, '\0', 64 - n);
       }
 
       retv = 1;
@@ -710,7 +724,7 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
 
       /* BEGIN printing undamaged part */
       /* Create map: global vert index to local part idx (of used-in-this-part verts) */
-      memset(global_mesh_to_global_obj_idxs, -1, (size_t)mesh->vertices_len * sizeof(int));
+      memset(global_mesh_to_global_obj_idxs, 0xFF, mesh->vertices_len * sizeof(int));
       for (j = 0; j < part->pvertices_len; ++j)
       {
         if (part->PVertices[j] < 0)
@@ -858,7 +872,7 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
       if (print_damage)
       {
         /* Create map: global vert index to local part idx (of used-in-this-part verts) */
-        memset(global_mesh_to_global_obj_idxs, -1, (size_t)mesh->vertices_len * sizeof(int));
+        memset(global_mesh_to_global_obj_idxs, 0xFF, mesh->vertices_len * sizeof(int));
         for (j = 0; j < part->pvertices_len; ++j)
         {
           if (part->PVertices[j] < 0)
@@ -1125,35 +1139,35 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
       }
     }
 
-    global_mesh_to_local_fce_idxs = (int *)malloc((size_t)mesh->vertices_len * sizeof(*global_mesh_to_local_fce_idxs));
+    global_mesh_to_local_fce_idxs = (int *)malloc(mesh->vertices_len * sizeof(*global_mesh_to_local_fce_idxs));
     if (!global_mesh_to_local_fce_idxs)
     {
       fprintf(stderr, "EncodeFce3: Cannot allocate memory\n");
       break;
     }
 
-    memset(*outbuf, 0, (size_t)outbuf_size * sizeof(**outbuf));
+    memset(*outbuf, 0, outbuf_size * sizeof(**outbuf));
 
     /* Header --------------------------------------------------------------- */
     /* tmp = 0;
-    memcpy(*buf + 0x0000, &tmp, (size_t)4); */
-    memcpy(*outbuf + 0x0004, &mesh->hdr.NumTriangles, (size_t)4);
-    memcpy(*outbuf + 0x0008, &mesh->hdr.NumVertices, (size_t)4);
-    memcpy(*outbuf + 0x000C, &mesh->hdr.NumArts, (size_t)4);
+    memcpy(*buf + 0x0000, &tmp, 4); */
+    memcpy(*outbuf + 0x0004, &mesh->hdr.NumTriangles, 4);
+    memcpy(*outbuf + 0x0008, &mesh->hdr.NumVertices, 4);
+    memcpy(*outbuf + 0x000C, &mesh->hdr.NumArts, 4);
 
 /*    buf = 0; */
-/*    memcpy(*outbuf + 0x0010, &buf, (size_t)4); */
+/*    memcpy(*outbuf + 0x0010, &buf, 4); */
     buf  = 12 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x0014, &buf, (size_t)4);
+    memcpy(*outbuf + 0x0014, &buf, 4);
     buf += 12 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x0018, &buf, (size_t)4);
+    memcpy(*outbuf + 0x0018, &buf, 4);
 
     buf += 56 * mesh->hdr.NumTriangles;
-    memcpy(*outbuf + 0x001C, &buf, (size_t)4);
+    memcpy(*outbuf + 0x001C, &buf, 4);
     buf += 32 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x0020, &buf, (size_t)4);
+    memcpy(*outbuf + 0x0020, &buf, 4);
     buf += 12 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x0024, &buf, (size_t)4);
+    memcpy(*outbuf + 0x0024, &buf, 4);
 
     /* Center parts around local centroid */
     if (center_parts == 1)
@@ -1179,14 +1193,14 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
       FcelibVertex *vert;
       int count_verts = 0;
 
-      x_array = (float *)malloc((size_t)(3 * (mesh->vertices_len + 1)) * sizeof(*x_array));
+      x_array = (float *)malloc(3 * (mesh->vertices_len + 1) * sizeof(*x_array));
       if (!x_array)
       {
         fprintf(stderr, "EncodeFce3: Cannot allocate memory\n");
         retv = 0;
         break;
       }
-      memset(x_array, '\0', (size_t)(3 * (mesh->vertices_len + 1)) * sizeof(*x_array));
+      memset(x_array, 0, 3 * (mesh->vertices_len + 1) * sizeof(*x_array));
       y_array = x_array + mesh->vertices_len;
       z_array = y_array + mesh->vertices_len;
 
@@ -1216,29 +1230,29 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
         ++j;
       }
 
-      qsort(x_array, (size_t)count_verts, (size_t)4, FCELIB_UTIL_CompareFloats);
-      qsort(y_array, (size_t)count_verts, (size_t)4, FCELIB_UTIL_CompareFloats);
-      qsort(z_array, (size_t)count_verts, (size_t)4, FCELIB_UTIL_CompareFloats);
+      qsort(x_array, count_verts, 4, FCELIB_UTIL_CompareFloats);
+      qsort(y_array, count_verts, 4, FCELIB_UTIL_CompareFloats);
+      qsort(z_array, count_verts, 4, FCELIB_UTIL_CompareFloats);
 
       x_array[0] = 0.5f * FCELIB_UTIL_Abs(x_array[count_verts - 1] - x_array[0]);
       y_array[0] = FCELIB_UTIL_Abs(y_array[0]) - 0.02f;
       z_array[0] = 0.5f * FCELIB_UTIL_Abs(z_array[count_verts - 1] - z_array[0]);
 
-      memcpy(*outbuf + 0x0028, x_array, (size_t)4);
-      memcpy(*outbuf + 0x002C, y_array, (size_t)4);
-      memcpy(*outbuf + 0x0030, z_array, (size_t)4);
+      memcpy(*outbuf + 0x0028, x_array, 4);
+      memcpy(*outbuf + 0x002C, y_array, 4);
+      memcpy(*outbuf + 0x0030, z_array, 4);
 
       free(x_array);
     }  /* Set HalfSizes */
 
     /* Dummies */
     buf = FCELIB_UTIL_Min(16, mesh->hdr.NumDummies);
-    memcpy(*outbuf + 0x0034, &buf, (size_t)4);
+    memcpy(*outbuf + 0x0034, &buf, 4);
     for (i = 0; i < FCELIB_UTIL_Min(16, mesh->hdr.NumDummies); ++i)
     {
-      memcpy(*outbuf + 0x0038 + i * 12 + 0, &mesh->hdr.Dummies[i].x, (size_t)4);
-      memcpy(*outbuf + 0x0038 + i * 12 + 4, &mesh->hdr.Dummies[i].y, (size_t)4);
-      memcpy(*outbuf + 0x0038 + i * 12 + 8, &mesh->hdr.Dummies[i].z, (size_t)4);
+      memcpy(*outbuf + 0x0038 + i * 12 + 0, &mesh->hdr.Dummies[i].x, 4);
+      memcpy(*outbuf + 0x0038 + i * 12 + 4, &mesh->hdr.Dummies[i].y, 4);
+      memcpy(*outbuf + 0x0038 + i * 12 + 8, &mesh->hdr.Dummies[i].z, 4);
     }
 
     /* PartPos */
@@ -1248,54 +1262,54 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
     /* PNumTriangles */
     /* PartNames */
     buf = FCELIB_UTIL_Min(64, mesh->hdr.NumParts);
-    memcpy(*outbuf + 0x00F8, &buf, (size_t)4);
+    memcpy(*outbuf + 0x00F8, &buf, 4);
     for (i = 0, j = 0; (i < mesh->parts_len) && (j < FCELIB_UTIL_Min(64, mesh->hdr.NumParts)); ++i)
     {
       if (mesh->hdr.Parts[i] < 0)
         continue;
       part = mesh->parts[ mesh->hdr.Parts[i] ];
 
-      memcpy(*outbuf + 0x00FC + j * 12 + 0, &part->PartPos.x, (size_t)4);
-      memcpy(*outbuf + 0x00FC + j * 12 + 4, &part->PartPos.y, (size_t)4);
-      memcpy(*outbuf + 0x00FC + j * 12 + 8, &part->PartPos.z, (size_t)4);
+      memcpy(*outbuf + 0x00FC + j * 12 + 0, &part->PartPos.x, 4);
+      memcpy(*outbuf + 0x00FC + j * 12 + 4, &part->PartPos.y, 4);
+      memcpy(*outbuf + 0x00FC + j * 12 + 8, &part->PartPos.z, 4);
 
-      memcpy(*outbuf + 0x03FC + j * 4, &sum_verts, (size_t)4);
+      memcpy(*outbuf + 0x03FC + j * 4, &sum_verts, 4);
       sum_verts += part->PNumVertices;
-      memcpy(*outbuf + 0x04FC + j * 4, &part->PNumVertices, (size_t)4);
+      memcpy(*outbuf + 0x04FC + j * 4, &part->PNumVertices, 4);
 
-      memcpy(*outbuf + 0x05FC + j * 4, &sum_triags, (size_t)4);
+      memcpy(*outbuf + 0x05FC + j * 4, &sum_triags, 4);
       sum_triags += part->PNumTriangles;
-      memcpy(*outbuf + 0x06FC + j * 4, &part->PNumTriangles, (size_t)4);
+      memcpy(*outbuf + 0x06FC + j * 4, &part->PNumTriangles, 4);
 
-      memcpy(*outbuf + 0x0E04 + j * 64, &part->PartName, (size_t)64);
+      memcpy(*outbuf + 0x0E04 + j * 64, &part->PartName, 64);
 
       ++j;
     }
 
     /* PriColors */
     buf = FCELIB_UTIL_Min(16, mesh->hdr.NumColors);
-    memcpy(*outbuf + 0x07FC, &buf, (size_t)4);
+    memcpy(*outbuf + 0x07FC, &buf, 4);
     for (i = 0; i < FCELIB_UTIL_Min(16, mesh->hdr.NumColors); ++i)
     {
-      memcpy(*outbuf + 0x0800 + i * 16 +  0, &mesh->hdr.PriColors[i].hue, (size_t)1);
-      memcpy(*outbuf + 0x0800 + i * 16 +  4, &mesh->hdr.PriColors[i].saturation, (size_t)1);
-      memcpy(*outbuf + 0x0800 + i * 16 +  8, &mesh->hdr.PriColors[i].brightness, (size_t)1);
-      memcpy(*outbuf + 0x0800 + i * 16 + 12, &mesh->hdr.PriColors[i].transparency, (size_t)1);
+      memcpy(*outbuf + 0x0800 + i * 16 +  0, &mesh->hdr.PriColors[i].hue, 1);
+      memcpy(*outbuf + 0x0800 + i * 16 +  4, &mesh->hdr.PriColors[i].saturation, 1);
+      memcpy(*outbuf + 0x0800 + i * 16 +  8, &mesh->hdr.PriColors[i].brightness, 1);
+      memcpy(*outbuf + 0x0800 + i * 16 + 12, &mesh->hdr.PriColors[i].transparency, 1);
     }
 
     /* SecColors */
     buf = FCELIB_UTIL_Min(16, mesh->hdr.NumSecColors);
-    memcpy(*outbuf + 0x0900, &buf, (size_t)4);
+    memcpy(*outbuf + 0x0900, &buf, 4);
     for (i = 0; i < FCELIB_UTIL_Min(16, mesh->hdr.NumSecColors); ++i)
     {
-      memcpy(*outbuf + 0x0904 + i * 16 +  0, &mesh->hdr.SecColors[i].hue, (size_t)1);
-      memcpy(*outbuf + 0x0904 + i * 16 +  4, &mesh->hdr.SecColors[i].saturation, (size_t)1);
-      memcpy(*outbuf + 0x0904 + i * 16 +  8, &mesh->hdr.SecColors[i].brightness, (size_t)1);
-      memcpy(*outbuf + 0x0904 + i * 16 + 12, &mesh->hdr.SecColors[i].transparency, (size_t)1);
+      memcpy(*outbuf + 0x0904 + i * 16 +  0, &mesh->hdr.SecColors[i].hue, 1);
+      memcpy(*outbuf + 0x0904 + i * 16 +  4, &mesh->hdr.SecColors[i].saturation, 1);
+      memcpy(*outbuf + 0x0904 + i * 16 +  8, &mesh->hdr.SecColors[i].brightness, 1);
+      memcpy(*outbuf + 0x0904 + i * 16 + 12, &mesh->hdr.SecColors[i].transparency, 1);
     }
 
     /* DummyNames */
-    memcpy(*outbuf + 0x0A04, &mesh->hdr.DummyNames, (size_t)(64 * 16));
+    memcpy(*outbuf + 0x0A04, &mesh->hdr.DummyNames, 64 * 16);
 
     /* Print vertices ------------------------------------------------------- */
     /* VertTblOffset = 0 */
@@ -1310,9 +1324,9 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
         if (part->PVertices[n] < 0)
           continue;
 
-        memcpy(*outbuf + 0x1F04 + (sum_verts + k) * 12 + 0x00, &mesh->vertices[ part->PVertices[n] ]->VertPos.x, (size_t)4);
-        memcpy(*outbuf + 0x1F04 + (sum_verts + k) * 12 + 0x04, &mesh->vertices[ part->PVertices[n] ]->VertPos.y, (size_t)4);
-        memcpy(*outbuf + 0x1F04 + (sum_verts + k) * 12 + 0x08, &mesh->vertices[ part->PVertices[n] ]->VertPos.z, (size_t)4);
+        memcpy(*outbuf + 0x1F04 + (sum_verts + k) * 12 + 0x00, &mesh->vertices[ part->PVertices[n] ]->VertPos.x, 4);
+        memcpy(*outbuf + 0x1F04 + (sum_verts + k) * 12 + 0x04, &mesh->vertices[ part->PVertices[n] ]->VertPos.y, 4);
+        memcpy(*outbuf + 0x1F04 + (sum_verts + k) * 12 + 0x08, &mesh->vertices[ part->PVertices[n] ]->VertPos.z, 4);
         ++k;
       }
       sum_verts += part->PNumVertices;
@@ -1331,9 +1345,9 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
       {
         if (part->PVertices[n] < 0)
           continue;
-        memcpy(*outbuf + buf + (sum_verts + k) * 12 + 0x00, &mesh->vertices[ part->PVertices[n] ]->NormPos.x, (size_t)4);
-        memcpy(*outbuf + buf + (sum_verts + k) * 12 + 0x04, &mesh->vertices[ part->PVertices[n] ]->NormPos.y, (size_t)4);
-        memcpy(*outbuf + buf + (sum_verts + k) * 12 + 0x08, &mesh->vertices[ part->PVertices[n] ]->NormPos.z, (size_t)4);
+        memcpy(*outbuf + buf + (sum_verts + k) * 12 + 0x00, &mesh->vertices[ part->PVertices[n] ]->NormPos.x, 4);
+        memcpy(*outbuf + buf + (sum_verts + k) * 12 + 0x04, &mesh->vertices[ part->PVertices[n] ]->NormPos.y, 4);
+        memcpy(*outbuf + buf + (sum_verts + k) * 12 + 0x08, &mesh->vertices[ part->PVertices[n] ]->NormPos.z, 4);
         ++k;
       }
       sum_verts += part->PNumVertices;
@@ -1351,7 +1365,7 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
       part = mesh->parts[ mesh->hdr.Parts[i] ];
 
       /* Create map: global vert index to local part idx (of used-in-this-part verts) */
-      memset(global_mesh_to_local_fce_idxs, 0xFF, (size_t)mesh->vertices_len * sizeof(*global_mesh_to_local_fce_idxs));
+      memset(global_mesh_to_local_fce_idxs, 0xFF, mesh->vertices_len * sizeof(*global_mesh_to_local_fce_idxs));
       for (n = 0, k = 0; n < part->pvertices_len && k < part->PNumVertices; ++n)
       {
         if (part->PVertices[n] < 0)
@@ -1365,16 +1379,16 @@ int FCELIB_IO_EncodeFce3(unsigned char **outbuf, const int outbuf_size, FcelibMe
         if (part->PTriangles[n] < 0)
           continue;
         triag = mesh->triangles[ part->PTriangles[n] ];
-        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x00, &triag->tex_page, (size_t)4);
-        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x04, &global_mesh_to_local_fce_idxs[ triag->vidx[0] ], (size_t)4);
-        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x08, &global_mesh_to_local_fce_idxs[ triag->vidx[1] ], (size_t)4);
-        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x0C, &global_mesh_to_local_fce_idxs[ triag->vidx[2] ], (size_t)4);
-        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x10 + 0x00, &tmp, (size_t)4);
-        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x10 + 0x04, &tmp, (size_t)4);
-        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x10 + 0x08, &tmp, (size_t)4);
-        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x1C, &triag->flag, (size_t)4);
-        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x20, &triag->U, (size_t)12);
-        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x2C, &triag->V, (size_t)12);
+        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x00, &triag->tex_page, 4);
+        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x04, &global_mesh_to_local_fce_idxs[ triag->vidx[0] ], 4);
+        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x08, &global_mesh_to_local_fce_idxs[ triag->vidx[1] ], 4);
+        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x0C, &global_mesh_to_local_fce_idxs[ triag->vidx[2] ], 4);
+        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x10 + 0x00, &tmp, 4);
+        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x10 + 0x04, &tmp, 4);
+        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x10 + 0x08, &tmp, 4);
+        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x1C, &triag->flag, 4);
+        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x20, &triag->U, 12);
+        memcpy(*outbuf + buf + (sum_triags + k) * 56 + 0x2C, &triag->V, 12);
         ++k;
       }
       sum_triags += part->PNumTriangles;
@@ -1422,58 +1436,58 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       }
     }
 
-    global_mesh_to_local_fce_idxs = (int *)malloc((size_t)mesh->vertices_len * sizeof(*global_mesh_to_local_fce_idxs));
+    global_mesh_to_local_fce_idxs = (int *)malloc(mesh->vertices_len * sizeof(*global_mesh_to_local_fce_idxs));
     if (!global_mesh_to_local_fce_idxs)
     {
       fprintf(stderr, "EncodeFce4: Cannot allocate memory\n");
       break;
     }
 
-    memset(*outbuf, 0, (size_t)buf_size * sizeof(unsigned char));
+    memset(*outbuf, 0, buf_size * sizeof(unsigned char));
 
     /* Header --------------------------------------------------------------- */
     if (fce_version == 0x00101015)
       tmp = 0x00101015;
     else
       tmp = 0x00101014;
-    memcpy(*outbuf + 0x0000, &tmp, (size_t)4);  /* Version */
-    /* memcpy(*outbuf + 0x0003, &tmp, (size_t)4);  */ /* Unknown1 */
-    memcpy(*outbuf + 0x0008, &mesh->hdr.NumTriangles, (size_t)4);
-    memcpy(*outbuf + 0x000C, &mesh->hdr.NumVertices, (size_t)4);
-    memcpy(*outbuf + 0x0010, &mesh->hdr.NumArts, (size_t)4);
+    memcpy(*outbuf + 0x0000, &tmp, 4);  /* Version */
+    /* memcpy(*outbuf + 0x0003, &tmp, 4);  */ /* Unknown1 */
+    memcpy(*outbuf + 0x0008, &mesh->hdr.NumTriangles, 4);
+    memcpy(*outbuf + 0x000C, &mesh->hdr.NumVertices, 4);
+    memcpy(*outbuf + 0x0010, &mesh->hdr.NumArts, 4);
 
     /* tmp = 0; */
-    /* memcpy(*outbuf + 0x0014, &tmp, (size_t)4); */
+    /* memcpy(*outbuf + 0x0014, &tmp, 4); */
     tmp  = 12 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x0018, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x0018, &tmp, 4);
     tmp += 12 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x001C, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x001C, &tmp, 4);
 
     tmp += 56 * mesh->hdr.NumTriangles;
-    memcpy(*outbuf + 0x0020, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x0020, &tmp, 4);
     tmp += 32 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x0024, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x0024, &tmp, 4);
     tmp += 12 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x0028, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x0028, &tmp, 4);
 
     tmp += 12 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x002c, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x002c, &tmp, 4);
     tmp += 12 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x0030, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x0030, &tmp, 4);
     tmp += 12 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x0034, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x0034, &tmp, 4);
     tmp += 12 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x0038, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x0038, &tmp, 4);
 
     tmp += 12 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x003c, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x003c, &tmp, 4);
     tmp += 4 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x0040, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x0040, &tmp, 4);
     tmp += 4 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x0044, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x0044, &tmp, 4);
 
     tmp += 4 * mesh->hdr.NumVertices;
-    memcpy(*outbuf + 0x0048, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x0048, &tmp, 4);
 
     /* Center parts around local centroid */
     if (center_parts == 1)
@@ -1505,14 +1519,14 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       FcelibVertex *vert;
       int count_verts = 0;
 
-      x_array = (float *)malloc((size_t)(3 * (mesh->vertices_len + 1)) * sizeof(*x_array));
+      x_array = (float *)malloc(3 * (mesh->vertices_len + 1) * sizeof(*x_array));
       if (!x_array)
       {
         fprintf(stderr, "EncodeFce4: Cannot allocate memory\n");
         retv = 0;
         break;
       }
-      memset(x_array, '\0', (size_t)(3 * (mesh->vertices_len + 1)) * sizeof(*x_array));
+      memset(x_array, 0, 3 * (mesh->vertices_len + 1) * sizeof(*x_array));
       y_array = x_array + mesh->vertices_len;
       z_array = y_array + mesh->vertices_len;
 
@@ -1550,28 +1564,28 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
         ++j;
       }
 
-      qsort(x_array, (size_t)count_verts, (size_t)4, FCELIB_UTIL_CompareFloats);
-      qsort(y_array, (size_t)count_verts, (size_t)4, FCELIB_UTIL_CompareFloats);
-      qsort(z_array, (size_t)count_verts, (size_t)4, FCELIB_UTIL_CompareFloats);
+      qsort(x_array, count_verts, 4, FCELIB_UTIL_CompareFloats);
+      qsort(y_array, count_verts, 4, FCELIB_UTIL_CompareFloats);
+      qsort(z_array, count_verts, 4, FCELIB_UTIL_CompareFloats);
       x_array[0] = 0.5f * FCELIB_UTIL_Abs(x_array[count_verts - 1] - x_array[0]);
       y_array[0] = FCELIB_UTIL_Abs(y_array[0]) - 0.02f;
       z_array[0] = 0.5f * FCELIB_UTIL_Abs(z_array[count_verts - 1] - z_array[0]);
 
-      memcpy(*outbuf + 0x004c, x_array, (size_t)4);
-      memcpy(*outbuf + 0x0050, y_array, (size_t)4);
-      memcpy(*outbuf + 0x0054, z_array, (size_t)4);
+      memcpy(*outbuf + 0x004c, x_array, 4);
+      memcpy(*outbuf + 0x0050, y_array, 4);
+      memcpy(*outbuf + 0x0054, z_array, 4);
 
       free(x_array);
     }  /* Set HalfSizes */
 
     /* Dummies */
     tmp = FCELIB_UTIL_Min(16, mesh->hdr.NumDummies);
-    memcpy(*outbuf + 0x0058, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x0058, &tmp, 4);
     for (i = 0; i < FCELIB_UTIL_Min(16, mesh->hdr.NumDummies); ++i)
     {
-      memcpy(*outbuf + 0x005c + i * 12 + 0, &mesh->hdr.Dummies[i].x, (size_t)4);
-      memcpy(*outbuf + 0x005c + i * 12 + 4, &mesh->hdr.Dummies[i].y, (size_t)4);
-      memcpy(*outbuf + 0x005c + i * 12 + 8, &mesh->hdr.Dummies[i].z, (size_t)4);
+      memcpy(*outbuf + 0x005c + i * 12 + 0, &mesh->hdr.Dummies[i].x, 4);
+      memcpy(*outbuf + 0x005c + i * 12 + 4, &mesh->hdr.Dummies[i].y, 4);
+      memcpy(*outbuf + 0x005c + i * 12 + 8, &mesh->hdr.Dummies[i].z, 4);
     }
 
     /* PartPos */
@@ -1581,26 +1595,26 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     /* PNumTriangles */
     /* PartNames */
     tmp = FCELIB_UTIL_Min(64, mesh->hdr.NumParts);
-    memcpy(*outbuf + 0x011c, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x011c, &tmp, 4);
     for (i = 0, j = 0; (i < mesh->parts_len) && (j < FCELIB_UTIL_Min(64, mesh->hdr.NumParts)); ++i)
     {
       if (mesh->hdr.Parts[i] < 0)
         continue;
       part = mesh->parts[ mesh->hdr.Parts[i] ];
 
-      memcpy(*outbuf + 0x0120 + j * 12 + 0, &part->PartPos.x, (size_t)4);
-      memcpy(*outbuf + 0x0120 + j * 12 + 4, &part->PartPos.y, (size_t)4);
-      memcpy(*outbuf + 0x0120 + j * 12 + 8, &part->PartPos.z, (size_t)4);
+      memcpy(*outbuf + 0x0120 + j * 12 + 0, &part->PartPos.x, 4);
+      memcpy(*outbuf + 0x0120 + j * 12 + 4, &part->PartPos.y, 4);
+      memcpy(*outbuf + 0x0120 + j * 12 + 8, &part->PartPos.z, 4);
 
-      memcpy(*outbuf + 0x0420 + j * 4, &sum_verts, (size_t)4);
+      memcpy(*outbuf + 0x0420 + j * 4, &sum_verts, 4);
       sum_verts += part->PNumVertices;
-      memcpy(*outbuf + 0x0520 + j * 4, &part->PNumVertices, (size_t)4);
+      memcpy(*outbuf + 0x0520 + j * 4, &part->PNumVertices, 4);
 
-      memcpy(*outbuf + 0x0620 + j * 4, &sum_triags, (size_t)4);
+      memcpy(*outbuf + 0x0620 + j * 4, &sum_triags, 4);
       sum_triags += part->PNumTriangles;
-      memcpy(*outbuf + 0x0720 + j * 4, &part->PNumTriangles, (size_t)4);
+      memcpy(*outbuf + 0x0720 + j * 4, &part->PNumTriangles, 4);
 
-      memcpy(*outbuf + 0x0e28 + j * 64, &part->PartName, (size_t)64);
+      memcpy(*outbuf + 0x0e28 + j * 64, &part->PartName, 64);
 
       ++j;
     }
@@ -1611,35 +1625,35 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
     /* SecColors */
     /* DriColors */
     tmp = FCELIB_UTIL_Min(16, mesh->hdr.NumColors);
-    memcpy(*outbuf + 0x0820, &tmp, (size_t)4);
+    memcpy(*outbuf + 0x0820, &tmp, 4);
     for (i = 0; i < FCELIB_UTIL_Min(16, mesh->hdr.NumColors); ++i)
     {
-      memcpy(*outbuf + 0x0824 + i * 4 + 0, &mesh->hdr.PriColors[i].hue, (size_t)1);
-      memcpy(*outbuf + 0x0824 + i * 4 + 1, &mesh->hdr.PriColors[i].saturation, (size_t)1);
-      memcpy(*outbuf + 0x0824 + i * 4 + 2, &mesh->hdr.PriColors[i].brightness, (size_t)1);
-      memcpy(*outbuf + 0x0824 + i * 4 + 3, &mesh->hdr.PriColors[i].transparency, (size_t)1);
+      memcpy(*outbuf + 0x0824 + i * 4 + 0, &mesh->hdr.PriColors[i].hue, 1);
+      memcpy(*outbuf + 0x0824 + i * 4 + 1, &mesh->hdr.PriColors[i].saturation, 1);
+      memcpy(*outbuf + 0x0824 + i * 4 + 2, &mesh->hdr.PriColors[i].brightness, 1);
+      memcpy(*outbuf + 0x0824 + i * 4 + 3, &mesh->hdr.PriColors[i].transparency, 1);
 
-      memcpy(*outbuf + 0x0864 + i * 4 + 0, &mesh->hdr.IntColors[i].hue, (size_t)1);
-      memcpy(*outbuf + 0x0864 + i * 4 + 1, &mesh->hdr.IntColors[i].saturation, (size_t)1);
-      memcpy(*outbuf + 0x0864 + i * 4 + 2, &mesh->hdr.IntColors[i].brightness, (size_t)1);
-      memcpy(*outbuf + 0x0864 + i * 4 + 3, &mesh->hdr.IntColors[i].transparency, (size_t)1);
+      memcpy(*outbuf + 0x0864 + i * 4 + 0, &mesh->hdr.IntColors[i].hue, 1);
+      memcpy(*outbuf + 0x0864 + i * 4 + 1, &mesh->hdr.IntColors[i].saturation, 1);
+      memcpy(*outbuf + 0x0864 + i * 4 + 2, &mesh->hdr.IntColors[i].brightness, 1);
+      memcpy(*outbuf + 0x0864 + i * 4 + 3, &mesh->hdr.IntColors[i].transparency, 1);
 
-      memcpy(*outbuf + 0x08a4 + i * 4 + 0, &mesh->hdr.SecColors[i].hue, (size_t)1);
-      memcpy(*outbuf + 0x08a4 + i * 4 + 1, &mesh->hdr.SecColors[i].saturation, (size_t)1);
-      memcpy(*outbuf + 0x08a4 + i * 4 + 2, &mesh->hdr.SecColors[i].brightness, (size_t)1);
-      memcpy(*outbuf + 0x08a4 + i * 4 + 3, &mesh->hdr.SecColors[i].transparency, (size_t)1);
+      memcpy(*outbuf + 0x08a4 + i * 4 + 0, &mesh->hdr.SecColors[i].hue, 1);
+      memcpy(*outbuf + 0x08a4 + i * 4 + 1, &mesh->hdr.SecColors[i].saturation, 1);
+      memcpy(*outbuf + 0x08a4 + i * 4 + 2, &mesh->hdr.SecColors[i].brightness, 1);
+      memcpy(*outbuf + 0x08a4 + i * 4 + 3, &mesh->hdr.SecColors[i].transparency, 1);
 
-      memcpy(*outbuf + 0x08e4 + i * 4 + 0, &mesh->hdr.DriColors[i].hue, (size_t)1);
-      memcpy(*outbuf + 0x08e4 + i * 4 + 1, &mesh->hdr.DriColors[i].saturation, (size_t)1);
-      memcpy(*outbuf + 0x08e4 + i * 4 + 2, &mesh->hdr.DriColors[i].brightness, (size_t)1);
-      memcpy(*outbuf + 0x08e4 + i * 4 + 3, &mesh->hdr.DriColors[i].transparency, (size_t)1);
+      memcpy(*outbuf + 0x08e4 + i * 4 + 0, &mesh->hdr.DriColors[i].hue, 1);
+      memcpy(*outbuf + 0x08e4 + i * 4 + 1, &mesh->hdr.DriColors[i].saturation, 1);
+      memcpy(*outbuf + 0x08e4 + i * 4 + 2, &mesh->hdr.DriColors[i].brightness, 1);
+      memcpy(*outbuf + 0x08e4 + i * 4 + 3, &mesh->hdr.DriColors[i].transparency, 1);
     }
 
     if (fce_version == 0x00101015)
-      memcpy(*outbuf + 0x0924, &mesh->hdr.Unknown3, (size_t)4);  /* FCE4M experimental */
+      memcpy(*outbuf + 0x0924, &mesh->hdr.Unknown3, 4);  /* FCE4M experimental */
 
     /* DummyNames */
-    memcpy(*outbuf + 0x0a28, &mesh->hdr.DummyNames, (size_t)(64 * 16));
+    memcpy(*outbuf + 0x0a28, &mesh->hdr.DummyNames, 64 * 16);
 
     /* Print vertices ------------------------------------------------------- */
     /* VertTblOffset = 0 */
@@ -1654,16 +1668,16 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
         if (part->PVertices[n] < 0)
           continue;
 
-        memcpy(*outbuf + 0x2038 + (sum_verts + k) * 12 + 0x00, &mesh->vertices[ part->PVertices[n] ]->VertPos.x, (size_t)4);
-        memcpy(*outbuf + 0x2038 + (sum_verts + k) * 12 + 0x04, &mesh->vertices[ part->PVertices[n] ]->VertPos.y, (size_t)4);
-        memcpy(*outbuf + 0x2038 + (sum_verts + k) * 12 + 0x08, &mesh->vertices[ part->PVertices[n] ]->VertPos.z, (size_t)4);
+        memcpy(*outbuf + 0x2038 + (sum_verts + k) * 12 + 0x00, &mesh->vertices[ part->PVertices[n] ]->VertPos.x, 4);
+        memcpy(*outbuf + 0x2038 + (sum_verts + k) * 12 + 0x04, &mesh->vertices[ part->PVertices[n] ]->VertPos.y, 4);
+        memcpy(*outbuf + 0x2038 + (sum_verts + k) * 12 + 0x08, &mesh->vertices[ part->PVertices[n] ]->VertPos.z, 4);
         ++k;
       }
       sum_verts += part->PNumVertices;
       ++j;
     }
     memcpy(&tmp, *outbuf + 0x002c, 4);  /* UndamgdVertTblOffset */
-    memcpy(*outbuf + 0x2038 + tmp, *outbuf + 0x2038, (size_t)(12 * mesh->hdr.NumVertices));
+    memcpy(*outbuf + 0x2038 + tmp, *outbuf + 0x2038, 12 * mesh->hdr.NumVertices);
 
     memcpy(&tmp, *outbuf + 0x0034, 4);  /* DamgdVertTblOffset */
     sum_verts = 0;
@@ -1677,9 +1691,9 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
         if (part->PVertices[n] < 0)
           continue;
 
-        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x00, &mesh->vertices[ part->PVertices[n] ]->DamgdVertPos.x, (size_t)4);
-        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x04, &mesh->vertices[ part->PVertices[n] ]->DamgdVertPos.y, (size_t)4);
-        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x08, &mesh->vertices[ part->PVertices[n] ]->DamgdVertPos.z, (size_t)4);
+        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x00, &mesh->vertices[ part->PVertices[n] ]->DamgdVertPos.x, 4);
+        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x04, &mesh->vertices[ part->PVertices[n] ]->DamgdVertPos.y, 4);
+        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x08, &mesh->vertices[ part->PVertices[n] ]->DamgdVertPos.z, 4);
         ++k;
       }
       sum_verts += part->PNumVertices;
@@ -1698,16 +1712,16 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       {
         if (part->PVertices[n] < 0)
           continue;
-        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x00, &mesh->vertices[ part->PVertices[n] ]->NormPos.x, (size_t)4);
-        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x04, &mesh->vertices[ part->PVertices[n] ]->NormPos.y, (size_t)4);
-        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x08, &mesh->vertices[ part->PVertices[n] ]->NormPos.z, (size_t)4);
+        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x00, &mesh->vertices[ part->PVertices[n] ]->NormPos.x, 4);
+        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x04, &mesh->vertices[ part->PVertices[n] ]->NormPos.y, 4);
+        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x08, &mesh->vertices[ part->PVertices[n] ]->NormPos.z, 4);
         ++k;
       }
       sum_verts += part->PNumVertices;
       ++j;
     }
     memcpy(&tmp, *outbuf + 0x0030, 4);  /* UndamgdNormTblOffset */
-    memcpy(*outbuf + 0x2038 + tmp, *outbuf + 0x2038 + 12 * mesh->hdr.NumVertices, (size_t)(12 * mesh->hdr.NumVertices));
+    memcpy(*outbuf + 0x2038 + tmp, *outbuf + 0x2038 + 12 * mesh->hdr.NumVertices, 12 * mesh->hdr.NumVertices);
 
     memcpy(&tmp, *outbuf + 0x0038, 4);  /* DamgdNormTblOffset */
     sum_verts = 0;
@@ -1720,9 +1734,9 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       {
         if (part->PVertices[n] < 0)
           continue;
-        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x00, &mesh->vertices[ part->PVertices[n] ]->DamgdNormPos.x, (size_t)4);
-        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x04, &mesh->vertices[ part->PVertices[n] ]->DamgdNormPos.y, (size_t)4);
-        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x08, &mesh->vertices[ part->PVertices[n] ]->DamgdNormPos.z, (size_t)4);
+        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x00, &mesh->vertices[ part->PVertices[n] ]->DamgdNormPos.x, 4);
+        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x04, &mesh->vertices[ part->PVertices[n] ]->DamgdNormPos.y, 4);
+        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 12 + 0x08, &mesh->vertices[ part->PVertices[n] ]->DamgdNormPos.z, 4);
         ++k;
       }
       sum_verts += part->PNumVertices;
@@ -1741,7 +1755,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
       {
         if (part->PVertices[n] < 0)
           continue;
-        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 4 + 0x00, &mesh->vertices[ part->PVertices[n] ]->Animation, (size_t)4);
+        memcpy(*outbuf + 0x2038 + tmp + (sum_verts + k) * 4 + 0x00, &mesh->vertices[ part->PVertices[n] ]->Animation, 4);
         ++k;
       }
       sum_verts += part->PNumVertices;
@@ -1763,7 +1777,7 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
         part = mesh->parts[ mesh->hdr.Parts[i] ];
 
         /* Create map: global vert index to local part idx (of used-in-this-part verts) */
-        memset(global_mesh_to_local_fce_idxs, 0xFF, (size_t)mesh->vertices_len * sizeof(*global_mesh_to_local_fce_idxs));
+        memset(global_mesh_to_local_fce_idxs, 0xFF, mesh->vertices_len * sizeof(*global_mesh_to_local_fce_idxs));
         for (n = 0, k = 0; n < part->pvertices_len && k < part->PNumVertices; ++n)
         {
           if (part->PVertices[n] < 0)
@@ -1778,23 +1792,23 @@ int FCELIB_IO_EncodeFce4(unsigned char **outbuf, const int buf_size, FcelibMesh 
             continue;
           triag = mesh->triangles[ part->PTriangles[n] ];
 
-          memcpy(&V_tmp, &triag->V, (size_t)12);
+          memcpy(&V_tmp, &triag->V, 12);
           /* if (fce_version == 0x00101014) */
           {
             for (h = 0; h < 3; ++h)
               V_tmp[h] = 1 - V_tmp[h];
           }
 
-          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x00, &triag->tex_page, (size_t)4);
-          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x04, &global_mesh_to_local_fce_idxs[ triag->vidx[0] ], (size_t)4);
-          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x08, &global_mesh_to_local_fce_idxs[ triag->vidx[1] ], (size_t)4);
-          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x0C, &global_mesh_to_local_fce_idxs[ triag->vidx[2] ], (size_t)4);
-          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x10 + 0x00, &padding, (size_t)4);
-          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x10 + 0x04, &padding, (size_t)4);
-          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x10 + 0x08, &padding, (size_t)4);
-          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x1C, &triag->flag, (size_t)4);
-          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x20, &triag->U, (size_t)12);
-          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x2C, &V_tmp, (size_t)12);
+          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x00, &triag->tex_page, 4);
+          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x04, &global_mesh_to_local_fce_idxs[ triag->vidx[0] ], 4);
+          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x08, &global_mesh_to_local_fce_idxs[ triag->vidx[1] ], 4);
+          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x0C, &global_mesh_to_local_fce_idxs[ triag->vidx[2] ], 4);
+          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x10 + 0x00, &padding, 4);
+          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x10 + 0x04, &padding, 4);
+          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x10 + 0x08, &padding, 4);
+          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x1C, &triag->flag, 4);
+          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x20, &triag->U, 12);
+          memcpy(*outbuf + 0x2038 + tmp + (sum_triags + k) * 56 + 0x2C, &V_tmp, 12);
           ++k;
         }
         sum_triags += part->PNumTriangles;
@@ -1835,7 +1849,11 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       break;
     }
 
+#ifdef FCELIB_PREVIEW_MESH2
+    mesh->internal_consumed = 1;
+#else
     mesh->freed = 0;
+#endif
 
     if (vert_idxs_len % 3 != 0)
     {
@@ -1953,8 +1971,8 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       triag->vidx[1] = vidx_1st + vert_idxs[j * 3 + 1];
       triag->vidx[2] = vidx_1st + vert_idxs[j * 3 + 2];
       triag->flag = 0x000;  /* default */
-      memcpy(triag->U, vert_texcoords + j * 6 + 0, (size_t)3 * sizeof(float));
-      memcpy(triag->V, vert_texcoords + j * 6 + 3, (size_t)3 * sizeof(float));
+      memcpy(triag->U, vert_texcoords + j * 6 + 0, 3 * sizeof(float));
+      memcpy(triag->V, vert_texcoords + j * 6 + 3, 3 * sizeof(float));
     }
     if (new_pid < 0)
       break;

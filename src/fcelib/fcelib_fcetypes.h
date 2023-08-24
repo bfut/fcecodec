@@ -619,7 +619,7 @@ int FCELIB_FCETYPES_GetFceVersion(const void *buf, const int buf_size)
 {
   int version;
   if (buf_size < 0x1F04) return -3;
-  memcpy(&version, buf, (size_t)4);
+  memcpy(&version, buf, 4);
   switch (version)
   {
     case 0x00101014:
@@ -642,67 +642,67 @@ FceHeader3 FCELIB_FCETYPES_GetFceHeader3(const unsigned char *header)
   FceHeader3 hdr;
   int i;
 
-  memcpy(&hdr.Unknown1, header + 0x0000, (size_t)4);
-  memcpy(&hdr.NumTriangles, header + 0x0004, (size_t)4);
-  memcpy(&hdr.NumVertices, header + 0x0008, (size_t)4);
-  memcpy(&hdr.NumArts, header + 0x000C, (size_t)4);
+  memcpy(&hdr.Unknown1, header + 0x0000, 4);
+  memcpy(&hdr.NumTriangles, header + 0x0004, 4);
+  memcpy(&hdr.NumVertices, header + 0x0008, 4);
+  memcpy(&hdr.NumArts, header + 0x000C, 4);
 
-  memcpy(&hdr.VertTblOffset, header + 0x0010, (size_t)4);
-  memcpy(&hdr.NormTblOffset, header + 0x0014, (size_t)4);
-  memcpy(&hdr.TriaTblOffset, header + 0x0018, (size_t)4);
+  memcpy(&hdr.VertTblOffset, header + 0x0010, 4);
+  memcpy(&hdr.NormTblOffset, header + 0x0014, 4);
+  memcpy(&hdr.TriaTblOffset, header + 0x0018, 4);
 
-  memcpy(&hdr.Reserve1offset, header + 0x001C, (size_t)4);
-  memcpy(&hdr.Reserve2offset, header + 0x0020, (size_t)4);
-  memcpy(&hdr.Reserve3offset, header + 0x0024, (size_t)4);
+  memcpy(&hdr.Reserve1offset, header + 0x001C, 4);
+  memcpy(&hdr.Reserve2offset, header + 0x0020, 4);
+  memcpy(&hdr.Reserve3offset, header + 0x0024, 4);
 
-  memcpy(&hdr.XHalfSize, header + 0x0028, (size_t)4);
-  memcpy(&hdr.YHalfSize, header + 0x002C, (size_t)4);
-  memcpy(&hdr.ZHalfSize, header + 0x0030, (size_t)4);
+  memcpy(&hdr.XHalfSize, header + 0x0028, 4);
+  memcpy(&hdr.YHalfSize, header + 0x002C, 4);
+  memcpy(&hdr.ZHalfSize, header + 0x0030, 4);
 
-  memcpy(&hdr.NumDummies, header + 0x0034, (size_t)4);
+  memcpy(&hdr.NumDummies, header + 0x0034, 4);
   for (i = 0; i < FCELIB_UTIL_Min(16, hdr.NumDummies); ++i)
   {
-    memcpy(&hdr.Dummies[i].x, header + 0x0038 + i * 12 + 0x0, (size_t)4);
-    memcpy(&hdr.Dummies[i].y, header + 0x0038 + i * 12 + 0x4, (size_t)4);
-    memcpy(&hdr.Dummies[i].z, header + 0x0038 + i * 12 + 0x8, (size_t)4);
+    memcpy(&hdr.Dummies[i].x, header + 0x0038 + i * 12 + 0x0, 4);
+    memcpy(&hdr.Dummies[i].y, header + 0x0038 + i * 12 + 0x4, 4);
+    memcpy(&hdr.Dummies[i].z, header + 0x0038 + i * 12 + 0x8, 4);
   }
 
-  memcpy(&hdr.NumParts, header + 0x00F8, (size_t)4);
+  memcpy(&hdr.NumParts, header + 0x00F8, 4);
   for (i = 0; i < FCELIB_UTIL_Min(64, hdr.NumParts); ++i)
   {
-    memcpy(&hdr.PartPos[i].x, header + 0x00FC + i * 12 + 0x0, (size_t)4);
-    memcpy(&hdr.PartPos[i].y, header + 0x00FC + i * 12 + 0x4, (size_t)4);
-    memcpy(&hdr.PartPos[i].z, header + 0x00FC + i * 12 + 0x8, (size_t)4);
+    memcpy(&hdr.PartPos[i].x, header + 0x00FC + i * 12 + 0x0, 4);
+    memcpy(&hdr.PartPos[i].y, header + 0x00FC + i * 12 + 0x4, 4);
+    memcpy(&hdr.PartPos[i].z, header + 0x00FC + i * 12 + 0x8, 4);
   }
 
-  memcpy(&hdr.P1stVertices, header + 0x03FC, (size_t)(64 * 4));
-  memcpy(&hdr.PNumVertices, header + 0x04FC, (size_t)(64 * 4));
-  memcpy(&hdr.P1stTriangles, header + 0x05FC, (size_t)(64 * 4));
-  memcpy(&hdr.PNumTriangles, header + 0x06FC, (size_t)(64 * 4));
+  memcpy(&hdr.P1stVertices, header + 0x03FC, 64 * 4);
+  memcpy(&hdr.PNumVertices, header + 0x04FC, 64 * 4);
+  memcpy(&hdr.P1stTriangles, header + 0x05FC, 64 * 4);
+  memcpy(&hdr.PNumTriangles, header + 0x06FC, 64 * 4);
 
-  memcpy(&hdr.NumPriColors, header + 0x07FC, (size_t)4);
+  memcpy(&hdr.NumPriColors, header + 0x07FC, 4);
   for (i = 0; i < FCELIB_UTIL_Min(16, hdr.NumPriColors); ++i)
   {
-    memcpy(&hdr.PriColors[i].hue,          header + 0x0800 + i * 16 + 0x00, (size_t)4);
-    memcpy(&hdr.PriColors[i].saturation,   header + 0x0800 + i * 16 + 0x04, (size_t)4);
-    memcpy(&hdr.PriColors[i].brightness,   header + 0x0800 + i * 16 + 0x08, (size_t)4);
-    memcpy(&hdr.PriColors[i].transparency, header + 0x0800 + i * 16 + 0x0C, (size_t)4);
+    memcpy(&hdr.PriColors[i].hue,          header + 0x0800 + i * 16 + 0x00, 4);
+    memcpy(&hdr.PriColors[i].saturation,   header + 0x0800 + i * 16 + 0x04, 4);
+    memcpy(&hdr.PriColors[i].brightness,   header + 0x0800 + i * 16 + 0x08, 4);
+    memcpy(&hdr.PriColors[i].transparency, header + 0x0800 + i * 16 + 0x0C, 4);
   }
 
-  memcpy(&hdr.NumSecColors, header + 0x0900, (size_t)4);
+  memcpy(&hdr.NumSecColors, header + 0x0900, 4);
   for (i = 0; i < FCELIB_UTIL_Min(16, hdr.NumSecColors); ++i)
   {
-    memcpy(&hdr.SecColors[i].hue,          header + 0x0904 + i * 16 + 0x00, (size_t)4);
-    memcpy(&hdr.SecColors[i].saturation,   header + 0x0904 + i * 16 + 0x04, (size_t)4);
-    memcpy(&hdr.SecColors[i].brightness,   header + 0x0904 + i * 16 + 0x08, (size_t)4);
-    memcpy(&hdr.SecColors[i].transparency, header + 0x0904 + i * 16 + 0x0C, (size_t)4);
+    memcpy(&hdr.SecColors[i].hue,          header + 0x0904 + i * 16 + 0x00, 4);
+    memcpy(&hdr.SecColors[i].saturation,   header + 0x0904 + i * 16 + 0x04, 4);
+    memcpy(&hdr.SecColors[i].brightness,   header + 0x0904 + i * 16 + 0x08, 4);
+    memcpy(&hdr.SecColors[i].transparency, header + 0x0904 + i * 16 + 0x0C, 4);
   }
 
-  memcpy(&hdr.DummyNames, header + 0x0A04, (size_t)(64 * 16));
+  memcpy(&hdr.DummyNames, header + 0x0A04, 64 * 16);
 
-  memcpy(&hdr.PartNames, header + 0x0E04, (size_t)(64 * 64));
+  memcpy(&hdr.PartNames, header + 0x0E04, 64 * 64);
 
-  memcpy(&hdr.Unknown2, header + 0x1E04, (size_t)256);
+  memcpy(&hdr.Unknown2, header + 0x1E04, 256);
 
   return hdr;
 }
@@ -713,87 +713,87 @@ FceHeader4 FCELIB_FCETYPES_GetFceHeader4(const unsigned char *header)
   FceHeader4 hdr;
   int i;
 
-  memcpy(&hdr.Version, header + 0x0000, (size_t)4);
-  memcpy(&hdr.Unknown1, header + 0x0004, (size_t)4);
-  memcpy(&hdr.NumTriangles, header + 0x0008, (size_t)4);
-  memcpy(&hdr.NumVertices, header + 0x000c, (size_t)4);
-  memcpy(&hdr.NumArts, header + 0x0010, (size_t)4);
+  memcpy(&hdr.Version, header + 0x0000, 4);
+  memcpy(&hdr.Unknown1, header + 0x0004, 4);
+  memcpy(&hdr.NumTriangles, header + 0x0008, 4);
+  memcpy(&hdr.NumVertices, header + 0x000c, 4);
+  memcpy(&hdr.NumArts, header + 0x0010, 4);
 
-  memcpy(&hdr.VertTblOffset, header + 0x0014, (size_t)4);
-  memcpy(&hdr.NormTblOffset, header + 0x0018, (size_t)4);
-  memcpy(&hdr.TriaTblOffset, header + 0x001c, (size_t)4);
+  memcpy(&hdr.VertTblOffset, header + 0x0014, 4);
+  memcpy(&hdr.NormTblOffset, header + 0x0018, 4);
+  memcpy(&hdr.TriaTblOffset, header + 0x001c, 4);
 
-  memcpy(&hdr.Reserve1offset, header + 0x0020, (size_t)4);
-  memcpy(&hdr.Reserve2offset, header + 0x0024, (size_t)4);
-  memcpy(&hdr.Reserve3offset, header + 0x0028, (size_t)4);
+  memcpy(&hdr.Reserve1offset, header + 0x0020, 4);
+  memcpy(&hdr.Reserve2offset, header + 0x0024, 4);
+  memcpy(&hdr.Reserve3offset, header + 0x0028, 4);
 
-  memcpy(&hdr.UndamgdVertTblOffset, header + 0x002c, (size_t)4);
-  memcpy(&hdr.UndamgdNormTblOffset, header + 0x0030, (size_t)4);
-  memcpy(&hdr.DamgdVertTblOffset, header + 0x0034, (size_t)4);
-  memcpy(&hdr.DamgdNormTblOffset, header + 0x0038, (size_t)4);
+  memcpy(&hdr.UndamgdVertTblOffset, header + 0x002c, 4);
+  memcpy(&hdr.UndamgdNormTblOffset, header + 0x0030, 4);
+  memcpy(&hdr.DamgdVertTblOffset, header + 0x0034, 4);
+  memcpy(&hdr.DamgdNormTblOffset, header + 0x0038, 4);
 
-  memcpy(&hdr.Reserve4offset, header + 0x003c, (size_t)4);
-  memcpy(&hdr.AnimationTblOffset, header + 0x0040, (size_t)4);
-  memcpy(&hdr.Reserve5offset, header + 0x0044, (size_t)4);
+  memcpy(&hdr.Reserve4offset, header + 0x003c, 4);
+  memcpy(&hdr.AnimationTblOffset, header + 0x0040, 4);
+  memcpy(&hdr.Reserve5offset, header + 0x0044, 4);
 
-  memcpy(&hdr.Reserve6offset, header + 0x0048, (size_t)4);
+  memcpy(&hdr.Reserve6offset, header + 0x0048, 4);
 
-  memcpy(&hdr.XHalfSize, header + 0x004c, (size_t)4);
-  memcpy(&hdr.YHalfSize, header + 0x0050, (size_t)4);
-  memcpy(&hdr.ZHalfSize, header + 0x0054, (size_t)4);
+  memcpy(&hdr.XHalfSize, header + 0x004c, 4);
+  memcpy(&hdr.YHalfSize, header + 0x0050, 4);
+  memcpy(&hdr.ZHalfSize, header + 0x0054, 4);
 
-  memcpy(&hdr.NumDummies, header + 0x0058, (size_t)4);
+  memcpy(&hdr.NumDummies, header + 0x0058, 4);
   for (i = 0; i < FCELIB_UTIL_Min(16, hdr.NumDummies); ++i)
   {
-    memcpy(&hdr.Dummies[i].x, header + 0x005c + i * 12 + 0x0, (size_t)4);
-    memcpy(&hdr.Dummies[i].y, header + 0x005c + i * 12 + 0x4, (size_t)4);
-    memcpy(&hdr.Dummies[i].z, header + 0x005c + i * 12 + 0x8, (size_t)4);
+    memcpy(&hdr.Dummies[i].x, header + 0x005c + i * 12 + 0x0, 4);
+    memcpy(&hdr.Dummies[i].y, header + 0x005c + i * 12 + 0x4, 4);
+    memcpy(&hdr.Dummies[i].z, header + 0x005c + i * 12 + 0x8, 4);
   }
 
-  memcpy(&hdr.NumParts, header + 0x011c, (size_t)4);
+  memcpy(&hdr.NumParts, header + 0x011c, 4);
   for (i = 0; i < FCELIB_UTIL_Min(64, hdr.NumParts); ++i)
   {
-    memcpy(&hdr.PartPos[i].x, header + 0x0120 + i * 12 + 0x0, (size_t)4);
-    memcpy(&hdr.PartPos[i].y, header + 0x0120 + i * 12 + 0x4, (size_t)4);
-    memcpy(&hdr.PartPos[i].z, header + 0x0120 + i * 12 + 0x8, (size_t)4);
+    memcpy(&hdr.PartPos[i].x, header + 0x0120 + i * 12 + 0x0, 4);
+    memcpy(&hdr.PartPos[i].y, header + 0x0120 + i * 12 + 0x4, 4);
+    memcpy(&hdr.PartPos[i].z, header + 0x0120 + i * 12 + 0x8, 4);
   }
 
-  memcpy(&hdr.P1stVertices, header + 0x0420, (size_t)(64 * 4));
-  memcpy(&hdr.PNumVertices, header + 0x0520, (size_t)(64 * 4));
-  memcpy(&hdr.P1stTriangles, header + 0x0620, (size_t)(64 * 4));
-  memcpy(&hdr.PNumTriangles, header + 0x0720, (size_t)(64 * 4));
+  memcpy(&hdr.P1stVertices, header + 0x0420, 64 * 4);
+  memcpy(&hdr.PNumVertices, header + 0x0520, 64 * 4);
+  memcpy(&hdr.P1stTriangles, header + 0x0620, 64 * 4);
+  memcpy(&hdr.PNumTriangles, header + 0x0720, 64 * 4);
 
-  memcpy(&hdr.NumColors, header + 0x0820, (size_t)4);
+  memcpy(&hdr.NumColors, header + 0x0820, 4);
   for (i = 0; i < FCELIB_UTIL_Min(16, hdr.NumColors); ++i)
   {
-    memcpy(&hdr.PriColors[i].hue,          header + 0x0824 + i * 4 + 0, (size_t)1);
-    memcpy(&hdr.PriColors[i].saturation,   header + 0x0824 + i * 4 + 1, (size_t)1);
-    memcpy(&hdr.PriColors[i].brightness,   header + 0x0824 + i * 4 + 2, (size_t)1);
-    memcpy(&hdr.PriColors[i].transparency, header + 0x0824 + i * 4 + 3, (size_t)1);
+    memcpy(&hdr.PriColors[i].hue,          header + 0x0824 + i * 4 + 0, 1);
+    memcpy(&hdr.PriColors[i].saturation,   header + 0x0824 + i * 4 + 1, 1);
+    memcpy(&hdr.PriColors[i].brightness,   header + 0x0824 + i * 4 + 2, 1);
+    memcpy(&hdr.PriColors[i].transparency, header + 0x0824 + i * 4 + 3, 1);
 
-    memcpy(&hdr.IntColors[i].hue,          header + 0x0864 + i * 4 + 0, (size_t)1);
-    memcpy(&hdr.IntColors[i].saturation,   header + 0x0864 + i * 4 + 1, (size_t)1);
-    memcpy(&hdr.IntColors[i].brightness,   header + 0x0864 + i * 4 + 2, (size_t)1);
-    memcpy(&hdr.IntColors[i].transparency, header + 0x0864 + i * 4 + 3, (size_t)1);
+    memcpy(&hdr.IntColors[i].hue,          header + 0x0864 + i * 4 + 0, 1);
+    memcpy(&hdr.IntColors[i].saturation,   header + 0x0864 + i * 4 + 1, 1);
+    memcpy(&hdr.IntColors[i].brightness,   header + 0x0864 + i * 4 + 2, 1);
+    memcpy(&hdr.IntColors[i].transparency, header + 0x0864 + i * 4 + 3, 1);
 
-    memcpy(&hdr.SecColors[i].hue,          header + 0x08a4 + i * 4 + 0, (size_t)1);
-    memcpy(&hdr.SecColors[i].saturation,   header + 0x08a4 + i * 4 + 1, (size_t)1);
-    memcpy(&hdr.SecColors[i].brightness,   header + 0x08a4 + i * 4 + 2, (size_t)1);
-    memcpy(&hdr.SecColors[i].transparency, header + 0x08a4 + i * 4 + 3, (size_t)1);
+    memcpy(&hdr.SecColors[i].hue,          header + 0x08a4 + i * 4 + 0, 1);
+    memcpy(&hdr.SecColors[i].saturation,   header + 0x08a4 + i * 4 + 1, 1);
+    memcpy(&hdr.SecColors[i].brightness,   header + 0x08a4 + i * 4 + 2, 1);
+    memcpy(&hdr.SecColors[i].transparency, header + 0x08a4 + i * 4 + 3, 1);
 
-    memcpy(&hdr.DriColors[i].hue,          header + 0x08e4 + i * 4 + 0, (size_t)1);
-    memcpy(&hdr.DriColors[i].saturation,   header + 0x08e4 + i * 4 + 1, (size_t)1);
-    memcpy(&hdr.DriColors[i].brightness,   header + 0x08e4 + i * 4 + 2, (size_t)1);
-    memcpy(&hdr.DriColors[i].transparency, header + 0x08e4 + i * 4 + 3, (size_t)1);
+    memcpy(&hdr.DriColors[i].hue,          header + 0x08e4 + i * 4 + 0, 1);
+    memcpy(&hdr.DriColors[i].saturation,   header + 0x08e4 + i * 4 + 1, 1);
+    memcpy(&hdr.DriColors[i].brightness,   header + 0x08e4 + i * 4 + 2, 1);
+    memcpy(&hdr.DriColors[i].transparency, header + 0x08e4 + i * 4 + 3, 1);
   }
 
-  memcpy(&hdr.Unknown3, header + 0x0924, (size_t)4);
-  memcpy(&hdr.Unknown2, header + 0x0928, (size_t)256);
+  memcpy(&hdr.Unknown3, header + 0x0924, 4);
+  memcpy(&hdr.Unknown2, header + 0x0928, 256);
 
-  memcpy(&hdr.DummyNames, header + 0x0a28, (size_t)(64 * 16));
+  memcpy(&hdr.DummyNames, header + 0x0a28, 64 * 16);
 
-  memcpy(&hdr.PartNames, header + 0x0e28, (size_t)(64 * 64));
-  memcpy(&hdr.Unknown4, header + 0x1e28, (size_t)528);
+  memcpy(&hdr.PartNames, header + 0x0e28, 64 * 64);
+  memcpy(&hdr.Unknown4, header + 0x1e28, 528);
 
   return hdr;
 }
@@ -813,7 +813,7 @@ int FCELIB_FCETYPES_MiniValidateHdr3(const unsigned char *header)
   };
   for (i = 0; i < 8; ++i)
   {
-    memcpy(&tmp, header + kHdrPos3[i], (size_t)4);
+    memcpy(&tmp, header + kHdrPos3[i], 4);
     if ((tmp < INT_MIN / 80) || (tmp > INT_MAX / 80))
     {
       fprintf(stderr, "MiniValidateHdr3: Invalid value at %#06x (%d)\n", kHdrPos3[i], tmp);
@@ -1105,7 +1105,7 @@ int FCELIB_FCETYPES_MiniValidateHdr4(const unsigned char *header)
   };
   for (i = 0; i < 16; ++i)
   {
-    memcpy(&tmp, header + kHdrPos4[i], (size_t)4);
+    memcpy(&tmp, header + kHdrPos4[i], 4);
     if ((tmp < INT_MIN / 140) || (tmp > INT_MAX / 140))
     {
       fprintf(stderr, "MiniValidateHdr4: Invalid value at %#06x (%d)\n", kHdrPos4[i], tmp);

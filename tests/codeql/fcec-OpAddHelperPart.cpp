@@ -7,6 +7,7 @@
 #include <iostream>
 //#include <vector>
 
+#define FCELIB_PREVIEW_MESH2
 #include "../../src/fcelib/fcelib.h"
 #include "../../src/fcelib/fcelib_fcetypes.h"  /* line can be omitted */
 #include "../../src/fcelib/fcelib_types.h"  /* line can be omitted */
@@ -30,12 +31,12 @@ int main(void)
   for (;;)
   {
     retv = 0;
-    
+
     for (int i = 0; i < FSTDMAXNUMLODS && retv == 0; ++i)
     {
       for (int r = 0; r < NUM_OPERATION_REPEATS && retv == 0; ++r)
       {
-#if 0      
+#if 0
         if (fcelib::FCELIB_TYPES_AddParts(&mesh[i], 1) == -1)
         {
           std::cout << r << " cannot add helper part (i,i)=(" << i << "," << i << ")" << std::endl;
@@ -43,7 +44,7 @@ int main(void)
           break;
         }
 #endif
-#if 1       
+#if 1
         if (fcelib::FCELIB_AddHelperPart(&mesh[i]) == -1)
         {
           std::cout << r << " cannot add helper part (i,i)=(" << i << "," << i << ")" << std::endl;
@@ -63,7 +64,7 @@ int main(void)
   {
     fcelib::FCELIB_FreeMesh(&mesh[i]);
   }
- 
+
 
   if (retv == 0)
     std::cout << "successful" << std::endl;

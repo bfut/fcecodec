@@ -232,14 +232,14 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_dest, FcelibMesh *mesh_src, const 
     }
     mesh_dest->hdr.NumVertices += part_dest->PNumVertices;
 
-    old_global_to_new_global_idxs = (int *)malloc((size_t)mesh_src->vertices_len * sizeof(*old_global_to_new_global_idxs));
+    old_global_to_new_global_idxs = (int *)malloc(mesh_src->vertices_len * sizeof(*old_global_to_new_global_idxs));
     if (!old_global_to_new_global_idxs)
     {
       fprintf(stderr, "CopyPartToMesh: Cannot allocate memory (map)\n");
       new_pid = -1;
       break;
     }
-    memset(old_global_to_new_global_idxs, -1, (size_t)mesh_src->vertices_len * sizeof(*old_global_to_new_global_idxs));
+    memset(old_global_to_new_global_idxs, 0xFF, mesh_src->vertices_len * sizeof(*old_global_to_new_global_idxs));
 
     /* i - vert index in source, j - vert index in receiver */
     for (i = 0, j = 0; (i < part_src->pvertices_len) && (j < part_src->PNumVertices); ++i)
@@ -401,15 +401,15 @@ int FCELIB_OP_DeletePartTriags(FcelibMesh *mesh, const int pidx, const int *idxs
     }
     part = mesh->parts[ mesh->hdr.Parts[internal_idx] ];
 
-    map = (int *)malloc((size_t)idxs_len * sizeof(*map));
+    map = (int *)malloc(idxs_len * sizeof(*map));
     if (!map)
     {
       fprintf(stderr, "DeletePartTriags: Cannot allocate memory (map)\n");
       break;
     }
 
-    memcpy(map, idxs, (size_t)idxs_len * sizeof(*map));
-    qsort(map, (size_t)idxs_len, sizeof(*map), FCELIB_UTIL_CompareInts);
+    memcpy(map, idxs, idxs_len * sizeof(*map));
+    qsort(map, idxs_len, sizeof(*map), FCELIB_UTIL_CompareInts);
     if (map[0] < 0 || map[idxs_len - 1] > part->PNumTriangles)
     {
       fprintf(stderr, "DeletePartTriags: Triangle index out of range (idxs)\n");
@@ -422,7 +422,7 @@ int FCELIB_OP_DeletePartTriags(FcelibMesh *mesh, const int pidx, const int *idxs
     {
       if (part->PTriangles[i] < 0)
         continue;
-      ptr = (int *)bsearch(&i, sptr, (size_t)search_len, sizeof(*map), FCELIB_UTIL_CompareInts);
+      ptr = (int *)bsearch(&i, sptr, search_len, sizeof(*map), FCELIB_UTIL_CompareInts);
       if (!ptr)
         continue;
       free(mesh->triangles[ part->PTriangles[i] ]);
@@ -453,13 +453,13 @@ int FCELIB_OP_DeleteUnrefdVerts(FcelibMesh *mesh)
   FcelibPart *part;
   int *map;
 
-  map = (int *)malloc((size_t)mesh->vertices_len * sizeof(*map));
+  map = (int *)malloc(mesh->vertices_len * sizeof(*map));
   if (!map)
   {
     fprintf(stderr, "DeleteUnrefdVerts: Cannot allocate memory (map)\n");
     return 0;
   }
-  memset(map, 0, (size_t)mesh->vertices_len * sizeof(*map));
+  memset(map, 0, mesh->vertices_len * sizeof(*map));
 
   for (i = 0; i < mesh->parts_len; ++i)
   {
@@ -599,14 +599,14 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
     }
     mesh->hdr.NumVertices += part_dest->PNumVertices;
 
-    old_global_to_new_global_idxs = (int *)malloc((size_t)mesh->vertices_len * sizeof(int));
+    old_global_to_new_global_idxs = (int *)malloc(mesh->vertices_len * sizeof(int));
     if (!old_global_to_new_global_idxs)
     {
       fprintf(stderr, "MergePartsToNew: Cannot allocate memory (map)\n");
       new_pid = -1;
       break;
     }
-    memset(old_global_to_new_global_idxs, 0xFF, (size_t)mesh->vertices_len * sizeof(int));
+    memset(old_global_to_new_global_idxs, 0xFF, mesh->vertices_len * sizeof(int));
 
     /* i - vert index in source, j - vert index in receiver */
     for (i = 0, j = 0; i < part_src1->pvertices_len && j < part_src1->PNumVertices; ++i)

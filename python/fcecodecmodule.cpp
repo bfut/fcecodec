@@ -40,6 +40,7 @@
 #define free PyMem_Free
 #endif  // PYMEM_MALLOC
 
+#define FCELIB_PREVIEW_MESH2
 #include "../src/fcelib/fcelib.h"
 #include "../src/fcelib/fcelib_types.h"
 
@@ -53,9 +54,6 @@ class Mesh : public fcelib::FcelibMesh
 public:
   Mesh() : mesh_(*this) { fcelib::FCELIB_InitMesh(&mesh_); }
   ~Mesh() { fcelib::FCELIB_FreeMesh(&mesh_); }
-
-  // Internal
-  fcelib::FcelibMesh *Get_mesh_() { return &mesh_; }
 
   // Service
   bool MValid() const { return fcelib::FCELIB_ValidateMesh(&mesh_); }
@@ -141,6 +139,7 @@ public:
   int OpMovePart(const int pid);
 
 private:
+  fcelib::FcelibMesh *Get_mesh_() { return &mesh_; }
   fcelib::FcelibMesh& mesh_;
 };
 

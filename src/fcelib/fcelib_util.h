@@ -110,14 +110,14 @@ int FCELIB_UTIL_ArrMax(const int *arr, const int arr_len)
   int retv = -100;
   for (;;)
   {
-    int *sortedarr = (int *)malloc((size_t)arr_len * sizeof(*sortedarr));
+    int *sortedarr = (int *)malloc(arr_len * sizeof(*sortedarr));
     if (!sortedarr)
     {
       fprintf(stderr, "Warning: FCELIB_UTIL_ArrMax: Cannot allocate memory, return default -100");
       break;
     }
-    memcpy(sortedarr, arr, (size_t)arr_len * sizeof(*sortedarr));
-    qsort(sortedarr, (size_t)arr_len, sizeof(*sortedarr), FCELIB_UTIL_CompareInts);
+    memcpy(sortedarr, arr, arr_len * sizeof(*sortedarr));
+    qsort(sortedarr, arr_len, sizeof(*sortedarr), FCELIB_UTIL_CompareInts);
 
     retv = sortedarr[arr_len - 1];
     free(sortedarr);
@@ -126,7 +126,7 @@ int FCELIB_UTIL_ArrMax(const int *arr, const int arr_len)
   return retv;
 }
 
-/* strncmp(), but for array of strings */
+/* strncmp() for array of strings */
 int FCELIB_UTIL_StrIsInArray(char *str, const char **arr)
 {
   int retv = 0;
