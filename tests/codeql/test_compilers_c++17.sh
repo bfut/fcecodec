@@ -15,8 +15,8 @@ DEST="fcec-OpAddHelperPart${VERSION}"
 
 # compiler-specific
 MINGWFLAGS="-fPIE -s -O2 -Xlinker --no-insert-timestamp" #  -fstack-clash-protection -Wl,-pie
-GCCFLAGS="-fPIE -fstack-clash-protection -fstack-protector-strong -D_FORTIFY_SOURCE=2 -s -O2"
-CPPFLAGS="-D_GLIBCXX_ASSERTIONS -fPIE -fstack-clash-protection -fstack-protector-strong -D_FORTIFY_SOURCE=2 -s -O2"
+GCCFLAGS="-fPIE -pie -fstack-clash-protection -fstack-protector-strong -D_FORTIFY_SOURCE=2 -s -O2"
+CPPFLAGS="-D_GLIBCXX_ASSERTIONS -fPIE -pie -fstack-clash-protection -fstack-protector-strong -D_FORTIFY_SOURCE=2 -s -O2"
 
 # debug
 GCCDEBUGFLAGS="-pedantic-errors -g -Wall -Wextra -Wstack-protector -fasynchronous-unwind-tables" # -fsanitize=leak

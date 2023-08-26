@@ -37,10 +37,6 @@
 #include "./fcelib_fcetypes.h"
 
 #ifdef __cplusplus
-namespace fcelib {
-#endif
-
-#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -61,10 +57,10 @@ typedef struct {
 } FcelibTriangle;
 
 typedef struct {
-  int     PNumVertices;    /* true count for this part */
-  int     pvertices_len;   /* array length */
-  int     PNumTriangles;   /* true count for this part */
-  int     ptriangles_len;  /* array length */
+  int     PNumVertices;    /* number of elements: true count for this part */
+  int     pvertices_len;   /* capacity: array length */
+  int     PNumTriangles;   /* number of elements: true count for this part */
+  int     ptriangles_len;  /* capacity: array length */
   char    PartName[64];
 
   tVector PartPos;
@@ -77,7 +73,7 @@ typedef struct {
   int      NumTriangles;
   int      NumVertices;
   int      NumArts;
-  int      NumParts;       /* true count */
+  int      NumParts;       /* number of elements: true count */
   int      NumDummies;     /* <= 16 */
   int      NumColors;      /* <= 16 */
   int      NumSecColors;   /* <= 16, FCE3 only */
@@ -92,51 +88,44 @@ typedef struct {
 } FcelibHeader;
 
 #ifdef __cplusplus
-/* Wnon-c-typedef-for-linkage, http://wg21.link/p1766r1 */
+/* Wnon-c-typedef-for-linkage, https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1766r1.html */
 /* potential issue with C++03 https://github.com/tinyobjloader/tinyobjloader/issues/259#issuecomment-590675708 */
 typedef struct FcelibMesh {
-#ifdef FCELIB_PREVIEW_MESH2
-  int              internal_consumed; /* previously decoded? yes/no 1/0, internal fcelib use only */
 #else
-  int              freed = 1;      /* has instance been destroyed before? */
-#endif  /* FCELIB_PREVIEW_MESH2 */
-#else
-typedef struct {
-#ifndef FCELIB_PREVIEW_MESH2
-  int              freed;          /* has instance been destroyed before? */
-#endif  /* FCELIB_PREVIEW_MESH2 */
-#endif  /* __cplusplus */
+struct FcelibMesh {
+#endif
+  int              _consumed;  /* previously decoded? yes/no 1/0, internal fcelib use only */
 
-  int              parts_len;      /* array length */
-  int              triangles_len;  /* array length */
-  int              vertices_len;   /* array length */
+  int              parts_len;          /* capacity: array length */
+  int              triangles_len;      /* capacity: array length */
+  int              vertices_len;       /* capacity: array length */
 
   FcelibHeader     hdr;
 
-  FcelibPart     **parts;          /* may contain NULL elements */
+  FcelibPart     **parts;              /* may contain NULL elements */
+
   /* Each vert and triag belongs to exactly one part, respectively. */
-  FcelibTriangle **triangles;      /* may contain NULL elements */
-  FcelibVertex   **vertices;       /* may contain NULL elements */
+  FcelibTriangle **triangles;          /* may contain NULL elements */
+  FcelibVertex   **vertices;           /* may contain NULL elements */
 
-#ifdef FCELIB_PREVIEW_MESH2
-  void           (*release)(struct FcelibMesh*);
-#endif
+#ifdef __cplusplus
+  void           (*release)(struct FcelibMesh*) = NULL;
 } FcelibMesh;
-
+#else
+  void           (*release)(struct FcelibMesh*);
+};
+typedef struct FcelibMesh FcelibMesh;  /*##*/
+#endif
 
 /* release, init, validate -------------------------------------------------- */
 
+/* Only call via mesh->release(); never call directly. */
 void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
 {
   int i;
   int k;
   int n;
   FcelibPart *part;
-
-#ifndef FCELIB_PREVIEW_MESH2
-  if (mesh->freed == 1)
-    return;
-#endif
 
   for (i = mesh->parts_len - 1; i >= 0 ; --i)
   {
@@ -229,33 +218,22 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
     mesh->hdr.DriColors[i].transparency = '\0';
   }
 
-#ifdef FCELIB_PREVIEW_MESH2
-  mesh->internal_consumed = 0;
+  mesh->_consumed = 0;
   mesh->release = NULL;
-#else
-  mesh->freed = 1;
-#endif
 }
 
 void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
 {
   int i;
 
-#ifdef FCELIB_PREVIEW_MESH2
   if (mesh->release == &FCELIB_TYPES_FreeMesh)
   {
     fprintf(stderr, "Warning: InitMesh: mesh is previously initialized\n");
     return;
   }
+
   mesh->release = &FCELIB_TYPES_FreeMesh;
-  mesh->internal_consumed = 0;
-#else
-#ifdef __cplusplus
-  if (mesh->freed != 1)
-    fprintf(stderr, "Warning: InitMesh: mesh is not free'd (requires FCELIB_FreeMesh)\n");
-#endif
-  mesh->freed = 1;
-#endif  /* FCELIB_PREVIEW_MESH2 */
+  mesh->_consumed = 0;
 
   mesh->hdr.NumTriangles = 0;
   mesh->hdr.NumVertices = 0;
@@ -462,7 +440,6 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh *mesh)
 
   return 1;
 }
-
 
 /* service ------------------------------------------------------------------ */
 
@@ -840,7 +817,6 @@ void FCELIB_TYPES_ResetPartCenter(const FcelibMesh *mesh, FcelibPart *part, cons
   memcpy(&part->PartPos.z, &new_PartPos.z, sizeof(float));
 }
 
-
 /* stats -------------------------------------------------------------------- */
 
 void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh *mesh)
@@ -980,10 +956,6 @@ void FCELIB_TYPES_PrintMeshVertices(const FcelibMesh *mesh)
 
 #ifdef __cplusplus
 }  /* extern "C" */
-#endif
-
-#ifdef __cplusplus
-}  /* namespace fcelib */
 #endif
 
 #endif  /* FCELIB_TYPES_H_ */

@@ -35,10 +35,6 @@
 #include "./fcelib_util.h"
 
 #ifdef __cplusplus
-namespace fcelib {
-#endif
-
-#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -51,7 +47,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
   int retv = 0;
   int i;
   int j;
-  size_t n;
+  int n;
   const unsigned char *buf = (const unsigned char *)inbuf;
   int fce_version;
 
@@ -61,26 +57,16 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
     return retv;
   }
 
-#ifdef FCELIB_PREVIEW_MESH2
-  if (!mesh->release || mesh->internal_consumed == 1)
-  {
-    fprintf(stderr, "DecodeFce: mesh is already consumed. Use another or a new mesh object.\n");
-    return retv;
-  }
   if (mesh->release != &FCELIB_TYPES_FreeMesh)
   {
     fprintf(stderr, "DecodeFce: mesh is not initialized.\n");
     return retv;
   }
-  mesh->internal_consumed = 1;
-#else
-  if (mesh->freed != 1)
+  if (mesh->_consumed == 1)
   {
-    fprintf(stderr, "DecodeFce: mesh is not free'd or initialized)\n");
+    fprintf(stderr, "DecodeFce: mesh is already consumed. Use another or a new mesh object.\n");
     return retv;
-  }
-  mesh->freed = 0;
-#endif  /* FCELIB_PREVIEW_MESH2 */
+  }  mesh->_consumed = 1;
 
   for (;;)
   {
@@ -109,7 +95,6 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           return 0;
 
         header = FCELIB_FCETYPES_GetFceHeader4(buf);
-
 
         /* Header ----------------------------------------------------------- */
           /* NumTriangles - counted below */
@@ -230,7 +215,6 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
         for (i = mesh->hdr.NumParts; i < mesh->parts_len; ++i)
           mesh->parts[i] = NULL;
 
-
         /* Triangles -------------------------------------------------------- */
         if (mesh->triangles_len == 0)
         {
@@ -286,7 +270,6 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
         }
         for (i = mesh->hdr.NumTriangles; i < mesh->triangles_len; ++i)
           mesh->triangles[i] = NULL;
-
 
         /* Vertices --------------------------------------------------------- */
         if (mesh->vertices_len == 0)
@@ -410,7 +393,6 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
           memcpy(&mesh->hdr.IntColors[i].transparency, buf + 0x0904 + i * 16 + 0xC, 1);
         }
 
-
         /* Parts ------------------------------------------------------------ */
         if (mesh->hdr.NumParts == 0)  /** TODO: test */
         {
@@ -472,7 +454,6 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
         for (i = mesh->hdr.NumParts; i < mesh->parts_len; ++i)
           mesh->parts[i] = NULL;
 
-
         /* Triangles -------------------------------------------------------- */
         if (mesh->triangles_len == 0)  /** TODO: test */
         {
@@ -522,7 +503,6 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
         }
         for (i = mesh->hdr.NumTriangles; i < mesh->triangles_len; ++i)
           mesh->triangles[i] = NULL;
-
 
         /* Vertices --------------------------------------------------------- */
         if (mesh->vertices_len == 0)  /** TODO: test - this requires (mesh->triangles_len == 0) */
@@ -601,7 +581,7 @@ int FCELIB_IO_DecodeFce(const void *inbuf, int buf_size, FcelibMesh *mesh)
   }  /* for (;;) */
 
   if (retv != 1)
-    FCELIB_TYPES_FreeMesh(mesh);
+    mesh->release(mesh);
 
   return retv;
 }
@@ -1849,11 +1829,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       break;
     }
 
-#ifdef FCELIB_PREVIEW_MESH2
-    mesh->internal_consumed = 1;
-#else
-    mesh->freed = 0;
-#endif
+    mesh->_consumed = 1;
 
     if (vert_idxs_len % 3 != 0)
     {
@@ -2038,10 +2014,6 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
 
 #ifdef __cplusplus
 }  /* extern "C" */
-#endif
-
-#ifdef __cplusplus
-}  /* namespace fcelib */
 #endif
 
 #endif  /* FCELIB_IO_H_ */

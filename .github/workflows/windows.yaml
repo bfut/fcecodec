@@ -27,11 +27,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    # - name: "Add requirements"
-    #   run: |
-    #     python -c "import sys; print(sys.version)"
-    #     python -m pip install --upgrade pip setuptools wheel pybind11
-
     - name: "pip install"
       run: |
         python -m pip install --verbose .

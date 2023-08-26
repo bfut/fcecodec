@@ -27,18 +27,7 @@
 #include <string.h>
 
 #ifdef __cplusplus
-namespace fcelib {
-#endif
-
-#ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifndef INT_MAX
-#define INT_MAX 2147483647
-#endif
-#ifndef INT_MIN
-#define INT_MIN -2147483648
 #endif
 
 #ifndef __cplusplus
@@ -144,10 +133,6 @@ int FCELIB_UTIL_StrIsInArray(char *str, const char **arr)
 
 #ifdef __cplusplus
 }  /* extern "C" */
-#endif
-
-#ifdef __cplusplus
-}  /* namespace fcelib */
 #endif
 
 #endif  /* FCELIB_UTIL_H_ */

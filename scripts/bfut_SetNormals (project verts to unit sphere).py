@@ -117,7 +117,7 @@ def main():
         print(f"mesh.MVertsPos={np.reshape(norms, (-1, 3))[:10]}")
         print(f"mesh.MVertsNorms={np.reshape(mesh.MVertsNorms, (-1, 3))[:10]}")
 
-    WriteFce(fce_outversion, mesh, filepath_fce_output, CONFIG["center_parts"])
+    WriteFce(fce_outversion, mesh, filepath_fce_output)
     print(f"OUTPUT = {filepath_fce_output}", flush=True)
 
 if __name__ == "__main__":

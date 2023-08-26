@@ -36,19 +36,15 @@ FCE4/FCE4M format theoretical limits (assuming signed int):
 #ifndef FCELIB_FCETYPES_H_
 #define FCELIB_FCETYPES_H_
 
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "./fcelib_util.h"
 
 #ifdef __cplusplus
-namespace fcelib {
-#endif
-
-#ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /* FCE3   tTriangle->flag   4 bit
       0x0   default             body parts: reflection
@@ -633,7 +629,6 @@ int FCELIB_FCETYPES_GetFceVersion(const void *buf, const int buf_size)
   }
 }
 
-
 /* Get header --------------------------------------------------------------- */
 
 /* Assumes valid FCE data */
@@ -797,7 +792,6 @@ FceHeader4 FCELIB_FCETYPES_GetFceHeader4(const unsigned char *header)
 
   return hdr;
 }
-
 
 /* Fce3 validation ---------------------------------------------------------- */
 
@@ -1086,7 +1080,6 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const void *header, const int infilesize)
 
   return retv;
 }
-
 
 /* Fce4 validation ---------------------------------------------------------- */
 
@@ -1491,7 +1484,6 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const void *header, const int infilesize)
   return retv;
 }
 
-
 /* print info --------------------------------------------------------------- */
 
 void FCELIB_FCETYPES_PrintHeaderFce3(const int fce_size, const void *header)
@@ -1698,10 +1690,6 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const int fce_size, const void *header)
 
 #ifdef __cplusplus
 }  /* extern "C" */
-#endif
-
-#ifdef __cplusplus
-}  /* namespace fcelib */
 #endif
 
 #endif  /* FCELIB_FCETYPES_H_ */

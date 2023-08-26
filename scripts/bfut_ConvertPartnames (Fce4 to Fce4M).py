@@ -182,7 +182,7 @@ def main():
             fce_outversion = "4M"
     else:
         fce_outversion = CONFIG["fce_version"]
-    if not CONFIG["script_version"] in ["34", "4M"]:
+    if CONFIG["script_version"] not in ["34", "4M"]:
         raise ValueError('invalid script_version config (expects "34"|"4M")')
 
     # Load FCE
@@ -190,7 +190,7 @@ def main():
     mesh = LoadFce(mesh, filepath_fce_input)
 
     if mesh.MNumParts < 1:
-        print(f"ConvertPartnames: FCE must have at least 1 part.")
+        print("ConvertPartnames: FCE must have at least 1 part.")
         return
 
     # Convert partnames

@@ -36,10 +36,6 @@
 #include "./fcelib_util.h"  /* kTrianglesDiamond, kVertDiamond */
 
 #ifdef __cplusplus
-namespace fcelib {
-#endif
-
-#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -761,10 +757,6 @@ int FCELIB_OP_MoveUpPart(FcelibMesh *mesh, const int idx)
 
 #ifdef __cplusplus
 }  /* extern "C" */
-#endif
-
-#ifdef __cplusplus
-}  /* namespace fcelib */
 #endif
 
 #endif  /* FCELIB_OP_H_ */

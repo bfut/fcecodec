@@ -43,10 +43,6 @@
 #include "./fcelib_types.h"
 
 #ifdef __cplusplus
-namespace fcelib {
-#endif
-
-#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -54,12 +50,8 @@ extern "C" {
 
 void FCELIB_FreeMesh(FcelibMesh *mesh)
 {
-#ifdef FCELIB_PREVIEW_MESH2
   if (mesh->release == &FCELIB_TYPES_FreeMesh)
     mesh->release(mesh);
-#else
-  FCELIB_TYPES_FreeMesh(mesh);
-#endif
 }
 
 void FCELIB_InitMesh(FcelibMesh *mesh)
@@ -91,7 +83,6 @@ int FCELIB_ValidateMesh(const FcelibMesh *mesh)
 {
   return FCELIB_TYPES_ValidateMesh(mesh);
 }
-
 
 /* mesh: operations --------------------------------------------------------- */
 
@@ -143,7 +134,6 @@ int FCELIB_MeshMoveUpPart(FcelibMesh *mesh, const int idx)
   return FCELIB_OP_MoveUpPart(mesh, idx);
 }
 
-
 /* tools -------------------------------------------------------------------- */
 
 /* Returns size in bytes. target_fce_version: 3 (FCE3), 4 (FCE4), 5 (FCE4M) */
@@ -185,7 +175,6 @@ void FCELIB_PrintFceInfo(const int fce_size, const void *hdr)
       break;
   }
 }
-
 
 /* i/o ---------------------------------------------------------------------- */
 
@@ -259,10 +248,6 @@ int FCELIB_GetInternalPartIdxByOrder(const FcelibMesh *mesh, const int idx)
 
 #ifdef __cplusplus
 } /* extern "C" */
-#endif
-
-#ifdef __cplusplus
-} /* namespace fcelib */
 #endif
 
 #endif /* FCELIB_H_ */
