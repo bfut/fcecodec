@@ -34,7 +34,7 @@ import argparse
 import os
 import pathlib
 
-import fcecodec
+import fcecodec as fc
 
 # Parse command-line
 parser = argparse.ArgumentParser()
@@ -81,7 +81,7 @@ def main():
         print("ignoring part positions")
     if CONFIG["print_part_positions"] == 1:
         print("printing extra shapes for each part position")
-    mesh = fcecodec.Mesh()
+    mesh = fc.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
     os.chdir(filepath_obj_output.parent)
     print(flush=True)

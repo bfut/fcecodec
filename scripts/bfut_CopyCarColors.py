@@ -27,7 +27,7 @@ REQUIRES
 import argparse
 import pathlib
 
-import fcecodec
+import fcecodec as fc
 
 CONFIG = {
     "fce_version" : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
@@ -37,15 +37,15 @@ CONFIG = {
 # -------------------------------------- wrappers
 def GetFceVersion(path):
     with open(path, "rb") as f:
-        version = fcecodec.GetFceVersion(f.read(0x2038))
+        version = fc.GetFceVersion(f.read(0x2038))
         assert version > 0
         return version
 
 def PrintFceInfo(path):
     with open(path, "rb") as f:
         buf = f.read()
-        fcecodec.PrintFceInfo(buf)
-        assert fcecodec.ValidateFce(buf) == 1
+        fc.PrintFceInfo(buf)
+        assert fc.ValidateFce(buf) == 1
 
 def LoadFce(mesh, path):
     with open(path, "rb") as f:
@@ -63,7 +63,7 @@ def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)
-        assert fcecodec.ValidateFce(buf) == 1
+        assert fc.ValidateFce(buf) == 1
         f.write(buf)
 
 
@@ -87,11 +87,11 @@ def main():
         fce_outversion = CONFIG["fce_version"]
 
     # Load FCE
-    mesh = fcecodec.Mesh()
+    mesh = fc.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
 
     # Copy colors
-    mesh_source = fcecodec.Mesh()
+    mesh_source = fc.Mesh()
     mesh_source = LoadFce(mesh_source, filepath_fce_input_source)
     mesh.MSetColors(mesh_source.MGetColors())
 

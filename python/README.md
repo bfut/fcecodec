@@ -30,7 +30,7 @@ For a script template and handy function wrappers, see
 [/python/bfut_mywrappers.py](/python/bfut_mywrappers.py)
 
 ```py
-import fcecodec
+import fcecodec as fc
 
 filepath_fce_input = "path/to/car_src.fce"
 filepath_fce_input2 = "path/to/car_src2.fce"
@@ -40,10 +40,10 @@ with open(filepath_fce_input, "rb") as f:
     fce_buf = f.read()
 
 # Print FCE stats
-fcecodec.PrintFceInfo(fce_buf)
+fc.PrintFceInfo(fce_buf)
 
 # Create Mesh object
-mesh = fcecodec.Mesh()
+mesh = fc.Mesh()
 
 # Load FCE data to Mesh object
 mesh.IoDecode(fce_buf)
@@ -68,7 +68,7 @@ assert new_pid != -1
 # Insert/copy part 1 from mesh2 to mesh
 with open(filepath_fce_input2, "rb") as f:
     fce_buf2 = f.read()
-mesh2 = fcecodec.Mesh()
+mesh2 = fc.Mesh()
 mesh2.IoDecode(fce_buf2)
 new_pid = mesh.OpInsertPart(mesh2, 1)
 assert new_pid != -1

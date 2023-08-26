@@ -40,7 +40,7 @@ import argparse
 import pathlib
 import sys
 
-import fcecodec
+import fcecodec as fc
 import numpy as np
 
 CONFIG = {
@@ -62,15 +62,15 @@ CONFIG = {
 # -------------------------------------- wrappers
 def GetFceVersion(path):
     with open(path, "rb") as f:
-        version = fcecodec.GetFceVersion(f.read(0x2038))
+        version = fc.GetFceVersion(f.read(0x2038))
         assert version > 0
         return version
 
 def PrintFceInfo(path):
     with open(path, "rb") as f:
         buf = f.read()
-        fcecodec.PrintFceInfo(buf)
-        assert fcecodec.ValidateFce(buf) == 1
+        fc.PrintFceInfo(buf)
+        assert fc.ValidateFce(buf) == 1
 
 def LoadFce(mesh, path):
     with open(path, "rb") as f:
@@ -88,7 +88,7 @@ def WriteFce(version, mesh, path, center_parts=True, mesh_function=None):
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)
-        assert fcecodec.ValidateFce(buf) == 1
+        assert fc.ValidateFce(buf) == 1
         f.write(buf)
 
 def GetMeshPartnames(mesh):
@@ -103,7 +103,7 @@ def GetMeshPartnameIdx(mesh, partname):
 
 
 # -------------------------------------- script functions
-def FlipTriangleFlag(mesh: fcecodec.Mesh, pid: int, flag: int, on=False, condition=-1, verbose=True):
+def FlipTriangleFlag(mesh: fc.Mesh, pid: int, flag: int, on=False, condition=-1, verbose=True):
     """
         Expects 'flag' is power of 2 (e.g., 2, 4, 8, ...)
 
@@ -302,7 +302,7 @@ def main():
     fenders = CONFIG["fenders"]
 
     # Load FCE
-    mesh = fcecodec.Mesh()
+    mesh = fc.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
 
     if mesh.MNumParts > 1:
@@ -478,7 +478,7 @@ def main():
 
         if len(fce4m_merge_map) > 0:
             print(f"remaining fce4m_merge_map={fce4m_merge_map}")
-            def ApplyMergeMap_Not_HB(mesh: fcecodec.Mesh, fce4m_merge_map: dict, delete_parts: list):
+            def ApplyMergeMap_Not_HB(mesh: fc.Mesh, fce4m_merge_map: dict, delete_parts: list):
                 """
                     For non-hi body merging, triangle order is not significant
                 """

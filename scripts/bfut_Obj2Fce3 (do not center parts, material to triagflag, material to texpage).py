@@ -39,7 +39,7 @@ import pathlib
 import re
 import sys
 
-import fcecodec
+import fcecodec as fc
 import numpy as np
 import tinyobjloader
 
@@ -67,8 +67,8 @@ else:
 def PrintFceInfo(path):
     with open(path, "rb") as f:
         buf = f.read()
-        fcecodec.PrintFceInfo(buf)
-        assert fcecodec.ValidateFce(buf) == 1
+        fc.PrintFceInfo(buf)
+        assert fc.ValidateFce(buf) == 1
 
 def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
     if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
@@ -80,7 +80,7 @@ def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)
-        assert fcecodec.ValidateFce(buf) == 1
+        assert fc.ValidateFce(buf) == 1
         f.write(buf)
 
 def GetMeshPartnames(mesh):
@@ -487,8 +487,8 @@ def main():
     PrintShapes(reader)
     shapenames = GetShapeNames(reader)
 
-    # Transform geometric data, load as fcecodec.Mesh
-    mesh = fcecodec.Mesh()
+    # Transform geometric data, load as fc.Mesh
+    mesh = fc.Mesh()
     for i in range(len(shapenames)):
         print("s_name", shapenames[i])
         mesh = ShapeToPart(reader,

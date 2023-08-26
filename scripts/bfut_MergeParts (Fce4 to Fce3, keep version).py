@@ -42,7 +42,7 @@ import argparse
 import pathlib
 import sys
 
-import fcecodec
+import fcecodec as fc
 import numpy as np
 
 CONFIG = {
@@ -56,15 +56,15 @@ CONFIG = {
 # -------------------------------------- wrappers
 def GetFceVersion(path):
     with open(path, "rb") as f:
-        version = fcecodec.GetFceVersion(f.read(0x2038))
+        version = fc.GetFceVersion(f.read(0x2038))
         assert version > 0
         return version
 
 def PrintFceInfo(path):
     with open(path, "rb") as f:
         buf = f.read()
-        fcecodec.PrintFceInfo(buf)
-        assert fcecodec.ValidateFce(buf) == 1
+        fc.PrintFceInfo(buf)
+        assert fc.ValidateFce(buf) == 1
 
 def LoadFce(mesh, path):
     with open(path, "rb") as f:
@@ -82,7 +82,7 @@ def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)
-        assert fcecodec.ValidateFce(buf) == 1
+        assert fc.ValidateFce(buf) == 1
         f.write(buf)
 
 def GetMeshPartnames(mesh):
@@ -125,7 +125,7 @@ def PrintMeshParts(mesh, fuse_map):
     for pid in range(mesh.MNumParts):
         print(f"{pid:<4} {mesh.PGetName(pid):<32} {fuse_map.get(mesh.PGetName(pid), ''):<24}")
 
-def FlipTriangleFlag(mesh: fcecodec.Mesh, pid: int, flag: int, on=False, condition: int=None, verbose=True):
+def FlipTriangleFlag(mesh: fc.Mesh, pid: int, flag: int, on=False, condition: int=None, verbose=True):
     """
         Expects 'flag' is power of 2 (e.g., 2, 4, 8, ...)
 
@@ -195,7 +195,7 @@ def main():
         transparent_windows = int(CONFIG["transparent_windows"])
 
     # Load FCE
-    mesh = fcecodec.Mesh()
+    mesh = fc.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
 
     if mesh.MNumParts > 1:

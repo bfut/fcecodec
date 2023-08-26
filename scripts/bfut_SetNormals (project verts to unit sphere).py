@@ -27,7 +27,7 @@ REQUIRES
 import argparse
 import pathlib
 
-import fcecodec
+import fcecodec as fc
 import numpy as np
 
 CONFIG = {
@@ -52,7 +52,7 @@ else:
 # -------------------------------------- wrappers
 def GetFceVersion(path):
     with open(path, "rb") as f:
-        version = fcecodec.GetFceVersion(f.read(0x2038))
+        version = fc.GetFceVersion(f.read(0x2038))
         assert version > 0
         return version
 
@@ -72,7 +72,7 @@ def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)
-        assert fcecodec.ValidateFce(buf) == 1
+        assert fc.ValidateFce(buf) == 1
         f.write(buf)
 
 
@@ -88,7 +88,7 @@ def main():
         raise ValueError(f'expected CONFIG["sphere_radius"] as float, is {type(CONFIG["sphere_radius"])}')
     sphere_radius = CONFIG["sphere_radius"]
 
-    mesh = fcecodec.Mesh()
+    mesh = fc.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
 
     # Get vertices

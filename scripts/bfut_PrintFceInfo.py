@@ -26,7 +26,7 @@ REQUIRES
 """
 import argparse
 
-import fcecodec
+import fcecodec as fc
 
 # Parse command-line
 parser = argparse.ArgumentParser()
@@ -41,8 +41,8 @@ filepath_fce_input = args.path[0]
 def PrintFceInfo(path):
     with open(path, "rb") as f:
         buf = f.read()
-        fcecodec.PrintFceInfo(buf)
-        assert fcecodec.ValidateFce(buf) == 1
+        fc.PrintFceInfo(buf)
+        assert fc.ValidateFce(buf) == 1
 
 
 #

@@ -27,7 +27,7 @@ REQUIRES
 import argparse
 import pathlib
 
-import fcecodec
+import fcecodec as fc
 
 CONFIG = {
     "fce_version"        : "4M",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
@@ -63,12 +63,12 @@ def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
             buf = mesh.IoEncode_Fce4(center_parts)
         else:
             buf = mesh.IoEncode_Fce4M(center_parts)
-        assert fcecodec.ValidateFce(buf) == 1
+        assert fc.ValidateFce(buf) == 1
         f.write(buf)
 
 #
 def main():
-    mesh = fcecodec.Mesh()
+    mesh = fc.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
     WriteFce(CONFIG["fce_version"], mesh, filepath_fce_output)
     print(f"FILE = {filepath_fce_output}", flush=True)

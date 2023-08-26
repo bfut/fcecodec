@@ -27,7 +27,7 @@ import sys
 
 # Look for local build, if not installed
 try:
-    import fcecodec
+    import fcecodec as fc
 except ModuleNotFoundError:
     import sys
     PATH = pathlib.Path(pathlib.Path(__file__).parent / "../python/build")
@@ -36,7 +36,7 @@ except ModuleNotFoundError:
         sys.path.append(str(x.resolve()))
     del PATH
 
-    import fcecodec
+    import fcecodec as fc
 
 script_path = pathlib.Path(__file__).parent
 filepath_fce_input = script_path / "fce/Snowman_car.fce"
@@ -63,7 +63,7 @@ from bfut_mywrappers import *
 # Generate src->X and src->X->Y
 def generate_data(version1, version2, filepath_fce_output):
     outpath = str(filepath_fce_output) + f"diff{version1}{version2}"
-    mesh = fcecodec.Mesh()
+    mesh = fc.Mesh()
 
     mesh = LoadFce(mesh, filepath_fce_input)
     WriteFce(version1, mesh, filepath_fce_output, center_parts=0)

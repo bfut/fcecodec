@@ -28,7 +28,7 @@ import argparse
 import pathlib
 import sys
 
-import fcecodec
+import fcecodec as fc
 import numpy as np
 
 CONFIG = {
@@ -65,7 +65,7 @@ def main():
             fce_outversion = "4M"
     else:
         fce_outversion = CONFIG["fce_version"]
-    mesh = fcecodec.Mesh()
+    mesh = fc.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
     ## do stuff here
 

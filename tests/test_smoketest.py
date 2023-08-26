@@ -27,7 +27,7 @@ import pytest
 
 # Look for local build, if not installed
 try:
-    import fcecodec
+    import fcecodec as fc
 except ModuleNotFoundError:
     import sys
     PATH = pathlib.Path(pathlib.Path(__file__).parent / "../python/build")
@@ -36,7 +36,7 @@ except ModuleNotFoundError:
         sys.path.append(str(x.resolve()))
     del PATH
 
-    import fcecodec
+    import fcecodec as fc
 
 
 # --------------------------------------
@@ -119,7 +119,7 @@ def test_smoketest_tracemalloc():
     print(f"version: {GetFceVersion(filepath_fce_input)}")
     # PrintFceInfo(filepath_fce_input)
 
-    mesh = fcecodec.Mesh()
+    mesh = fc.Mesh()
     print(mesh, type(mesh))
     print(flush = True)
 
@@ -169,7 +169,7 @@ def test_smoketest_no_tracemalloc():
     print(f"version: {GetFceVersion(filepath_fce_input)}")
     # PrintFceInfo(filepath_fce_input)
 
-    mesh = fcecodec.Mesh()
+    mesh = fc.Mesh()
     print(mesh, type(mesh))
     print(flush = True)
 
@@ -411,7 +411,7 @@ def test_FceVersion(vers, path):
 # def test_PrintFceInfo(vers, path):
 #     import wurlitzer
 #     with wurlitzer.pipes() as (out, err):
-#         fcecodec.PrintFceInfo(path.read_bytes())
+#         fc.PrintFceInfo(path.read_bytes())
 #     stdout = out.read()
 #     assert len(err.read()) == 0 and stdout == vers
 
@@ -423,8 +423,8 @@ def test_version():
             next(f)
         __version__ = f.readline().rstrip().split("\"")[-2]
     print(f"VERSION_INFO={__version__}")
-    if hasattr(fcecodec, "__version__"):
-        print(f"fcecodec.__version__={fcecodec.__version__}")
+    if hasattr(fc, "__version__"):
+        print(f"fc.__version__={fc.__version__}")
     else:
-        print(f'hasattr(fcecodec, "__version__")={hasattr(fcecodec, "__version__")}')
-    assert hasattr(fcecodec, "__version__") and fcecodec.__version__ == __version__
+        print(f'hasattr(fc, "__version__")={hasattr(fc, "__version__")}')
+    assert hasattr(fc, "__version__") and fc.__version__ == __version__
