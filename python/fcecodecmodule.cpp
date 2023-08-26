@@ -35,7 +35,6 @@
 #include <vector>
 
 #ifdef PYMEM_MALLOC
-// TODO: necessary for tracemalloc?
 #define malloc PyMem_Malloc
 #define realloc PyMem_Realloc
 #define free PyMem_Free

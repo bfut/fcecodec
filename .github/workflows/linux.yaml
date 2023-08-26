@@ -28,7 +28,9 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: "pip install"
+      shell: bash
       run: |
+        export PYMEM_MALLOC=""
         python -m pip install --verbose .
 
     - name: "Print fcecodec.__version__, help"
@@ -48,6 +50,4 @@ jobs:
     - name: "pytest"
       shell: bash
       run: |
-        cmp --help
-        cksum
         pytest -s -vv
