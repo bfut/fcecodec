@@ -45,9 +45,9 @@ extra_compile_args = []
 if "PYMEM_MALLOC" in os.environ:
     print(f'PYMEM_MALLOC={os.environ["PYMEM_MALLOC"]}')
     extra_compile_args += [ "-DPYMEM_MALLOC" ]
-if "FCECODECMODULE_DEBUG" in os.environ:
-    print(f'FCECODECMODULE_DEBUG={os.environ["FCECODECMODULE_DEBUG"]}')
-    extra_compile_args += [ "-FCECODECMODULE_DEBUG" ]
+if "FCELIB_PYTHON_DEBUG" in os.environ:
+    print(f'FCELIB_PYTHON_DEBUG={os.environ["FCELIB_PYTHON_DEBUG"]}')
+    extra_compile_args += [ "-FCELIB_PYTHON_DEBUG" ]
 if platform.system() == "Windows":
     extra_compile_args += [
         ("/wd4267")  # prevents warnings on conversion from size_t to int

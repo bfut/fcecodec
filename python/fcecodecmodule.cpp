@@ -405,7 +405,7 @@ void Mesh::MSetDummyPos(py::array_t<float, py::array::c_style | py::array::force
 
 int Mesh::PNumTriags(const int pid) const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PNumTriags: failure");
 #endif
@@ -416,7 +416,7 @@ int Mesh::PNumTriags(const int pid) const
 }
 int Mesh::PNumVerts(const int pid) const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PNumVerts: failure");
 #endif
@@ -428,7 +428,7 @@ int Mesh::PNumVerts(const int pid) const
 
 const std::string Mesh::PGetName(const int pid) const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetName: failure");
 #endif
@@ -439,7 +439,7 @@ const std::string Mesh::PGetName(const int pid) const
 }
 void Mesh::PSetName(const int pid, const std::string &s)
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetName: failure");
 #endif
@@ -452,7 +452,7 @@ void Mesh::PSetName(const int pid, const std::string &s)
 
 py::buffer Mesh::PGetPos(const int pid) const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetPos: failure");
 #endif
@@ -469,7 +469,7 @@ py::buffer Mesh::PGetPos(const int pid) const
 }
 void Mesh::PSetPos(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetPos: failure");
 #endif
@@ -494,7 +494,7 @@ void Mesh::PSetPos(const int pid, py::array_t<float, py::array::c_style | py::ar
 
 py::buffer Mesh::PGetTriagsVidx(const int pid) const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetTriagsVidx: failure");
 #endif
@@ -524,7 +524,7 @@ py::buffer Mesh::PGetTriagsVidx(const int pid) const
 
 py::buffer Mesh::PGetTriagsFlags(const int pid) const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetTriagsFlags: failure");
 #endif
@@ -546,7 +546,7 @@ py::buffer Mesh::PGetTriagsFlags(const int pid) const
 }
 void Mesh::PSetTriagsFlags(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetTriagsFlags: failure");
 #endif
@@ -574,7 +574,7 @@ void Mesh::PSetTriagsFlags(const int pid, py::array_t<int, py::array::c_style | 
 
 py::buffer Mesh::PGetTriagsTexcoords(const int pid) const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetTriagsTexcoords: failure");
 #endif
@@ -603,7 +603,7 @@ py::buffer Mesh::PGetTriagsTexcoords(const int pid) const
 }
 void Mesh::PSetTriagsTexcoords(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetTriagsTexcoords: failure");
 #endif
@@ -634,7 +634,7 @@ void Mesh::PSetTriagsTexcoords(const int pid, py::array_t<float, py::array::c_st
 
 py::buffer Mesh::PGetTriagsTexpages(const int pid) const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetTriagsTexpages: failure");
 #endif
@@ -657,7 +657,7 @@ py::buffer Mesh::PGetTriagsTexpages(const int pid) const
 }
 void Mesh::PSetTriagsTexpages(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetTriagsTexpages: failure");
 #endif
@@ -688,7 +688,7 @@ void Mesh::PSetTriagsTexpages(const int pid, py::array_t<int, py::array::c_style
 /* Via vector index (=global vert idx) map to global vert order. */
 py::buffer Mesh::MVertsGetMap_idx2order() const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MVertsGetMap_idx2order: failure");
 #endif
@@ -718,7 +718,7 @@ py::buffer Mesh::MVertsGetMap_idx2order() const
 
 py::buffer Mesh::MGetVertsPos() const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetVertsPos: failure");
 #endif
@@ -749,7 +749,7 @@ py::buffer Mesh::MGetVertsPos() const
 }
 void Mesh::MSetVertsPos(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetVertsPos: failure");
 #endif
@@ -784,7 +784,7 @@ void Mesh::MSetVertsPos(py::array_t<float, py::array::c_style | py::array::force
 
 py::buffer Mesh::MGetVertsNorms() const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetVertsNorms: failure");
 #endif
@@ -815,7 +815,7 @@ py::buffer Mesh::MGetVertsNorms() const
 }
 void Mesh::MSetVertsNorms(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetVertsNorms: failure");
 #endif
@@ -850,7 +850,7 @@ void Mesh::MSetVertsNorms(py::array_t<float, py::array::c_style | py::array::for
 
 py::buffer Mesh::MGetDamgdVertsPos() const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetDamgdVertsPos: failure");
 #endif
@@ -881,7 +881,7 @@ py::buffer Mesh::MGetDamgdVertsPos() const
 }
 void Mesh::MSetDamgdVertsPos(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetDamgdVertsPos: failure");
 #endif
@@ -916,7 +916,7 @@ void Mesh::MSetDamgdVertsPos(py::array_t<float, py::array::c_style | py::array::
 
 py::buffer Mesh::MGetDamgdVertsNorms() const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetDamgdVertsNorms: failure");
 #endif
@@ -947,7 +947,7 @@ py::buffer Mesh::MGetDamgdVertsNorms() const
 }
 void Mesh::MSetDamgdVertsNorms(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetDamgdVertsNorms: failure");
 #endif
@@ -982,7 +982,7 @@ void Mesh::MSetDamgdVertsNorms(py::array_t<float, py::array::c_style | py::array
 
 py::buffer Mesh::MGetVertsAnimation() const
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetVertsAnimation: failure");
 #endif
@@ -1011,7 +1011,7 @@ py::buffer Mesh::MGetVertsAnimation() const
 }
 void Mesh::MSetVertsAnimation(py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
-#ifdef FCECODECMODULE_DEBUG
+#ifdef FCELIB_PYTHON_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetVertsAnimation: failure");
 #endif
