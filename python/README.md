@@ -161,7 +161,7 @@ CLASSES
      |  OpDelUnrefdVerts(...)
      |      OpDelUnrefdVerts(self: fcecodec.Mesh) -> bool
      |
-     |      Delete all vertices that are not referenced by any triangle.
+     |      Delete all vertices that are not referenced by any triangle. This is a very expensive operation. Unreferenced vertices occur after triangles are deleted or they are otherwise present in data.
      |
      |  OpDeletePart(...)
      |      OpDeletePart(self: fcecodec.Mesh, pid: int) -> bool
@@ -269,7 +269,7 @@ CLASSES
      |  Data descriptors defined here:
      |
      |  MNumArts
-     |      Usually equal to 1. Larger values enable multi-texture access for cop#.fce
+     |      Usually equal to 1. Larger values enable multi-texture access for cop#.fce (police officer models), road objects, etc. Also used in the FCE4M format.
      |
      |  MUnknown3
      |      FCE4M only. Unknown purpose.

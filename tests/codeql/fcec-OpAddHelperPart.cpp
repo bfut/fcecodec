@@ -55,22 +55,12 @@ int main(void)
     {
       for (int r = 0; r < NUM_OPERATION_REPEATS && retv == 0; ++r)
       {
-#if 0
-        if (FCELIB_TYPES_AddParts(&mesh[i], 1) == -1)
-        {
-          std::cout << r << " cannot add helper part (i,i)=(" << i << "," << i << ")" << std::endl;
-          retv = -1;
-          break;
-        }
-#endif
-#if 1
         if (FCELIB_AddHelperPart(&mesh[i]) == -1)
         {
           std::cout << r << " cannot add helper part (i,i)=(" << i << "," << i << ")" << std::endl;
           retv = -1;
           break;
         }
-#endif
       }
 
       // FCELIB_PrintMeshInfo(mesh[i]);  // debug

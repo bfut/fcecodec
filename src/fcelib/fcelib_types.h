@@ -87,34 +87,34 @@ typedef struct {
   int      *Parts;         /* ordered list of part indexes, -1 for unused */
 } FcelibHeader;
 
-#ifdef __cplusplus
-/* Wnon-c-typedef-for-linkage, https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p1766r1.html */
-/* potential issue with C++03 https://github.com/tinyobjloader/tinyobjloader/issues/259#issuecomment-590675708 */
-typedef struct FcelibMesh {
-#else
 struct FcelibMesh {
+#ifdef __cplusplus
+  int              _consumed = 0;  /* previously decoded? yes/no 1/0, internal fcelib use only */
+#else
+  int              _consumed;      /* previously decoded? yes/no 1/0, internal fcelib use only */
 #endif
-  int              _consumed;  /* previously decoded? yes/no 1/0, internal fcelib use only */
 
-  int              parts_len;          /* capacity: array length */
-  int              triangles_len;      /* capacity: array length */
-  int              vertices_len;       /* capacity: array length */
+  int              parts_len;      /* capacity: array length */
+  int              triangles_len;  /* capacity: array length */
+  int              vertices_len;   /* capacity: array length */
 
   FcelibHeader     hdr;
 
-  FcelibPart     **parts;              /* may contain NULL elements */
+  FcelibPart     **parts;          /* may contain NULL elements */
 
   /* Each vert and triag belongs to exactly one part, respectively. */
-  FcelibTriangle **triangles;          /* may contain NULL elements */
-  FcelibVertex   **vertices;           /* may contain NULL elements */
+  FcelibTriangle **triangles;      /* may contain NULL elements */
+  FcelibVertex   **vertices;       /* may contain NULL elements */
 
 #ifdef __cplusplus
   void           (*release)(struct FcelibMesh*) = NULL;
-} FcelibMesh;
 #else
   void           (*release)(struct FcelibMesh*);
+#endif
 };
-typedef struct FcelibMesh FcelibMesh;  /*##*/
+
+#ifndef __cplusplus
+typedef struct FcelibMesh FcelibMesh;
 #endif
 
 /* release, init, validate -------------------------------------------------- */
@@ -222,15 +222,24 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
   mesh->release = NULL;
 }
 
+/* Assumes (mesh != NULL). Silently re-initializes.
+
+   C API: mesh must have been initialized */
 void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
 {
   int i;
 
+#ifndef FCELIB_PYTHON_BINDINGS
+#ifdef __cplusplus
   if (mesh->release == &FCELIB_TYPES_FreeMesh)
+    mesh->release(mesh);
+  if (mesh->release && mesh->release != &FCELIB_TYPES_FreeMesh)
   {
-    fprintf(stderr, "Warning: InitMesh: mesh is previously initialized\n");
+    fprintf(stderr, "InitMesh: mesh is not free and cannot be initialized.\n");
     return;
   }
+#endif
+#endif
 
   mesh->release = &FCELIB_TYPES_FreeMesh;
   mesh->_consumed = 0;

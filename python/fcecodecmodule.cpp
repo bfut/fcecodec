@@ -39,8 +39,9 @@
 #define free PyMem_Free
 #endif
 
+#define FCELIB_PYTHON_BINDINGS  // avoid some deterministic checks
 #include "../src/fcelib/fcelib.h"
-#include "../src/fcelib/fcelib_types.h"
+// #include "../src/fcelib/fcelib_types.h"  // optional include
 
 namespace py = pybind11;
 
@@ -145,8 +146,6 @@ private:
 
 void Mesh::IoDecode(const std::string &buf)
 {
-  FCELIB_FreeMesh(&mesh_);
-  FCELIB_InitMesh(&mesh_);
   if (!FCELIB_DecodeFce(buf.c_str(), buf.size(), &mesh_))
     throw std::runtime_error("IoDecode: Cannot parse FCE data");
 }
@@ -406,7 +405,7 @@ void Mesh::MSetDummyPos(py::array_t<float, py::array::c_style | py::array::force
 
 int Mesh::PNumTriags(const int pid) const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PNumTriags: failure");
 #endif
@@ -417,7 +416,7 @@ int Mesh::PNumTriags(const int pid) const
 }
 int Mesh::PNumVerts(const int pid) const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PNumVerts: failure");
 #endif
@@ -429,7 +428,7 @@ int Mesh::PNumVerts(const int pid) const
 
 const std::string Mesh::PGetName(const int pid) const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetName: failure");
 #endif
@@ -440,7 +439,7 @@ const std::string Mesh::PGetName(const int pid) const
 }
 void Mesh::PSetName(const int pid, const std::string &s)
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetName: failure");
 #endif
@@ -453,7 +452,7 @@ void Mesh::PSetName(const int pid, const std::string &s)
 
 py::buffer Mesh::PGetPos(const int pid) const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetPos: failure");
 #endif
@@ -470,7 +469,7 @@ py::buffer Mesh::PGetPos(const int pid) const
 }
 void Mesh::PSetPos(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetPos: failure");
 #endif
@@ -495,7 +494,7 @@ void Mesh::PSetPos(const int pid, py::array_t<float, py::array::c_style | py::ar
 
 py::buffer Mesh::PGetTriagsVidx(const int pid) const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetTriagsVidx: failure");
 #endif
@@ -525,7 +524,7 @@ py::buffer Mesh::PGetTriagsVidx(const int pid) const
 
 py::buffer Mesh::PGetTriagsFlags(const int pid) const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetTriagsFlags: failure");
 #endif
@@ -547,7 +546,7 @@ py::buffer Mesh::PGetTriagsFlags(const int pid) const
 }
 void Mesh::PSetTriagsFlags(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetTriagsFlags: failure");
 #endif
@@ -575,7 +574,7 @@ void Mesh::PSetTriagsFlags(const int pid, py::array_t<int, py::array::c_style | 
 
 py::buffer Mesh::PGetTriagsTexcoords(const int pid) const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetTriagsTexcoords: failure");
 #endif
@@ -604,7 +603,7 @@ py::buffer Mesh::PGetTriagsTexcoords(const int pid) const
 }
 void Mesh::PSetTriagsTexcoords(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetTriagsTexcoords: failure");
 #endif
@@ -635,7 +634,7 @@ void Mesh::PSetTriagsTexcoords(const int pid, py::array_t<float, py::array::c_st
 
 py::buffer Mesh::PGetTriagsTexpages(const int pid) const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetTriagsTexpages: failure");
 #endif
@@ -658,7 +657,7 @@ py::buffer Mesh::PGetTriagsTexpages(const int pid) const
 }
 void Mesh::PSetTriagsTexpages(const int pid, py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetTriagsTexpages: failure");
 #endif
@@ -689,7 +688,7 @@ void Mesh::PSetTriagsTexpages(const int pid, py::array_t<int, py::array::c_style
 /* Via vector index (=global vert idx) map to global vert order. */
 py::buffer Mesh::MVertsGetMap_idx2order() const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MVertsGetMap_idx2order: failure");
 #endif
@@ -719,7 +718,7 @@ py::buffer Mesh::MVertsGetMap_idx2order() const
 
 py::buffer Mesh::MGetVertsPos() const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetVertsPos: failure");
 #endif
@@ -750,7 +749,7 @@ py::buffer Mesh::MGetVertsPos() const
 }
 void Mesh::MSetVertsPos(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetVertsPos: failure");
 #endif
@@ -785,7 +784,7 @@ void Mesh::MSetVertsPos(py::array_t<float, py::array::c_style | py::array::force
 
 py::buffer Mesh::MGetVertsNorms() const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetVertsNorms: failure");
 #endif
@@ -816,7 +815,7 @@ py::buffer Mesh::MGetVertsNorms() const
 }
 void Mesh::MSetVertsNorms(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetVertsNorms: failure");
 #endif
@@ -851,7 +850,7 @@ void Mesh::MSetVertsNorms(py::array_t<float, py::array::c_style | py::array::for
 
 py::buffer Mesh::MGetDamgdVertsPos() const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetDamgdVertsPos: failure");
 #endif
@@ -882,7 +881,7 @@ py::buffer Mesh::MGetDamgdVertsPos() const
 }
 void Mesh::MSetDamgdVertsPos(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetDamgdVertsPos: failure");
 #endif
@@ -917,7 +916,7 @@ void Mesh::MSetDamgdVertsPos(py::array_t<float, py::array::c_style | py::array::
 
 py::buffer Mesh::MGetDamgdVertsNorms() const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetDamgdVertsNorms: failure");
 #endif
@@ -948,7 +947,7 @@ py::buffer Mesh::MGetDamgdVertsNorms() const
 }
 void Mesh::MSetDamgdVertsNorms(py::array_t<float, py::array::c_style | py::array::forcecast> arr)
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetDamgdVertsNorms: failure");
 #endif
@@ -983,7 +982,7 @@ void Mesh::MSetDamgdVertsNorms(py::array_t<float, py::array::c_style | py::array
 
 py::buffer Mesh::MGetVertsAnimation() const
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MGetVertsAnimation: failure");
 #endif
@@ -1012,7 +1011,7 @@ py::buffer Mesh::MGetVertsAnimation() const
 }
 void Mesh::MSetVertsAnimation(py::array_t<int, py::array::c_style | py::array::forcecast> arr)
 {
-#ifndef FCECODECMODULE_SKIP_VALIDATE
+#ifdef FCECODECMODULE_DEBUG
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("MSetVertsAnimation: failure");
 #endif
@@ -1186,7 +1185,7 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
       py::arg("vert_idxs"), py::arg("vert_texcoords"), py::arg("vert_pos"), py::arg("normals"),
       R"pbdoc( vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz... )pbdoc")
 
-    .def_property("MNumArts", &Mesh::MGetNumArts, &Mesh::MSetNumArts, R"pbdoc( Usually equal to 1. Larger values enable multi-texture access for cop#.fce )pbdoc")
+    .def_property("MNumArts", &Mesh::MGetNumArts, &Mesh::MSetNumArts, R"pbdoc( Usually equal to 1. Larger values enable multi-texture access for cop#.fce (police officer models), road objects, etc. Also used in the FCE4M format. )pbdoc")
     .def_property("MUnknown3", &Mesh::MGetUnknown3, &Mesh::MSetUnknown3, R"pbdoc( FCE4M only. Unknown purpose. )pbdoc")
     .def("MGetColors", &Mesh::MGetColors)
     .def("MSetColors", &Mesh::MSetColors, py::arg("colors"), R"pbdoc( Expects shape=(N, 4, 4) )pbdoc")
@@ -1226,7 +1225,7 @@ PYBIND11_MODULE(fcecodec, fcecodec_module)
     .def("OpInsertPart", &Mesh::OpInsertPart, py::arg("mesh_src"), py::arg("pid_src"), R"pbdoc( Insert (copy) specified part from mesh_src. Returns new part index. )pbdoc")
     .def("OpDeletePart", &Mesh::OpDeletePart, py::arg("pid"))
     .def("OpDeletePartTriags", &Mesh::OpDeletePartTriags, py::arg("pid"), py::arg("idxs"))
-    .def("OpDelUnrefdVerts", &Mesh::OpDelUnrefdVerts, R"pbdoc( Delete all vertices that are not referenced by any triangle. )pbdoc")
+    .def("OpDelUnrefdVerts", &Mesh::OpDelUnrefdVerts, R"pbdoc( Delete all vertices that are not referenced by any triangle. This is a very expensive operation. Unreferenced vertices occur after triangles are deleted or they are otherwise present in data. )pbdoc")
     .def("OpMergeParts", &Mesh::OpMergeParts, py::arg("pid1"), py::arg("pid2"), R"pbdoc( Returns new part index. )pbdoc")
     .def("OpMovePart", &Mesh::OpMovePart, py::arg("pid"), R"pbdoc( Move up specified part towards order 0. Returns new part index. )pbdoc")
     ;

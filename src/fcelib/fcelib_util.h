@@ -61,6 +61,11 @@ const int kTrianglesDiamond[8 * 3] = {
   4, 5, 1
 };
 
+#ifndef FCELIB_UTIL_Min
+#define FCELIB_UTIL_Min(x,y) ((x)<(y)?(x):(y))
+#define FCELIB_UTIL_Abs(x) ((x)<0 ? -(x) : (x))
+#endif
+
 /* Returns 0 if a==b, 1 if a>b, -1 if a<b */
 int FCELIB_UTIL_CompareFloats(const void *a, const void *b)
 {
@@ -77,23 +82,7 @@ int FCELIB_UTIL_CompareInts(const void *a, const void *b)
   return (arg1 > arg2) - (arg1 < arg2);
 }
 
-int FCELIB_UTIL_Min(const int a, const int b)
-{
-  if (a < b)
-    return a;
-  else
-    return b;
-}
-
-float FCELIB_UTIL_Abs(const float a)
-{
-  if (a < 0)
-    return -a;
-  else
-    return a;
-}
-
-/* Returns -100 on failure. */
+/* Returns maximum or -100 on failure. Assumes nonnegative integers. */
 int FCELIB_UTIL_ArrMax(const int *arr, const int arr_len)
 {
   int retv = -100;
@@ -115,7 +104,7 @@ int FCELIB_UTIL_ArrMax(const int *arr, const int arr_len)
   return retv;
 }
 
-/* strncmp() for array of strings */
+/* strncmp() on array of strings. Returns 1 on first match, else 0. */
 int FCELIB_UTIL_StrIsInArray(char *str, const char **arr)
 {
   int retv = 0;

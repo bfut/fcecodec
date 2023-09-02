@@ -166,12 +166,12 @@ void FCELIB_PrintFceInfo(const int fce_size, const void *hdr)
   switch (FCELIB_FCETYPES_GetFceVersion(hdr, fce_size))
   {
     case 4: case 5:
-      FCELIB_FCETYPES_PrintHeaderFce4(fce_size, hdr);
+      FCELIB_FCETYPES_PrintHeaderFce4(hdr, fce_size);
       break;
     case -3: case -4: case -5:
       break;
     default:
-      FCELIB_FCETYPES_PrintHeaderFce3(fce_size, hdr);
+      FCELIB_FCETYPES_PrintHeaderFce3(hdr, fce_size);
       break;
   }
 }
@@ -183,17 +183,23 @@ int FCELIB_ValidateFce(const void *buf, const int length)
   switch (FCELIB_FCETYPES_GetFceVersion(buf, length))
   {
     case 4: case 5:
-      return FCELIB_FCETYPES_Fce4ValidateHeader(buf, length);
+    {
+      const FceHeader4 hdr = FCELIB_FCETYPES_GetFceHeader4((const unsigned char *)buf);
+      return FCELIB_FCETYPES_Fce4ValidateHeader(length, buf, &hdr);
+    }
     case -3: case -4: case -5:
       return 0;
     default:
-      return FCELIB_FCETYPES_Fce3ValidateHeader(buf, length);
+    {
+      const FceHeader3 hdr = FCELIB_FCETYPES_GetFceHeader3((const unsigned char *)buf);
+      return FCELIB_FCETYPES_Fce3ValidateHeader(length, buf, &hdr);
+    }
   }
 }
 
 int FCELIB_DecodeFce(const void *buf, int buf_size, FcelibMesh *mesh)
 {
-  return FCELIB_IO_DecodeFce(buf, buf_size, mesh);
+  return FCELIB_IO_DecodeFce(mesh, (const unsigned char *)buf, buf_size);
 }
 
 int FCELIB_ExportObj(const FcelibMesh *mesh,
@@ -211,19 +217,19 @@ int FCELIB_ExportObj(const FcelibMesh *mesh,
 int FCELIB_EncodeFce3(unsigned char **buf, const int buf_size,
                       FcelibMesh *mesh, const int center_parts)
 {
-  return FCELIB_IO_EncodeFce3(buf, buf_size, mesh, center_parts);
+  return FCELIB_IO_EncodeFce3(mesh, buf, buf_size, center_parts);
 }
 
 int FCELIB_EncodeFce4(unsigned char **buf, const int buf_size,
                       FcelibMesh *mesh, const int center_parts)
 {
-  return FCELIB_IO_EncodeFce4(buf, buf_size, mesh, center_parts, 0x00101014);
+  return FCELIB_IO_EncodeFce4(mesh, buf, buf_size, center_parts, 0x00101014);
 }
 
 int FCELIB_EncodeFce4M(unsigned char **buf, const int buf_size,
                        FcelibMesh *mesh, const int center_parts)
 {
-  return FCELIB_IO_EncodeFce4(buf, buf_size, mesh, center_parts, 0x00101015);
+  return FCELIB_IO_EncodeFce4(mesh, buf, buf_size, center_parts, 0x00101015);
 }
 
 int FCELIB_GeomDataToNewPart(FcelibMesh *mesh,
