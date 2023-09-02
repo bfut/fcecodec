@@ -245,7 +245,7 @@ int FCELIB_GeomDataToNewPart(FcelibMesh *mesh,
                                      normals, normals_len);
 }
 
-/* service (assumes valid FcelibMesh) --------------------------------------- */
+/* service ------------------------------------------------------------------ */
 
 int FCELIB_GetInternalPartIdxByOrder(const FcelibMesh *mesh, const int idx)
 {

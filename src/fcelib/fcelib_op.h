@@ -41,8 +41,10 @@ extern "C" {
 
 /* mesh --------------------------------------------------------------------- */
 
-/* Auxiliary operation.
-   Returns new part index (order) on success, -1 on failure. */
+/*
+  Auxiliary operation.
+  Returns new part index (order) on success, -1 on failure.
+*/
 int FCELIB_OP_AddHelperPart(FcelibMesh *mesh)
 {
   int i;
@@ -65,8 +67,10 @@ int FCELIB_OP_AddHelperPart(FcelibMesh *mesh)
                                      vert_pos, 6 * 3);
 }
 
-/* Center specified part around local centroid.
-   Does not move part w.r.t. to global coordinates */
+/*
+  Center specified part around local centroid.
+  Does not move part w.r.t. to global coordinates
+*/
 int FCELIB_OP_CenterPart(FcelibMesh *mesh, const int idx)
 {
   int retv = 0;
@@ -94,8 +98,10 @@ int FCELIB_OP_CenterPart(FcelibMesh *mesh, const int idx)
   return retv;
 }
 
-/* Center specified part around new_center.
-   Does not move part w.r.t. to global coordinates */
+/*
+  Center specified part around new_center.
+  Does not move part w.r.t. to global coordinates
+*/
 int FCELIB_OP_SetPartCenter(FcelibMesh *mesh, const int pidx, const float new_center[3])
 {
   int retv = 0;
@@ -125,8 +131,10 @@ int FCELIB_OP_SetPartCenter(FcelibMesh *mesh, const int pidx, const float new_ce
   return retv;
 }
 
-/* Returns mesh_dest new part index (order) on success, -1 on failure.
-   Allows mesh_dest == mesh_src. */
+/*
+  Returns mesh_dest new part index (order) on success, -1 on failure.
+  Allows (mesh_dest == mesh_src)
+*/
 int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_dest, FcelibMesh *mesh_src, const int idx_src)
 {
   int new_pid = -1;
@@ -243,7 +251,7 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_dest, FcelibMesh *mesh_src, const 
       if (part_src->PVertices[i] < 0)
         continue;
 
-      mesh_dest->vertices[vidx_1st + j] = (FcelibVertex *)malloc(sizeof(FcelibVertex));
+      mesh_dest->vertices[vidx_1st + j] = (FcelibVertex *)malloc(sizeof(**mesh_dest->vertices));
       if (!mesh_dest->vertices[vidx_1st + j])
       {
         fprintf(stderr, "CopyPartToMesh: Cannot allocate memory (vert)\n");
@@ -281,7 +289,7 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_dest, FcelibMesh *mesh_src, const 
       if (part_src->PTriangles[i] < 0)
         continue;
 
-      mesh_dest->triangles[tidx_1st + j] = (FcelibTriangle *)malloc(sizeof(FcelibTriangle));
+      mesh_dest->triangles[tidx_1st + j] = (FcelibTriangle *)malloc(sizeof(**mesh_dest->triangles));
       if (!mesh_dest->triangles[tidx_1st + j])
       {
         fprintf(stderr, "CopyPartToMesh: Cannot allocate memory (triag)\n");
@@ -595,14 +603,14 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
     }
     mesh->hdr.NumVertices += part_dest->PNumVertices;
 
-    old_global_to_new_global_idxs = (int *)malloc(mesh->vertices_len * sizeof(int));
+    old_global_to_new_global_idxs = (int *)malloc(mesh->vertices_len * sizeof(*old_global_to_new_global_idxs));
     if (!old_global_to_new_global_idxs)
     {
       fprintf(stderr, "MergePartsToNew: Cannot allocate memory (map)\n");
       new_pid = -1;
       break;
     }
-    memset(old_global_to_new_global_idxs, 0xFF, mesh->vertices_len * sizeof(int));
+    memset(old_global_to_new_global_idxs, 0xFF, mesh->vertices_len * sizeof(*old_global_to_new_global_idxs));
 
     /* i - vert index in source, j - vert index in receiver */
     for (i = 0, j = 0; i < part_src1->pvertices_len && j < part_src1->PNumVertices; ++i)
@@ -610,7 +618,7 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
       if (part_src1->PVertices[i] < 0)
         continue;
 
-      mesh->vertices[vidx_1st + j] = (FcelibVertex *)malloc(sizeof(FcelibVertex));
+      mesh->vertices[vidx_1st + j] = (FcelibVertex *)malloc(sizeof(**mesh->vertices));
       if (!mesh->vertices[vidx_1st + j])
       {
         fprintf(stderr, "MergePartsToNew: Cannot allocate memory (vert1)\n");
@@ -632,7 +640,7 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
       if (part_src2->PVertices[i] < 0)
         continue;
 
-      mesh->vertices[vidx_1st + j] = (FcelibVertex *)malloc(sizeof(FcelibVertex));
+      mesh->vertices[vidx_1st + j] = (FcelibVertex *)malloc(sizeof(**mesh->vertices));
       if (!mesh->vertices[vidx_1st + j])
       {
         fprintf(stderr, "MergePartsToNew: Cannot allocate memory (vert2)\n");
@@ -670,7 +678,7 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
     {
       if (part_src1->PTriangles[i] < 0)
         continue;
-      mesh->triangles[tidx_1st + j] = (FcelibTriangle *)malloc(sizeof(FcelibTriangle));
+      mesh->triangles[tidx_1st + j] = (FcelibTriangle *)malloc(sizeof(**mesh->triangles));
       if (!mesh->triangles[tidx_1st + j])
       {
         fprintf(stderr, "MergePartsToNew: Cannot allocate memory (triag1)\n");
@@ -692,7 +700,7 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
       if (part_src2->PTriangles[i] < 0)
         continue;
 
-      mesh->triangles[tidx_1st + j] = (FcelibTriangle *)malloc(sizeof(FcelibTriangle));
+      mesh->triangles[tidx_1st + j] = (FcelibTriangle *)malloc(sizeof(**mesh->triangles));
       if (!mesh->triangles[tidx_1st + j])
       {
         fprintf(stderr, "MergePartsToNew: Cannot allocate memory (triag2)\n");
@@ -723,10 +731,12 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
   return new_pid;
 }
 
-/* Move up part in order ('up' means towards idx=0)
-     If it's the first part, do nothing.
-     If not, switch with previous part.
-   Returns new index on success, -1 on failure.  */
+/*
+  Move up part in order ('up' means towards idx=0)
+    If it's the first part, do nothing.
+    If not, swap with previous part.
+  Returns new index on success, -1 on failure.
+*/
 int FCELIB_OP_MoveUpPart(FcelibMesh *mesh, const int idx)
 {
   int internal_index_idx;

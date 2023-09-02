@@ -61,8 +61,10 @@ void __FCELIB_IO_DECODE_HASVERTICES(int *retv, FcelibMesh *mesh)
   }
 }
 
-/* Not bounds-checked.
-   Returns 1 on success, 0 on failure. Same for 3,4,M */
+/*
+  Returns 1 on success, 0 on failure. Same for FCE3, FCE4, FCE4M.
+  Not bounds-checked.
+*/
 int __FCELIB_IO_DECODE_GETPARTS(FcelibMesh *mesh, const char *header_PartNames, const tVector *header_PartPos, const int *header_PNumVertices, const int *header_PNumTriangles)
 {
   int retv = 0;
@@ -116,21 +118,21 @@ int __FCELIB_IO_DECODE_GETPARTS(FcelibMesh *mesh, const char *header_PartNames, 
       mesh->vertices_len += mesh->parts[i]->pvertices_len;
       mesh->triangles_len += mesh->parts[i]->ptriangles_len;
 
-      mesh->parts[i]->PVertices = (int *)malloc(mesh->parts[i]->pvertices_len * sizeof(int));
+      mesh->parts[i]->PVertices = (int *)malloc(mesh->parts[i]->pvertices_len * sizeof(*mesh->parts[i]->PVertices));
       if (!mesh->parts[i]->PVertices)
       {
         fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
         break;
       }
-      memset(mesh->parts[i]->PVertices, 0xFF, mesh->parts[i]->pvertices_len * sizeof(int));
+      memset(mesh->parts[i]->PVertices, 0xFF, mesh->parts[i]->pvertices_len * sizeof(*mesh->parts[i]->PVertices));
 
-      mesh->parts[i]->PTriangles = (int *)malloc(mesh->parts[i]->ptriangles_len * sizeof(int));
+      mesh->parts[i]->PTriangles = (int *)malloc(mesh->parts[i]->ptriangles_len * sizeof(*mesh->parts[i]->PTriangles));
       if (!mesh->parts[i]->PTriangles)
       {
         fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
         break;
       }
-      memset(mesh->parts[i]->PTriangles, 0xFF, mesh->parts[i]->ptriangles_len * sizeof(int));
+      memset(mesh->parts[i]->PTriangles, 0xFF, mesh->parts[i]->ptriangles_len * sizeof(*mesh->parts[i]->PTriangles));
     }  /* for i */
 
     retv = 1;
@@ -140,11 +142,13 @@ int __FCELIB_IO_DECODE_GETPARTS(FcelibMesh *mesh, const char *header_PartNames, 
   return retv;
 }
 
-/* Params: FCE buffer, FcelibMesh. Returns bool.
-   Assumes (mesh != NULL). Silently releases and re-initializes existing mesh.
-   Assumes valid FCE data.
+/*
+  Params: FCE buffer, FcelibMesh. Returns bool.
+  Assumes (mesh != NULL). Silently releases and re-initializes existing mesh.
+  Assumes valid FCE data.
 
-   C API: mesh must have been initialized */
+  C API: mesh must have been initialized
+*/
 int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size)
 {
   int retv = 0;
@@ -275,13 +279,13 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
           break;
         }
 
-        mesh->triangles = (FcelibTriangle **)malloc(mesh->triangles_len * sizeof(FcelibTriangle *));
+        mesh->triangles = (FcelibTriangle **)malloc(mesh->triangles_len * sizeof(*mesh->triangles));
         if (!mesh->triangles)
         {
           fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
           break;
         }
-        memset(mesh->triangles, 0, mesh->triangles_len * sizeof(FcelibTriangle *));
+        memset(mesh->triangles, 0, mesh->triangles_len * sizeof(*mesh->triangles));
 
         mesh->hdr.NumTriangles = 0;
         mesh->hdr.NumVertices = 0;
@@ -292,7 +296,7 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
           {
             mesh->parts[i]->PTriangles[j] = mesh->hdr.NumTriangles;
 
-            mesh->triangles[mesh->hdr.NumTriangles] = (FcelibTriangle *)malloc(sizeof(FcelibTriangle));
+            mesh->triangles[mesh->hdr.NumTriangles] = (FcelibTriangle *)malloc(sizeof(**mesh->triangles));
             if (!mesh->triangles[mesh->hdr.NumTriangles])
             {
               fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
@@ -324,13 +328,13 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
 
         /* Vertices --------------------------------------------------------- */
         /* We already know that (mesh->vertices_len > 0) */
-        mesh->vertices = (FcelibVertex **)malloc(mesh->vertices_len * sizeof(FcelibVertex *));
+        mesh->vertices = (FcelibVertex **)malloc(mesh->vertices_len * sizeof(*mesh->vertices));
         if (!mesh->vertices)
         {
           fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
           break;
         }
-        memset(mesh->vertices, 0, mesh->vertices_len * sizeof(FcelibVertex *));
+        memset(mesh->vertices, 0, mesh->vertices_len * sizeof(*mesh->vertices));
 
         mesh->hdr.NumVertices = 0;
 
@@ -341,7 +345,7 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
           {
             mesh->parts[i]->PVertices[j] = mesh->hdr.NumVertices;
 
-            mesh->vertices[mesh->hdr.NumVertices] = (FcelibVertex *)malloc(sizeof(FcelibVertex));
+            mesh->vertices[mesh->hdr.NumVertices] = (FcelibVertex *)malloc(sizeof(**mesh->vertices));
             if (!mesh->vertices[mesh->hdr.NumVertices])
             {
               fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
@@ -447,13 +451,13 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
           break;
         }
 
-        mesh->triangles = (FcelibTriangle **)malloc(mesh->triangles_len * sizeof(FcelibTriangle *));
+        mesh->triangles = (FcelibTriangle **)malloc(mesh->triangles_len * sizeof(*mesh->triangles));
         if (!mesh->triangles)
         {
           fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
           break;
         }
-        memset(mesh->triangles, 0, mesh->triangles_len * sizeof(FcelibTriangle *));
+        memset(mesh->triangles, 0, mesh->triangles_len * sizeof(*mesh->triangles));
 
         mesh->hdr.NumTriangles = 0;
         mesh->hdr.NumVertices = 0;
@@ -464,7 +468,7 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
           {
             mesh->parts[i]->PTriangles[j] = mesh->hdr.NumTriangles;
 
-            mesh->triangles[mesh->hdr.NumTriangles] = (FcelibTriangle *)malloc(sizeof(FcelibTriangle));
+            mesh->triangles[mesh->hdr.NumTriangles] = (FcelibTriangle *)malloc(sizeof(**mesh->triangles));
             if (!mesh->triangles[mesh->hdr.NumTriangles])
             {
               fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
@@ -490,13 +494,13 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
 
         /* Vertices --------------------------------------------------------- */
         /* We already know that (mesh->vertices_len > 0) */
-        mesh->vertices = (FcelibVertex **)malloc(mesh->vertices_len * sizeof(FcelibVertex *));
+        mesh->vertices = (FcelibVertex **)malloc(mesh->vertices_len * sizeof(*mesh->vertices));
         if (!mesh->vertices)
         {
           fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
           break;
         }
-        memset(mesh->vertices, 0, mesh->vertices_len * sizeof(FcelibVertex *));
+        memset(mesh->vertices, 0, mesh->vertices_len * sizeof(*mesh->vertices));
 
         mesh->hdr.NumVertices = 0;
 
@@ -507,7 +511,7 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
           {
             mesh->parts[i]->PVertices[j] = mesh->hdr.NumVertices;
 
-            mesh->vertices[mesh->hdr.NumVertices] = (FcelibVertex *)malloc(sizeof(FcelibVertex));
+            mesh->vertices[mesh->hdr.NumVertices] = (FcelibVertex *)malloc(sizeof(**mesh->vertices));
             if (!mesh->vertices[mesh->hdr.NumVertices])
             {
               fprintf(stderr, "DecodeFce: Cannot allocate memory\n");
@@ -565,8 +569,10 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
 
 /* encode ------------------------------------------------------------------- */
 
-/* The FCE triangle flag is output as material name. Returns boolean.
-   Assumes *objpath, *mtlpath, and *texture_name are strings. */
+/*
+  FCE triangle flags are written to material names. Returns boolean.
+  Assumes *objpath, *mtlpath, and *texture_name are strings.
+*/
 int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
                         const void *objpath, const void *mtlpath,
                         const char *texture_name,
@@ -1067,9 +1073,10 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
   return retv;
 }
 
-/* Limited to 64 parts. Returns boolean.
+/*
+  Limited to 64 parts. Returns boolean.
 
-   If center_parts == 1, centroids and vert positions will be recalculated and reset for all parts. This changes *mesh.
+  If center_parts == 1, centroids and vert positions will be recalculated and reset for all parts. This would change *mesh.
 */
 int FCELIB_IO_EncodeFce3(FcelibMesh *mesh, unsigned char **outbuf, const int outbuf_size, const int center_parts)
 {
@@ -1363,10 +1370,11 @@ int FCELIB_IO_EncodeFce3(FcelibMesh *mesh, unsigned char **outbuf, const int out
   return retv;
 }
 
-/* Limited to 64 parts, 16 dummies, 16 colors. Returns boolean.
-   For FCE4M, call with fce_version = 0x00101015
+/*
+  Limited to 64 parts, 16 dummies, 16 colors. Returns boolean.
+  For FCE4M, call with fce_version = 0x00101015
 
-   If center_parts == 1, centroids and vert positions will be recalculated and reset for all parts. This changes *mesh.
+  If center_parts == 1, centroids and vert positions will be recalculated and reset for all parts. This would change *mesh.
 */
 int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int buf_size,
                          const int center_parts, const int fce_version)
@@ -1401,7 +1409,7 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int buf
       break;
     }
 
-    memset(*outbuf, 0, buf_size * sizeof(unsigned char));
+    memset(*outbuf, 0, buf_size * sizeof(**outbuf));
 
     /* Header --------------------------------------------------------------- */
     if (fce_version == 0x00101015)
@@ -1784,9 +1792,11 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int buf
   return retv;
 }
 
-/* Assumes (mesh != NULL). If necessary, will initialize mesh.
+/*
+  Assumes (mesh != NULL). If necessary, will initialize mesh.
 
-   C API: mesh must have been initialized */
+  C API: mesh must have been initialized
+*/
 int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
                                 int *vert_idxs, const int vert_idxs_len,  /* N*3, N triags */
                                 const float *vert_texcoords, const int vert_texcoords_len,  /* N*6 */
@@ -1894,15 +1904,10 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       break;
     }
     memset(part, 0, sizeof(*part));
-    /* part->pvertices_len = 0; */
-    /* part->ptriangles_len = 0; */
 
     mesh->parts[ mesh->hdr.Parts[new_pid] ] = part;
 
     sprintf(part->PartName, "IoGeomDataToNewPart_%d", new_pid);  /* unlikely to exceed 63 characters */
-    /* part->PartPos.x = 0.0f; */
-    /* part->PartPos.y = 0.0f; */
-    /* part->PartPos.z = 0.0f; */
 
     part->PNumVertices = (int)(vert_pos_len / 3);
     part->PNumTriangles = (int)(vert_idxs_len / 3);

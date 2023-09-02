@@ -20,11 +20,13 @@
 */
 
 /**
-  implements library types, init & free, validation, some basic functionality.
+  implements library types, init & release, validation, some basic functionality
 
   parts, triags, verts are written into arrays that may contain NULL elements.
   These elements can be accessed via ordered index arrays. New elements are
   added at the end.
+
+  at the expense of linear access, many operations are just carried out on index arrays
 **/
 
 #ifndef FCELIB_TYPES_H_
@@ -123,7 +125,7 @@ struct FcelibMesh {
 
 /* release, init, validate -------------------------------------------------- */
 
-/* Only call via mesh->release(); never call directly. */
+/* Call via mesh->release(), never directly. */
 void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
 {
   int i;
@@ -180,9 +182,11 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
 #endif
 }
 
-/* Assumes (mesh != NULL). Silently re-initializes.
+/*
+  Assumes (mesh != NULL). Silently re-initializes.
 
-   C API: mesh must have been initialized */
+  C API: mesh must have been initialized
+*/
 void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
 {
 #ifndef FCELIB_PYTHON_BINDINGS
@@ -707,8 +711,10 @@ int FCELIB_TYPES_GetPartCentroid(const FcelibMesh *mesh, const FcelibPart *part,
   return retv;
 }
 
-/* Does not move part w.r.t. to global coordinates
-   Assumes part belongs to mesh. */
+/*
+  Does not move part w.r.t. to global coordinates
+  Assumes part belongs to mesh.
+*/
 void FCELIB_TYPES_ResetPartCenter(const FcelibMesh *mesh, FcelibPart *part, const tVector new_PartPos)
 {
   FcelibVertex *vert;

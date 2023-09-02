@@ -20,7 +20,8 @@
 */
 
 /**
-  implements FCE types, format validations. documents FCE format.
+  documents FCE format.
+  implements FCE types with format validations.
 
 FCE4/FCE4M format theoretical limits (assuming signed int):
   min filesize:            0x2038, except FCE3: 0x1F04
@@ -55,7 +56,8 @@ typedef struct FceHeader3 FceHeader3;
 typedef struct FceHeader4 FceHeader4;
 #endif
 
-/* FCE3   tTriangle->flag   4 bit
+/*
+  FCE3   tTriangle->flag   4 bit
       0x0   default             body parts: reflection
 0:    0x1   matte (no chrome)
 1:    0x2   high chrome
@@ -83,7 +85,8 @@ A triangle is visible behind a semi-transparent triangle, if
 its index is smaller.
 */
 
-/* FCE4   tTriangle->flag   12 bit
+/*
+  FCE4   tTriangle->flag   12 bit
       0x000   default             body parts: reflection,
                                   interior etc.: no reflection
 0:    0x001   matte (no chrome)
@@ -156,10 +159,12 @@ struct tVector {
   float z;  /* z->inf is to the front */
 };
 
-/* Valid values for all four components: 0..255
+/*
+  Valid values for all four components: 0..255
   hue<degrees>  / 360 * 255
   saturation<%> / 100 * 255
-  brightness<%> / 100 * 255 */
+  brightness<%> / 100 * 255
+*/
 struct tColor3 {
   int hue;
   int saturation;
@@ -562,7 +567,8 @@ FCE4M only:
 :F_SHIFT                  shifter
 */
 
-/* car.fce - light objects (FCE3)
+/*
+car.fce - light objects (FCE3)
 KDSF, KDSFU - Components: char kind, direction, side, flashing, unknown;
 Valid values:
   K : "H" (Headlights); "T" (Taillights); "S" (Siren);
@@ -804,6 +810,7 @@ FceHeader4 FCELIB_FCETYPES_GetFceHeader4(const unsigned char *header)
 
 /* Fce3 validation ---------------------------------------------------------- */
 
+/* Bounds-checks counts and offsets from FCE data */
 int FCELIB_FCETYPES_MiniValidateHdr3(const unsigned char *header)
 {
   int retv = 1;
@@ -816,7 +823,7 @@ int FCELIB_FCETYPES_MiniValidateHdr3(const unsigned char *header)
   };
   for (i = 0; i < 8; ++i)
   {
-    memcpy(&tmp, header + kHdrPos3[i], 4);
+    memcpy(&tmp, header + kHdrPos3[i], sizeof(tmp));
     if ((tmp < INT_MIN / 80) || (tmp > INT_MAX / 80))
     {
       fprintf(stderr, "MiniValidateHdr3: Invalid value at %#06x (%d)\n", kHdrPos3[i], tmp);
@@ -829,11 +836,9 @@ int FCELIB_FCETYPES_MiniValidateHdr3(const unsigned char *header)
 int FCELIB_FCETYPES_Fce3ComputeSize(const int NumVertices, const int NumTriangles)
 {
   int fsize = 0;
-
-  fsize += 0x1F04;             /* (int)sizeof(struct FceHeader3); */
+  fsize += 0x1F04;             /* FCE3 header size */
   fsize += 80 * NumVertices;   /* ((4*12) + 32) x NumVertices */
   fsize += 56 * NumTriangles;  /* 56 x NumTriangles*/
-
   return fsize;
 }
 
@@ -850,7 +855,6 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const int infilesize, const void *header,
   /* parts: triangle indices within bounds?
    */
 
-  /* aborts */
   for (;;)
   {
     if (!FCELIB_FCETYPES_MiniValidateHdr3((const unsigned char *)header))
@@ -935,12 +939,16 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const int infilesize, const void *header,
     }
     size = 0;
 
-    /* Vertices, triangles areas: parts non-overlapping, within bounds (do nothing
-       when zero verts, triags) */
+    /*
+      Vertices, triangles areas: parts non-overlapping, within bounds (do nothing
+      when zero verts, triags)
+    */
     for (i = 0; i < FCELIB_UTIL_Min(64, hdr->NumParts) - 1; ++i)
     {
-      /* Combined with other checks, guarantees verts, triags stay within their
-         areas, respectively */
+      /*
+        Combined with other checks, guarantees verts, triags stay within their
+        areas, respectively
+      */
       if ((hdr->P1stVertices[i] < 0) ||
           (hdr->P1stVertices[i] + hdr->PNumVertices[i] > hdr->NumVertices))
       {
@@ -986,13 +994,14 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const int infilesize, const void *header,
       }
     }
 
-    /* Validate filesize, area offsets, area sizes, areas non-overlapping
+    /*
+      Validate filesize, area offsets, area sizes, areas non-overlapping
 
-       FCE3 allows NumVertices, and PNumTriangles to be larger than the truth.
-       Fcecodec requires that area sizes relate to given values, which FCE3 allows
-       (FCE3 is even less restrictive).
+      FCE3 allows NumVertices, and PNumTriangles to be larger than the truth.
+      Fcecodec requires that area sizes relate to given values, which FCE3 allows
+      (FCE3 is even less restrictive).
 
-       Note: Fcecodec warns about, accepts (VertTblOffset > 0)
+      Note: Fcecodec warns about, accepts (VertTblOffset > 0)
     */
     if ((size = FCELIB_FCETYPES_Fce3ComputeSize(hdr->NumVertices, hdr->NumTriangles)) != infilesize)
     {
@@ -1091,6 +1100,7 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const int infilesize, const void *header,
 
 /* Fce4 validation ---------------------------------------------------------- */
 
+/* Bounds-checks counts and offsets from FCE data */
 int FCELIB_FCETYPES_MiniValidateHdr4(const unsigned char *header)
 {
   int retv = 1;
@@ -1106,7 +1116,7 @@ int FCELIB_FCETYPES_MiniValidateHdr4(const unsigned char *header)
   };
   for (i = 0; i < 16; ++i)
   {
-    memcpy(&tmp, header + kHdrPos4[i], 4);
+    memcpy(&tmp, header + kHdrPos4[i], sizeof(tmp));
     if ((tmp < INT_MIN / 140) || (tmp > INT_MAX / 140))
     {
       fprintf(stderr, "MiniValidateHdr4: Invalid value at %#06x (%d)\n", kHdrPos4[i], tmp);
@@ -1120,14 +1130,11 @@ int FCELIB_FCETYPES_Fce4ComputeSize(const int Version,
                                     const int NumVertices, const int NumTriangles)
 {
   int fsize = 0;
-
-  fsize += 0x2038;             /* (int)sizeof(struct FceHeader4); */
+  fsize += 0x2038;             /* FCE4 / FCE4M header size */
   fsize += 140 * NumVertices;  /* ((8*12) + 32 + (3*4)) x NumVertices */
   fsize += 68 * NumTriangles;  /* (56 + 12) x NumTriangles*/
-
   if (Version == 0x00101015)
     fsize += NumVertices;  /* Reserve6 is larger */
-
   return fsize;
 }
 
@@ -1141,7 +1148,6 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const int infilesize, const void *header,
   int size;
   int dist_to_eof;
 
-  /* aborts */
   for (;;)
   {
     if (!FCELIB_FCETYPES_MiniValidateHdr4((const unsigned char *)header))
@@ -1173,7 +1179,7 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const int infilesize, const void *header,
 
     if ((hdr->NumColors > 16) || (hdr->NumColors < 0))
     {
-      /* FCE4M does not use colors and hence allows incorrect values */
+      /* FCE4M does not use colors and may allow invalid values */
       if (hdr->Version == 0x00101014)
       {
         fprintf(stderr, "Fce4ValidateHeader: Invalid number of colors (%d is not in [0, 16])\n", hdr->NumColors);
@@ -1247,12 +1253,16 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const int infilesize, const void *header,
     }
     size = 0;
 
-    /* Vertices, triangles areas: parts non-overlapping, within bounds (do nothing
-       when zero verts, triags) */
+    /*
+      Vertices, triangles areas: parts non-overlapping, within bounds (do nothing
+      when zero verts, triags)
+    */
     for (i = 0; i < FCELIB_UTIL_Min(64, hdr->NumParts) - 1; ++i)
     {
-      /* Combined with other checks, guarantees verts, triags stay within their
-         areas, respectively */
+      /*
+        Combined with other checks, guarantees verts, triags stay within their
+        areas, respectively
+      */
       if ((hdr->P1stVertices[i] < 0) ||
           (hdr->P1stVertices[i] + hdr->PNumVertices[i] > hdr->NumVertices))
       {
@@ -1298,12 +1308,13 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const int infilesize, const void *header,
       }
     }
 
-    /* Validate filesize, area offsets, area sizes, areas non-overlapping
+    /*
+      Validate filesize, area offsets, area sizes, areas non-overlapping
 
-       Fcecodec requires that area sizes relate to given NumVertices, and
-       PNumTriangles
+      Fcecodec requires that area sizes relate to given NumVertices, and
+      PNumTriangles
 
-       Note: Fcecodec warns about, accepts (VertTblOffset > 0)
+      Note: Fcecodec warns about, accepts (VertTblOffset > 0)
     */
     if ((size = FCELIB_FCETYPES_Fce4ComputeSize(hdr->Version, hdr->NumVertices, hdr->NumTriangles)) != infilesize)
     {
@@ -1332,8 +1343,10 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const int infilesize, const void *header,
     }
 
 
-    /* Warn about Reserve5offset, Reserve6offset mismatches
-       Fcecodec allows, if all areas are within bounds */
+    /*
+      Warn about Reserve5offset, Reserve6offset mismatches
+      Fcecodec allows, if all areas are within bounds
+    */
     if ((hdr->Reserve5offset > hdr->Reserve6offset) ||
         (0x2038 + hdr->Reserve6offset > infilesize) ||
         (0x2038 + hdr->Reserve5offset > infilesize))
