@@ -167,9 +167,9 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
       mesh->release(mesh);
       FCELIB_TYPES_InitMesh(mesh);
     }
+#ifndef FCELIB_PYTHON_BINDINGS
     else if (!mesh->release)
       FCELIB_TYPES_InitMesh(mesh);
-#ifndef FCELIB_PYTHON_BINDINGS
     else if (mesh->_consumed || mesh->release != &FCELIB_TYPES_FreeMesh)
     {
       fprintf(stderr, "DecodeFce: mesh is not free and cannot be initialized.\n");

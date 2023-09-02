@@ -46,6 +46,15 @@ FCE4/FCE4M format theoretical limits (assuming signed int):
 extern "C" {
 #endif
 
+#ifndef __cplusplus
+typedef struct tTriangle tTriangle;
+typedef struct tVector tVector;
+typedef struct tColor3 tColor3;
+typedef struct tColor4 tColor4;
+typedef struct FceHeader3 FceHeader3;
+typedef struct FceHeader4 FceHeader4;
+#endif
+
 /* FCE3   tTriangle->flag   4 bit
       0x0   default             body parts: reflection
 0:    0x1   matte (no chrome)
@@ -126,7 +135,7 @@ Name    Application example                     Application example
 */
 
 /* Length = 56. Vertex indices are local. Values from 'P1stVertices' make them global. */
-typedef struct {
+struct tTriangle {
 /* 0x00 */  int   tex_page;     /* Texture page number; > 0 in FCE3/FCE4 officer models, FCE4 pursuit road objects, FCE4M damage textures. Requires NumArts=max(tex_pages)-1 apart from the last */
 /* 0x04 */  int   vidx1;        /* Vertex #1 local index */
 /* 0x08 */  int   vidx2;
@@ -139,34 +148,34 @@ typedef struct {
 /* 0x2C */  float V1;           /* Vertex #1 texture V-coordinate */
 /* 0x30 */  float V2;
 /* 0x34 */  float V3;
-} tTriangle;
+};
 
-typedef struct {
+struct tVector {
   float x;  /* x->inf is to the right */
   float y;  /* y->inf is up */
   float z;  /* z->inf is to the front */
-} tVector;
+};
 
 /* Valid values for all four components: 0..255
   hue<degrees>  / 360 * 255
   saturation<%> / 100 * 255
   brightness<%> / 100 * 255 */
-typedef struct {
+struct tColor3 {
   int hue;
   int saturation;
   int brightness;
   int transparency;
-} tColor3;
+};
 
-typedef struct {
+struct tColor4 {
   unsigned char hue;
   unsigned char saturation;
   unsigned char brightness;
   unsigned char transparency;
-} tColor4;
+};
 
 /* 0x1F04  -  size of this header */
-typedef struct {
+struct FceHeader3 {
 /* 0x0000 */  int      Unknown1           ;  /* != 0x14101000 && != 0x15101000, nullable, sometimes 0x13101000 (ex. render/pc/cone.fce) */
 /* 0x0004 */  int      NumTriangles       ;  /* Number of triangles in model */
 /* 0x0008 */  int      NumVertices        ;  /* Number of vertices in model */
@@ -206,7 +215,7 @@ typedef struct {
 /* 0x0E04 */  char     PartNames [64 * 64];  /* Part names (ASCIIZ, role only by order) */
 
 /* 0x1E04 */  char     Unknown2[256]      ;  /* nullable */
-} FceHeader3;
+};
 
 static
 const char *kFce3PartsNames[kFceLibImplementedFce3Parts] = {
@@ -263,7 +272,7 @@ Loft02                   1    Y
 */
 
 /* 0x2038  -  size of this header */
-typedef struct {
+struct FceHeader4 {
 /* 0x0000 */  int      Version             ;  /* FCE4: 0x00101014, FCE4M: 0x00101015 */
 /* 0x0004 */  int      Unknown1            ;  /* nullable */
 /* 0x0008 */  int      NumTriangles        ;  /* Number of triangles in model */
@@ -320,7 +329,7 @@ typedef struct {
 /* 0x0e28 */  char     PartNames [64 * 64] ;  /* Part names (ASCIIZ, role only by name) */
 
 /* 0x1e28 */  char     Unknown4[528]       ;  /* nullable */
-} FceHeader4;
+};
 
 static
 const char *kFce4HiBodyParts[kFceLibNumFce4HiBodyParts] = {

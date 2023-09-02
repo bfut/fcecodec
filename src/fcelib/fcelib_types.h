@@ -40,23 +40,31 @@
 extern "C" {
 #endif
 
-typedef struct {
+#ifndef __cplusplus
+typedef struct FcelibVertex FcelibVertex;
+typedef struct FcelibTriangle FcelibTriangle;
+typedef struct FcelibPart FcelibPart;
+typedef struct FcelibHeader FcelibHeader;
+typedef struct FcelibMesh FcelibMesh;
+#endif
+
+struct FcelibVertex {
   tVector VertPos;
   tVector NormPos;
   tVector DamgdVertPos;
   tVector DamgdNormPos;
   int     Animation;  /* 0x4 = immovable, 0x0 othw */
-} FcelibVertex;
+};
 
-typedef struct {
+struct FcelibTriangle {
   int   tex_page;
   int   vidx[3];  /* global vertex indexes */
   int   flag;
   float U[3];
   float V[3];
-} FcelibTriangle;
+};
 
-typedef struct {
+struct FcelibPart {
   int     PNumVertices;    /* number of elements: true count for this part */
   int     pvertices_len;   /* capacity: array length */
   int     PNumTriangles;   /* number of elements: true count for this part */
@@ -66,9 +74,9 @@ typedef struct {
   tVector PartPos;
   int    *PVertices;       /* ordered list of global vert idxs, -1 for unused */
   int    *PTriangles;      /* ordered list of global triag idxs, -1 for unused */
-} FcelibPart;
+};
 
-typedef struct {
+struct FcelibHeader {
   int      Unknown3;       /* FCE4M experimental */
   int      NumTriangles;
   int      NumVertices;
@@ -85,7 +93,7 @@ typedef struct {
   tVector  Dummies[16];
   char     DummyNames[16 * 64];
   int      *Parts;         /* ordered list of part indexes, -1 for unused */
-} FcelibHeader;
+};
 
 struct FcelibMesh {
 #ifdef __cplusplus
@@ -112,10 +120,6 @@ struct FcelibMesh {
   void           (*release)(struct FcelibMesh*);
 #endif
 };
-
-#ifndef __cplusplus
-typedef struct FcelibMesh FcelibMesh;
-#endif
 
 /* release, init, validate -------------------------------------------------- */
 
@@ -160,66 +164,20 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
     free(part);
   }  /* for i */
 
-  if (mesh->triangles)
-    free(mesh->triangles);
-  mesh->triangles = NULL;
-  if (mesh->vertices)
-    free(mesh->vertices);
-  mesh->vertices = NULL;
-  if (mesh->parts)
-    free(mesh->parts);
-  mesh->parts = NULL;
   if (mesh->hdr.Parts)
     free(mesh->hdr.Parts);
-  mesh->hdr.Parts = NULL;
+  if (mesh->parts)
+    free(mesh->parts);
+  if (mesh->triangles)
+    free(mesh->triangles);
+  if (mesh->vertices)
+    free(mesh->vertices);
 
-  mesh->parts_len = 0;
-  mesh->triangles_len = 0;
-  mesh->vertices_len = 0;
-
-  mesh->hdr.NumParts = 0;
-
-  mesh->hdr.Unknown3 = 0;
-  mesh->hdr.NumArts = 1;
-  mesh->hdr.NumVertices = 0;
-  mesh->hdr.NumTriangles = 0;
-
-  mesh->hdr.NumDummies = 0;
-  for (i = 0; i < 16; ++i)
-  {
-    mesh->hdr.Dummies[i].x = 0.0;
-    mesh->hdr.Dummies[i].y = 0.0;
-    mesh->hdr.Dummies[i].z = 0.0;
-  }
-  memset(mesh->hdr.DummyNames, '\0', sizeof(mesh->hdr.DummyNames));
-
-  mesh->hdr.NumColors = 0;
-  mesh->hdr.NumSecColors = 0;
-  for (i = 0; i < 16; ++i)
-  {
-    mesh->hdr.PriColors[i].hue = '\0';
-    mesh->hdr.PriColors[i].saturation = '\0';
-    mesh->hdr.PriColors[i].brightness = '\0';
-    mesh->hdr.PriColors[i].transparency = '\0';
-
-    mesh->hdr.IntColors[i].hue = '\0';
-    mesh->hdr.IntColors[i].saturation = '\0';
-    mesh->hdr.IntColors[i].brightness = '\0';
-    mesh->hdr.IntColors[i].transparency = '\0';
-
-    mesh->hdr.SecColors[i].hue = '\0';
-    mesh->hdr.SecColors[i].saturation = '\0';
-    mesh->hdr.SecColors[i].brightness = '\0';
-    mesh->hdr.SecColors[i].transparency = '\0';
-
-    mesh->hdr.DriColors[i].hue = '\0';
-    mesh->hdr.DriColors[i].saturation = '\0';
-    mesh->hdr.DriColors[i].brightness = '\0';
-    mesh->hdr.DriColors[i].transparency = '\0';
-  }
-
-  mesh->_consumed = 0;
-  mesh->release = NULL;
+#ifdef __cplusplus
+  *mesh = {};
+#else
+  memset(mesh, 0, sizeof(*mesh));
+#endif
 }
 
 /* Assumes (mesh != NULL). Silently re-initializes.
@@ -227,8 +185,6 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
    C API: mesh must have been initialized */
 void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
 {
-  int i;
-
 #ifndef FCELIB_PYTHON_BINDINGS
 #ifdef __cplusplus
   if (mesh->release == &FCELIB_TYPES_FreeMesh)
@@ -241,58 +197,14 @@ void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
 #endif
 #endif
 
-  mesh->release = &FCELIB_TYPES_FreeMesh;
-  mesh->_consumed = 0;
+#ifdef __cplusplus
+  *mesh = {};
+#else
+  memset(mesh, 0, sizeof(*mesh));
+#endif
 
-  mesh->hdr.NumTriangles = 0;
-  mesh->hdr.NumVertices = 0;
   mesh->hdr.NumArts = 1;
-
-  mesh->hdr.Unknown3 = 0;  /* FCE4M experimental */
-
-  mesh->hdr.NumParts = 0;
-  mesh->hdr.Parts = NULL;
-
-  mesh->hdr.NumDummies = 0;
-  for (i = 0; i < 16; ++i)
-  {
-    mesh->hdr.Dummies[i].x = 0.0f;
-    mesh->hdr.Dummies[i].y = 0.0f;
-    mesh->hdr.Dummies[i].z = 0.0f;
-  }
-  memset(mesh->hdr.DummyNames, '\0', sizeof(mesh->hdr.DummyNames));
-
-  mesh->hdr.NumColors = 0;
-  mesh->hdr.NumSecColors = 0;
-  for (i = 0; i < 16; ++i)
-  {
-    mesh->hdr.PriColors[i].hue = '\0';
-    mesh->hdr.PriColors[i].saturation = '\0';
-    mesh->hdr.PriColors[i].brightness = '\0';
-    mesh->hdr.PriColors[i].transparency = '\0';
-
-    mesh->hdr.IntColors[i].hue = '\0';
-    mesh->hdr.IntColors[i].saturation = '\0';
-    mesh->hdr.IntColors[i].brightness = '\0';
-    mesh->hdr.IntColors[i].transparency = '\0';
-
-    mesh->hdr.SecColors[i].hue = '\0';
-    mesh->hdr.SecColors[i].saturation = '\0';
-    mesh->hdr.SecColors[i].brightness = '\0';
-    mesh->hdr.SecColors[i].transparency = '\0';
-
-    mesh->hdr.DriColors[i].hue = '\0';
-    mesh->hdr.DriColors[i].saturation = '\0';
-    mesh->hdr.DriColors[i].brightness = '\0';
-    mesh->hdr.DriColors[i].transparency = '\0';
-  }
-
-  mesh->parts_len = 0;
-  mesh->parts = NULL;
-  mesh->triangles_len = 0;
-  mesh->triangles = NULL;
-  mesh->vertices_len = 0;
-  mesh->vertices = NULL;
+  mesh->release = &FCELIB_TYPES_FreeMesh;
 }
 
 /* Returns: 1 = valid mesh, -1 = empty valid mesh, 0 = invalid mesh */
