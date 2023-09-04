@@ -1467,11 +1467,11 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int buf
         part = mesh->parts[ mesh->hdr.Parts[i] ];
         FCELIB_TYPES_GetPartCentroid(mesh, part, &centroid);
 #if FCECVERBOSE >= 1
-        fprintf(stdout, "<%s> centroid: (%f, %f, %f) partpos: (%f, %f, %f)\n", part->PartName, centroid.x, centroid.y, centroid.z, part->PartPos.x, part->PartPos.y, part->PartPos.z);
+        printf("<%s> centroid: (%f, %f, %f) partpos: (%f, %f, %f)\n", part->PartName, centroid.x, centroid.y, centroid.z, part->PartPos.x, part->PartPos.y, part->PartPos.z);
 #endif
         FCELIB_TYPES_ResetPartCenter(mesh, part, centroid);
 #if FCECVERBOSE >= 1
-        fprintf(stdout, "<%s> new partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
+        printf("<%s> new partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
 #endif
         ++j;
       }
@@ -1509,8 +1509,8 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int buf
             continue;
         }
 #if FCECVERBOSE >= 1
-        fprintf(stdout, "HalfSize: <%s> partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
-        fprintf(stdout, "HalfSize: PNumVertices: %d\n", part->PNumVertices);
+        printf("HalfSize: <%s> partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
+        printf("HalfSize: PNumVertices: %d\n", part->PNumVertices);
 #endif
 
         /* n - internal vert index, k - vert order */

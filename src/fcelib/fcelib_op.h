@@ -582,8 +582,8 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
     ++mesh->hdr.NumParts;
 
 #if FCECVERBOSE >= 1
-    fprintf(stdout, "triangles %d + %d = %d\n", part_src1->PNumTriangles, part_src2->PNumTriangles, part_dest->PNumTriangles);
-    fprintf(stdout, "vertices %d + %d = %d\n", part_src1->PNumVertices, part_src2->PNumVertices, part_dest->PNumVertices);
+    printf("triangles %d + %d = %d\n", part_src1->PNumTriangles, part_src2->PNumTriangles, part_dest->PNumTriangles);
+    printf("vertices %d + %d = %d\n", part_src1->PNumVertices, part_src2->PNumVertices, part_dest->PNumVertices);
 #endif
 
     /* Copy vertices */

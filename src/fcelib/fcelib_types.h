@@ -636,7 +636,7 @@ int FCELIB_TYPES_GetPartCentroid(const FcelibMesh *mesh, const FcelibPart *part,
   float* x_arr;
   float* y_arr;
   float* z_arr;
-  float* xyz_arr = NULL;
+  float* xyz_arr;
   const int PNumVertices = part->PNumVertices;
   FcelibVertex *vert;
   int count_verts = 0;
@@ -645,9 +645,7 @@ int FCELIB_TYPES_GetPartCentroid(const FcelibMesh *mesh, const FcelibPart *part,
   {
     if (PNumVertices == 0)
     {
-      centroid->x = 0.0f;
-      centroid->y = 0.0f;
-      centroid->z = 0.0f;
+      memset(centroid, 0, sizeof(*centroid));
       retv = 1;
       break;
     }
@@ -700,9 +698,6 @@ int FCELIB_TYPES_GetPartCentroid(const FcelibMesh *mesh, const FcelibPart *part,
 #endif
 
     free(xyz_arr);
-    x_arr = NULL;
-    y_arr = NULL;
-    z_arr = NULL;
 
     retv = 1;
     break;
@@ -817,7 +812,9 @@ void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh *mesh)
           mesh->hdr.DriColors[i].hue, mesh->hdr.DriColors[i].saturation,
           mesh->hdr.DriColors[i].brightness, mesh->hdr.DriColors[i].transparency);
   }
+#ifndef FCELIB_PYTHON_BINDINGS
   fflush(stdout);
+#endif
 }
 
 /* Prints ref'ed global part indexes. */
@@ -832,7 +829,9 @@ void FCELIB_TYPES_PrintMeshParts(const FcelibMesh *mesh)
     printf("%d, ", mesh->hdr.Parts[j]);
 
   printf("\n]\n");
+#ifndef FCELIB_PYTHON_BINDINGS
   fflush(stdout);
+#endif
 }
 
 /* Prints ref'ed global triag indexes for each part. */
@@ -855,7 +854,9 @@ void FCELIB_TYPES_PrintMeshTriangles(const FcelibMesh *mesh)
 
     printf("\n]\n");
   }
+#ifndef FCELIB_PYTHON_BINDINGS
   fflush(stdout);
+#endif
 }
 
 /* Prints ref'ed global vert indexes for each part. */
@@ -878,7 +879,9 @@ void FCELIB_TYPES_PrintMeshVertices(const FcelibMesh *mesh)
 
     printf("\n]\n");
   }
+#ifndef FCELIB_PYTHON_BINDINGS
   fflush(stdout);
+#endif
 }
 
 #ifdef __cplusplus

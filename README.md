@@ -31,7 +31,7 @@ conversion tutorial
 
 ## References
 FCE3 specifications taken from [1].
-FCE4 specifications are loosely adapted from [1] and [2].
+FCE4 specifications are loosely adapted from [1] and [2]. FCE4M specifications own work.
 [2] was apparently based on [3].
 
 [1] D. Auroux et al. [_The unofficial Need For Speed III file format specifications - Version 1.0_](/references/unofficial_nfs3_file_specs_10.txt) [1998]<br/>

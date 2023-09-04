@@ -50,13 +50,17 @@ if "FCELIB_PYTHON_DEBUG" in os.environ:
     extra_compile_args += [ "-FCELIB_PYTHON_DEBUG" ]
 if platform.system() == "Windows":
     extra_compile_args += [
-        ("/wd4267")  # prevents warnings on conversion from size_t to int
+        ("/wd4267"),  # prevents warnings on conversion from size_t to int
+        ("/std:c++latest"), ("/Zc:__cplusplus"),  # sets __cplusplus
     ]
 else:
     extra_compile_args += [
         # # debug
         # ("-g"), ("-O0"),
         ("-pedantic-errors"),
+        ("-fvisibility=hidden"),  # sets the default symbol visibility to hidden
+        ("-Wformat-security"),
+        ("-Wdeprecated-declarations"),
     ]
 
     if "gcc" in platform.python_compiler().lower():
