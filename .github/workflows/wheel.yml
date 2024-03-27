@@ -1,11 +1,7 @@
 name: wheel
 
 on:
-  # workflow_dispatch:
-  [push, pull_request]
-
-env:
-  module: fcecodec
+  [push, pull_request, workflow_dispatch]
 
 jobs:
   build_wheels:
@@ -23,7 +19,7 @@ jobs:
         with:
           package-dir: "."
           output-dir:  "./wheelhouse"
-          config-file: "./${{ env.module }}/pyproject.toml"
+          config-file: "./pyproject.toml"
 
       - uses: actions/upload-artifact@v4
         with:
