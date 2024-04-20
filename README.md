@@ -1,9 +1,15 @@
 # fcecodec
 `fcecodec` is a Python extension module that decodes, encodes, and operates on
 FCE data. FCE is a geometry definition file format.
-The Python extension module is based on a header-only library written in C89.
+The Python extension module is based on a dependency-free, header-only library written in C89.
 Python bindings are written in C++ (pybind11). Supported on Windows and Linux.
 Tested on macOS.
+
+The intended usage is for transparent pre- and post-processing tasks specific to FCE.
+Exporting OBJ is supported out-of-the-box.
+Importing OBJ has mainstream support via script.
+The need for this new implementation arose as vintage FCE tools are generally closed source, unmaintainable, and exclusive to ancient Windows.
+As a result, many previously manual chores are now automatized in simple Python scripts.
 
 ## Installation / Documentation
 Python extension module: [/python/README.md](/python/README.md)<br/>
@@ -33,6 +39,7 @@ conversion tutorial
 FCE3 specifications taken from [1].
 FCE4 specifications are loosely adapted from [1] and [2].
 [2] was apparently based on [3].
+FCE4M specifications own work.
 
 [1] D. Auroux et al. [_The unofficial Need For Speed III file format specifications - Version 1.0_](/references/unofficial_nfs3_file_specs_10.txt) [1998]<br/>
 [2] A. Sadhra [_NFS4Loader.h_](/references/OpenNFS/NFS4Loader.h) via _OpenNFS_ [2015]<br/>
