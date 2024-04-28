@@ -15,15 +15,15 @@ jobs:
       fail-fast: false
       matrix:
         os: [ windows-latest ]
-        python-version: [ "3.8", "3.11" ]
+        python-version: [ "3.10", "3.11", "3.12" ]
 
     name: Python ${{ matrix.python-version }} (${{ matrix.os }})
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -40,12 +40,11 @@ jobs:
         python -c "import subprocess; import sys; retcode = subprocess.call([ sys.executable, '_version.py' ]); print('Exit code', retcode); sys.exit(0)"
         python -c "import fcecodec as fc; help(fc)"
 
-    - name: "Install numpy pytest wurlitzer"
+    - name: "Install requirements"
       shell: bash
       run: |
         python -m pip install numpy
         python -m pip install pytest
-        python -m pip install wurlitzer
 
     - name: "pytest"
       shell: bash

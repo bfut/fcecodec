@@ -42,10 +42,6 @@ namespace py = pybind11;
 #define free PyMem_Free
 #endif
 
-#if 0
-#define SCL_SPRINTF_BUFSZ 64
-#include "../src/SCL/sclcstring.h"
-#endif
 #define SCL_PY_PRINTF
 #include "../src/SCL/sclpython.h"
 
