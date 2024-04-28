@@ -1,6 +1,6 @@
 /*
   fcelib_util.h
-  fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2024 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -26,10 +26,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef __cplusplus
 enum { kFceLibImplementedFce3Parts = 13 };
 enum { kFceLibNumFce4HiBodyParts = 18 };
@@ -38,7 +34,8 @@ static const int kFceLibImplementedFce3Parts = 13;
 static const int kFceLibNumFce4HiBodyParts = 18;
 #endif
 
-/* Represent dummies */
+/* Represent FCE dummies (light/fx objects)
+   Mainly used for OBJ output, hence kTrianglesDiamond has 1-based indexes. */
 static
 const float kVertDiamond[6 * 3] = {
   1.0,  0.0,  0.0,
@@ -119,9 +116,5 @@ int FCELIB_UTIL_StrIsInArray(char *str, const char **arr)
   }
   return retv;
 }
-
-#ifdef __cplusplus
-}  /* extern "C" */
-#endif
 
 #endif  /* FCELIB_UTIL_H_ */

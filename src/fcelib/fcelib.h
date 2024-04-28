@@ -1,6 +1,6 @@
 /*
   fcelib.h
-  fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2024 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -20,11 +20,13 @@
 */
 
 /**
-  library interface: library users should only use functions from this header externally,
+  high level library interface: library users should only use functions from this header externally,
     whereas functions from here are never used internally
 
-  library structs are defined in fcelib_types.h
-  FCE structs and FCE format documentation can be found in fcelib_fcetypes.h
+  fcelib_types.h defines library structs
+  fcelib_fcetypes.h defines FCE structs and includes extensive FCE format documentation
+
+  "TODO:" in comments marks nitpicks
 **/
 
 #ifndef FCELIB_H_
@@ -36,6 +38,7 @@
 #define FCECVERS "1.5"
 #ifndef FCECVERBOSE
 #define FCECVERBOSE 0  /* >=1 for verbose console output */
+/* #define FCEC_STATE */  /* feature branch */
 #endif
 
 #include "./fcelib_io.h"
@@ -54,9 +57,9 @@ void FCELIB_FreeMesh(FcelibMesh *mesh)
     mesh->release(mesh);
 }
 
-void FCELIB_InitMesh(FcelibMesh *mesh)
+FcelibMesh *FCELIB_InitMesh(FcelibMesh *mesh)
 {
-  FCELIB_TYPES_InitMesh(mesh);
+  return FCELIB_TYPES_InitMesh(mesh);
 }
 
 void FCELIB_PrintMeshInfo(const FcelibMesh *mesh)

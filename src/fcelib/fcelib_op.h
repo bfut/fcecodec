@@ -1,6 +1,6 @@
 /*
   fcelib_op.h
-  fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2024 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -34,10 +34,6 @@
 #include "./fcelib_io.h"  /* FCELIB_IO_GeomDataToNewPart */
 #include "./fcelib_types.h"
 #include "./fcelib_util.h"  /* kTrianglesDiamond, kVertDiamond */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* mesh --------------------------------------------------------------------- */
 
@@ -158,6 +154,11 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_dest, FcelibMesh *mesh_src, const 
 
   for (;;)
   {
+#ifdef FCEC_STATE
+    /* TODO: this is a defensive assumption. this function may not be dirty'ing at all */
+    mesh_dest->state |= (kFceLibFlagPartsDirty | kFceLibFlagVerticesDirty | kFceLibFlagTrianglesDirty);
+#endif
+
     /* Lengthen part index map only if necessary */
     if (!mesh_dest->hdr.Parts)
     {
@@ -365,6 +366,10 @@ int FCELIB_OP_DeletePart(FcelibMesh *mesh, const int idx)
     mesh->parts[ mesh->hdr.Parts[internal_idx] ] = NULL;
     mesh->hdr.Parts[internal_idx] = -1;
 
+#ifdef FCEC_STATE
+    mesh->state |= (kFceLibFlagPartsDirty | kFceLibFlagVerticesDirty | kFceLibFlagTrianglesDirty);
+#endif
+
     retv = 1;
     break;
   }  /* for (;;) */
@@ -441,6 +446,10 @@ int FCELIB_OP_DeletePartTriags(FcelibMesh *mesh, const int pidx, const int *idxs
     mesh->hdr.NumTriangles -= idxs_len;
     free(map);
 
+#ifdef FCEC_STATE
+    mesh->state |= kFceLibFlagTrianglesDirty;
+#endif
+
     retv = 1;
     break;
   }  /* for (;;) */
@@ -491,6 +500,9 @@ int FCELIB_OP_DeleteUnrefdVerts(FcelibMesh *mesh)
       part->PVertices[j] = -1;
       --part->PNumVertices;
       --mesh->hdr.NumVertices;
+#ifdef FCEC_STATE
+      mesh->state |= kFceLibFlagVerticesDirty;
+#endif
     }
   }
 
@@ -537,6 +549,11 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
 
   for (;;)
   {
+#ifdef FCEC_STATE
+    /* TODO: this is a defensive assumption. this function may not be dirty'ing at all */
+    mesh->state |= (kFceLibFlagPartsDirty | kFceLibFlagVerticesDirty | kFceLibFlagTrianglesDirty);
+#endif
+
     if (mesh->hdr.Parts[mesh->parts_len - 1] >= 0)
     {
       if (!FCELIB_TYPES_AddParts(mesh, 1))
@@ -547,14 +564,10 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
     }
 
     /* Get first unused index */
-    i = mesh->parts_len - 1;
-    while (mesh->hdr.Parts[i] < 0 && i >= 0)
-      --i;
-    ++i;
-    new_pid = i;
-
+    new_pid = FCELIB_TYPES_GetFirstUnusedGlobalPartIdx(mesh);
     vidx_1st = FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(mesh);
     tidx_1st = FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(mesh);
+
 
     /* Add part */
     mesh->hdr.Parts[new_pid] = FCELIB_UTIL_ArrMax(mesh->hdr.Parts, mesh->parts_len) + 1;
@@ -582,8 +595,8 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
     ++mesh->hdr.NumParts;
 
 #if FCECVERBOSE >= 1
-    fprintf(stdout, "triangles %d + %d = %d\n", part_src1->PNumTriangles, part_src2->PNumTriangles, part_dest->PNumTriangles);
-    fprintf(stdout, "vertices %d + %d = %d\n", part_src1->PNumVertices, part_src2->PNumVertices, part_dest->PNumVertices);
+    printf("triangles %d + %d = %d\n", part_src1->PNumTriangles, part_src2->PNumTriangles, part_dest->PNumTriangles);
+    printf("vertices %d + %d = %d\n", part_src1->PNumVertices, part_src2->PNumVertices, part_dest->PNumVertices);
 #endif
 
     /* Copy vertices */
@@ -681,6 +694,7 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
       mesh->triangles[tidx_1st + j] = (FcelibTriangle *)malloc(sizeof(**mesh->triangles));
       if (!mesh->triangles[tidx_1st + j])
       {
+        /* fatal error? */
         fprintf(stderr, "MergePartsToNew: Cannot allocate memory (triag1)\n");
         new_pid = -1;
         break;
@@ -703,6 +717,7 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
       mesh->triangles[tidx_1st + j] = (FcelibTriangle *)malloc(sizeof(**mesh->triangles));
       if (!mesh->triangles[tidx_1st + j])
       {
+        /* fatal error */
         fprintf(stderr, "MergePartsToNew: Cannot allocate memory (triag2)\n");
         new_pid = -1;
         break;
@@ -760,13 +775,12 @@ int FCELIB_OP_MoveUpPart(FcelibMesh *mesh, const int idx)
     const int tmp = mesh->hdr.Parts[internal_index_idx];
     mesh->hdr.Parts[internal_index_idx] = mesh->hdr.Parts[internal_index_j];
     mesh->hdr.Parts[internal_index_j] = tmp;
+#ifdef FCEC_STATE
+    mesh->state |= kFceLibFlagPartsDirty;
+#endif
   }
 
   return idx - 1;
 }
-
-#ifdef __cplusplus
-}  /* extern "C" */
-#endif
 
 #endif  /* FCELIB_OP_H_ */

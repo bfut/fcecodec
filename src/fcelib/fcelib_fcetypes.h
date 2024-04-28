@@ -1,6 +1,6 @@
 /*
   fcelib_fcetypes.h
-  fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2024 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -145,6 +145,10 @@ struct tTriangle {
 /* 0x0C */  int   vidx3;
 /* 0x10 */  char  unknown[12];  /* all items = 0xFF00 or 0xFFFF */
 /* 0x1C */  int   flag;         /* triangle flag */
+#if 0
+/* 0x20 */  float U[3];         /* at 0: vertex #1 texture U-coordinate, etc. */
+/* 0x2C */  float V[3];         /* at 0: vertex #1 texture V-coordinate, etc. */
+#endif
 /* 0x20 */  float U1;           /* Vertex #1 texture U-coordinate */
 /* 0x24 */  float U2;
 /* 0x28 */  float U3;
@@ -357,6 +361,10 @@ const char *kFce4HiBodyParts[kFceLibNumFce4HiBodyParts] = {
   ":HLRW",
   ":HRRW",
 };
+
+#ifdef __cplusplus
+}  /* extern "C" */
+#endif
 
 /*
 car.fce (FCE4)
@@ -1186,7 +1194,7 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const int infilesize, const void *header,
         retv = 0;
       }
       else if (hdr->Version == 0x00101015)
-        fprintf(stdout, "Fce4ValidateHeader: Warning: Invalid number of colors (%d is not in [0, 16])\n", hdr->NumColors);
+        printf("Fce4ValidateHeader: Warning: Invalid number of colors (%d is not in [0, 16])\n", hdr->NumColors);
     }
 
     /* Vertices, triangles counts */
@@ -1707,9 +1715,5 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const void *header, const int fce_size)
     }
   }
 }
-
-#ifdef __cplusplus
-}  /* extern "C" */
-#endif
 
 #endif  /* FCELIB_FCETYPES_H_ */

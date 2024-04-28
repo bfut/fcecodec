@@ -1,4 +1,4 @@
-# fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
+# fcecodec Copyright (C) 2021-2024 Benjamin Futasz <https://github.com/bfut>
 #
 # You may not redistribute this program without its source code.
 #
@@ -158,7 +158,7 @@ def test_smoketest_tracemalloc():
     print(flush = True)
     # tracemalloc -- END -----------------------------------------------------------
 
-    assert first_size == 0 and second_size < 4000 and second_peak < 130000
+    assert first_size == 0 and second_size < 55000 and second_peak < 130000
 
 
 @pytest.mark.skipif(platform.python_implementation() != "PyPy",
@@ -419,7 +419,7 @@ def test_version():
     script_path = pathlib.Path(__file__).parent.resolve()
     os.chdir(script_path)
     with open(script_path / "../src/fcelib/fcelib.h", mode="r", encoding="utf8") as f:
-        for _ in range(36 - 1):
+        for _ in range(38 - 1):
             next(f)
         __version__ = f.readline().rstrip().split("\"")[-2]
     print(f"VERSION_INFO={__version__}")

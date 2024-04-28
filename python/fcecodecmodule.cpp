@@ -1,6 +1,6 @@
 /*
   fcecodecmodule.c - Python module
-  fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2024 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -18,14 +18,6 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/numpy.h>
-
-// https://github.com/pybind/python_example/issues/12
-// https://github.com/pybind/python_example/blob/master/src/main.cpp
-#define STRINGIFY(x) #x
-#define MACRO_STRINGIFY(x) STRINGIFY(x)
 
 #include <array>
 #include <cstdio>
@@ -33,17 +25,32 @@
 #include <utility>
 #include <vector>
 
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+#include <pybind11/stl.h>
+
+namespace py = pybind11;
+
+// https://github.com/pybind/python_example/issues/12
+// https://github.com/pybind/python_example/blob/master/src/main.cpp
+#define STRINGIFY(x) #x
+#define MACRO_STRINGIFY(x) STRINGIFY(x)
+
 #ifdef PYMEM_MALLOC
 #define malloc PyMem_Malloc
 #define realloc PyMem_Realloc
 #define free PyMem_Free
 #endif
 
+#if 0
+#define SCL_SPRINTF_BUFSZ 64
+#include "../src/SCL/sclcstring.h"
+#endif
+#define SCL_PY_PRINTF
+#include "../src/SCL/sclpython.h"
+
 #define FCELIB_PYTHON_BINDINGS  // avoid some deterministic checks
 #include "../src/fcelib/fcelib.h"
-// #include "../src/fcelib/fcelib_types.h"  // optional include
-
-namespace py = pybind11;
 
 /* classes, structs --------------------------------------------------------- */
 
@@ -353,7 +360,7 @@ void Mesh::SetDummyNames(std::vector<std::string> &arr)
   for (int i = 0; i < static_cast<int>(arr.size()) && i < 16; ++i)
   {
     std::string *str1 = &arr.at(i);
-    std::strncpy(mesh_.hdr.DummyNames + i * 64, str1->c_str(), std::min(63, static_cast<int>(str1->size())));
+    strncpy(mesh_.hdr.DummyNames + i * 64, str1->c_str(), std::min(63, static_cast<int>(str1->size())));
   }
 
   mesh_.hdr.NumDummies = static_cast<int>(arr.size());
@@ -446,8 +453,8 @@ void Mesh::PSetName(const int pid, const std::string &s)
   const int idx = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
   if (idx < 0)
     throw std::out_of_range("PSetName: part index (pid) out of range");
-  std::strncpy(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName, s.c_str(),
-               sizeof(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName) - 1);  // max 63 chars
+  strncpy(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName, s.c_str(),
+          sizeof(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName) - 1);  // max 63 chars
 }
 
 py::buffer Mesh::PGetPos(const int pid) const
@@ -1053,8 +1060,8 @@ int Mesh::OpAddHelperPart(const std::string &s, py::array_t<float, py::array::c_
   const int idx = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid_new);
   if (idx < 0)
     throw std::out_of_range("OpAddHelperPart: part index (pid) out of range");
-  std::strncpy(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName, s.c_str(),
-               sizeof(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName) - 1);  // max 63 chars
+  strncpy(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName, s.c_str(),
+          sizeof(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName) - 1);  // max 63 chars
   return pid_new;
 }
 

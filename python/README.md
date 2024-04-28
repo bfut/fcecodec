@@ -1,33 +1,23 @@
 # fcecodec - Python extension module
-This file describes installation, and usage of `fcecodec` as Python extension
+This file describes installation and usage of `fcecodec` as Python extension
 module.
 
 ## Installation
-Requires Python 3.8+
+Requires Python 3.10+
 
-        git clone https://github.com/bfut/fcecodec.git
-        cd fcecodec
-        python -m pip install .
+``
+python -m pip install fcecodec
+``
 
 Though `numpy` is not required, it is recommended
-
-        python -m pip install --upgrade numpy
-
-
-#### Windows
-Install `Visual Studio` with the Python Development workload. For a detailed
-description, see the _Prerequisites_ section on
-[microsoft.com: C++ extensions for Python](https://docs.microsoft.com/en-us/visualstudio/python/working-with-c-cpp-python-in-visual-studio?view=vs-2019#prerequisites)
-
-Installing `Anaconda` and `git` is recommended.
-
-Once these prerequisites have been met, installation generally works as
-described above.
+``
+python -m pip install --upgrade numpy
+``
 
 ## Examples
 For a script template and handy function wrappers, see
-[/scripts/fcecodecScriptTemplate.py](/scripts/fcecodecScriptTemplate.py) and
-[/python/bfut_mywrappers.py](/python/bfut_mywrappers.py)
+[https://github.com/bfut/fcecodec/blob/main/scripts/fcecodecScriptTemplate.py](https://github.com/bfut/fcecodec/blob/main/scripts/fcecodecScriptTemplate.py) and
+[https://github.com/bfut/fcecodec/blob/main/python/bfut_mywrappers.py](https://github.com/bfut/fcecodec/blob/main/python/bfut_mywrappers.py)
 
 ```py
 import fcecodec as fc
@@ -119,13 +109,13 @@ CLASSES
      |      vert_idxs: 012..., vert_texcoords: uuuvvv... , vert_pos: xyzxyzxyz..., normals: xyzxyzxyz...
      |
      |  MGetColors(...)
-     |      MGetColors(self: fcecodec.Mesh) -> buffer
+     |      MGetColors(self: fcecodec.Mesh) -> Buffer
      |
      |  MGetDummyNames(...)
-     |      MGetDummyNames(self: fcecodec.Mesh) -> List[str]
+     |      MGetDummyNames(self: fcecodec.Mesh) -> list[str]
      |
      |  MGetDummyPos(...)
-     |      MGetDummyPos(self: fcecodec.Mesh) -> buffer
+     |      MGetDummyPos(self: fcecodec.Mesh) -> Buffer
      |
      |  MSetColors(...)
      |      MSetColors(self: fcecodec.Mesh, colors: numpy.ndarray[numpy.uint8]) -> None
@@ -133,7 +123,7 @@ CLASSES
      |      Expects shape=(N, 4, 4)
      |
      |  MSetDummyNames(...)
-     |      MSetDummyNames(self: fcecodec.Mesh, names: List[str]) -> None
+     |      MSetDummyNames(self: fcecodec.Mesh, names: list[str]) -> None
      |
      |  MSetDummyPos(...)
      |      MSetDummyPos(self: fcecodec.Mesh, positions: numpy.ndarray[numpy.float32]) -> None
@@ -167,7 +157,7 @@ CLASSES
      |      OpDeletePart(self: fcecodec.Mesh, pid: int) -> bool
      |
      |  OpDeletePartTriags(...)
-     |      OpDeletePartTriags(self: fcecodec.Mesh, pid: int, idxs: List[int]) -> bool
+     |      OpDeletePartTriags(self: fcecodec.Mesh, pid: int, idxs: list[int]) -> bool
      |
      |  OpInsertPart(...)
      |      OpInsertPart(self: fcecodec.Mesh, mesh_src: fcecodec.Mesh, pid_src: int) -> int
@@ -193,21 +183,21 @@ CLASSES
      |      PGetName(self: fcecodec.Mesh, pid: int) -> str
      |
      |  PGetPos(...)
-     |      PGetPos(self: fcecodec.Mesh, pid: int) -> buffer
+     |      PGetPos(self: fcecodec.Mesh, pid: int) -> Buffer
      |
      |  PGetTriagsFlags(...)
-     |      PGetTriagsFlags(self: fcecodec.Mesh, pid: int) -> buffer
+     |      PGetTriagsFlags(self: fcecodec.Mesh, pid: int) -> Buffer
      |
      |  PGetTriagsTexcoords(...)
-     |      PGetTriagsTexcoords(self: fcecodec.Mesh, pid: int) -> buffer
+     |      PGetTriagsTexcoords(self: fcecodec.Mesh, pid: int) -> Buffer
      |
      |      uuuvvv..., Returns (N*6, ) numpy array for N triangles.
      |
      |  PGetTriagsTexpages(...)
-     |      PGetTriagsTexpages(self: fcecodec.Mesh, pid: int) -> buffer
+     |      PGetTriagsTexpages(self: fcecodec.Mesh, pid: int) -> Buffer
      |
      |  PGetTriagsVidx(...)
-     |      PGetTriagsVidx(self: fcecodec.Mesh, pid: int) -> buffer
+     |      PGetTriagsVidx(self: fcecodec.Mesh, pid: int) -> Buffer
      |
      |      Returns (N*3, ) numpy array of global vert indexes for N triangles.
      |
@@ -250,8 +240,14 @@ CLASSES
      |  PrintVerts(...)
      |      PrintVerts(self: fcecodec.Mesh) -> None
      |
+     |  __buffer__(self, flags, /)
+     |      Return a buffer object that exposes the underlying memory of the object.
+     |
      |  __init__(...)
      |      __init__(self: fcecodec.Mesh) -> None
+     |
+     |  __release_buffer__(self, buffer, /)
+     |      Release the buffer object that exposes the underlying memory of the object.
      |
      |  ----------------------------------------------------------------------
      |  Readonly properties defined here:

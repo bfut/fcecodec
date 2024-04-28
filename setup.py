@@ -1,4 +1,4 @@
-# fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
+# fcecodec Copyright (C) 2021-2024 Benjamin Futasz <https://github.com/bfut>
 #
 # You may not redistribute this program without its source code.
 #
@@ -34,12 +34,14 @@ os.chdir(script_path)
 
 print("try reading VERSION_INFO from fcelib.h...")
 with open(script_path / "./src/fcelib/fcelib.h", mode="r", encoding="utf8") as f:
-    for _ in range(36 - 1):
+    for _ in range(38 - 1):
         next(f)
-    __version__ = f.readline().rstrip().split("\"")[-2]
+    __version__ = f.readline()
+    print(f"readline() yields '{__version__}'")
+    __version__ = __version__.rstrip().split("\"")[-2]
     print(f"VERSION_INFO={__version__}")
 
-long_description = (script_path / "./README.md").read_text(encoding="utf-8")
+long_description = (script_path / "./python/README.md").read_text(encoding="utf-8")
 
 extra_compile_args = []
 if "PYMEM_MALLOC" in os.environ:
@@ -50,13 +52,17 @@ if "FCELIB_PYTHON_DEBUG" in os.environ:
     extra_compile_args += [ "-FCELIB_PYTHON_DEBUG" ]
 if platform.system() == "Windows":
     extra_compile_args += [
-        ("/wd4267")  # prevents warnings on conversion from size_t to int
+        ("/wd4267"),  # prevents warnings on conversion from size_t to int
+        ("/std:c++latest"), ("/Zc:__cplusplus"),  # sets __cplusplus
     ]
 else:
     extra_compile_args += [
         # # debug
         # ("-g"), ("-O0"),
         ("-pedantic-errors"),
+        ("-fvisibility=hidden"),  # sets the default symbol visibility to hidden
+        ("-Wformat-security"),
+        ("-Wdeprecated-declarations"),
     ]
 
     if "gcc" in platform.python_compiler().lower():
@@ -77,14 +83,15 @@ else:
             ("-Wwrite-strings"),  # ("-Wno-discarded-qualifiers"),
 
             # # https://developers.redhat.com/blog/2018/03/21/compiler-and-linker-flags-gcc
-            # ("-D_FORTIFY_SOURCE=2"),
-            # ("-D_GLIBCXX_ASSERTIONS"),
+            ("-D_FORTIFY_SOURCE=2"),
+            # ("-D_GLIBCXX_ASSERTIONS"),  # runtime bounds-checking for C++ strings and containers
             # ("-fexceptions"),
             # ("-fplugin=annobin"),
-            # ("-fstack-clash-protection"),
-            # ("-fstack-protector-strong"),
+            ("-fstack-clash-protection"),
+            ("-fstack-protector-strong"),
             # ("-fcf-protection"),
-            # ("-Werror=format-security"),
+            ("-Werror=format-security"),
+            # ("-Werror=implicit-function-declaration"),  # C only
             # ("-Wl,-z,defs"),
             # ("-Wl,-z,now"),
             # ("-Wl,-z,relro"),
@@ -129,22 +136,22 @@ setuptools.setup(
     description="FCE decoder/encoder",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: End Users/Desktop",
-        "Intended Audience :: Developers",
-        "Topic :: Artistic Software",
-        "Topic :: Games/Entertainment",
-        "Topic :: Multimedia :: Graphics :: 3D Modeling",
-        "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python :: 3",
-    ],
+    # classifiers=[
+    #     "Development Status :: 5 - Production/Stable",
+    #     "Intended Audience :: End Users/Desktop",
+    #     "Intended Audience :: Developers",
+    #     "Topic :: Artistic Software",
+    #     "Topic :: Games/Entertainment",
+    #     "Topic :: Multimedia :: Graphics :: 3D Modeling",
+    #     "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+    #     "Operating System :: OS Independent",
+    #     "Programming Language :: Python :: 3",
+    # ],
     ext_modules=ext_modules,
     # extras_require={"test": "pytest"},
     # # Currently, build_ext only provides an optional "highest supported C++
     # # level" feature, but in the future it may provide more features.
     cmdclass={"build_ext": build_ext},
     zip_safe=False,
-    python_requires=">=3.8",
+    python_requires=">=3.10",
 )

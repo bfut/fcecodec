@@ -1,6 +1,6 @@
 /*
   fcelib_types.h
-  fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2024 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -26,7 +26,9 @@
   These elements can be accessed via ordered index arrays. New elements are
   added at the end.
 
-  at the expense of linear access, many operations are just carried out on index arrays
+  Many operations are carried out on index arrays.
+  Array elements (parts, triags, verts) are accessed in constant time at first.
+  Once an index array has been flagged as dirty, access is of linear complexity.
 **/
 
 #ifndef FCELIB_TYPES_H_
@@ -83,7 +85,7 @@ struct FcelibHeader {
   int      NumTriangles;
   int      NumVertices;
   int      NumArts;
-  int      NumParts;       /* number of elements: true count */
+  int      NumParts;       /* number of elements: true count (i.e., count of entries in *Parts that are > -1) */
   int      NumDummies;     /* <= 16 */
   int      NumColors;      /* <= 16 */
   int      NumSecColors;   /* <= 16, FCE3 only */
@@ -94,25 +96,50 @@ struct FcelibHeader {
   tColor4  DriColors[16];  /* FCE4 only */
   tVector  Dummies[16];
   char     DummyNames[16 * 64];
-  int      *Parts;         /* ordered list of part indexes, -1 for unused */
+  int      *Parts;         /* ordered list of part indexes, -1 for unused; length given by mesh.parts_len */
 };
+
+#ifdef FCEC_STATE
+#ifndef __cplusplus
+enum { kFceLibFlagPartsDirty = (1 << 0) };
+enum { kFceLibFlagTrianglesDirty = (1 << 1) };
+enum { kFceLibFlagVerticesDirty = (1 << 2) };
+#else
+static const int kFceLibFlagPartsDirty = (1 << 0);
+static const int kFceLibFlagTrianglesDirty = (1 << 1);
+static const int kFceLibFlagVerticesDirty = (1 << 2);
+#endif
+#endif  /* FCEC_STATE */
 
 struct FcelibMesh {
 #ifdef __cplusplus
-  int              _consumed = 0;  /* previously decoded? yes/no 1/0, internal fcelib use only */
+  int              _consumed = 0;      /* previously decoded? yes/no 1/0, internal fcelib use only */
+#ifdef FCEC_STATE
+  int              state = 0;    /* flags index arrays as dirty */
+#endif  /* FCEC_STATE */
 #else
-  int              _consumed;      /* previously decoded? yes/no 1/0, internal fcelib use only */
+  int              _consumed;          /* previously decoded? yes/no 1/0, internal fcelib use only */
+#ifdef FCEC_STATE
+  int              state;        /* flags index arrays as dirty */
+#endif  /* FCEC_STATE */
 #endif
 
-  int              parts_len;      /* capacity: array length */
-  int              triangles_len;  /* capacity: array length */
-  int              vertices_len;   /* capacity: array length */
+  int              parts_len;          /* capacity: array length */
+  int              triangles_len;      /* capacity: array length */
+  int              vertices_len;       /* capacity: array length */
 
   FcelibHeader     hdr;
 
-  FcelibPart     **parts;          /* may contain NULL elements */
+  /*
+    Access via appropriate ordered index array only.
+    for **parts, use *hdr.Parts
+    for **triangles, use *FcelibPart.PTriangles
+    for **vertices, use *FcelibPart.PVertices
+    Also see FCELIB_TYPES_* service functions.
 
-  /* Each vert and triag belongs to exactly one part, respectively. */
+    Each vert and triag belongs to exactly one part, respectively.
+  */
+  FcelibPart     **parts;          /* may contain NULL elements */
   FcelibTriangle **triangles;      /* may contain NULL elements */
   FcelibVertex   **vertices;       /* may contain NULL elements */
 
@@ -122,6 +149,10 @@ struct FcelibMesh {
   void           (*release)(struct FcelibMesh*);
 #endif
 };
+
+#ifdef __cplusplus
+}  /* extern "C" */
+#endif
 
 /* release, init, validate -------------------------------------------------- */
 
@@ -133,38 +164,73 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
   int n;
   FcelibPart *part;
 
-  for (i = mesh->parts_len - 1; i >= 0 ; --i)
+  /* If index arrays are dirty, safe access for free'ing. */
+#ifdef FCEC_STATE
+  if (mesh->state & (kFceLibFlagVerticesDirty | kFceLibFlagTrianglesDirty))
+#else
+  if (1)
+#endif
   {
-    if (mesh->hdr.Parts[i] < 0)
-      continue;
-    part = mesh->parts[ mesh->hdr.Parts[i] ];
-
-    for (n = part->pvertices_len - 1, k = part->PNumVertices - 1; n >= 0 && k >= 0; --n)
+    for (i = mesh->parts_len - 1; i >= 0 ; --i)
     {
-      if (part->PVertices[n] < 0)
+      if (mesh->hdr.Parts[i] < 0)
         continue;
-      free(mesh->vertices[ part->PVertices[n] ]);
-      --k;
-    }  /* for n, k */
-    free(part->PVertices);
+      part = mesh->parts[ mesh->hdr.Parts[i] ];
 
-    for (n = part->ptriangles_len - 1, k = part->PNumTriangles - 1; n >= 0 && k >= 0; --n)
-    {
-      if (part->PTriangles[n] < 0)
-        continue;
-      free(mesh->triangles[ part->PTriangles[n] ]);
-      --k;
-    }  /* for n, k */
-    free(part->PTriangles);
-  }  /* for i */
+      for (n = part->pvertices_len - 1, k = part->PNumVertices - 1; n >= 0 && k >= 0; --n)
+      {
+        if (part->PVertices[n] < 0)
+          continue;
+        free(mesh->vertices[ part->PVertices[n] ]);
+        --k;
+      }  /* for n, k */
+      free(part->PVertices);
 
-  for (i = mesh->parts_len - 1; i >= 0 ; --i)
+      for (n = part->ptriangles_len - 1, k = part->PNumTriangles - 1; n >= 0 && k >= 0; --n)
+      {
+        if (part->PTriangles[n] < 0)
+          continue;
+        free(mesh->triangles[ part->PTriangles[n] ]);
+        --k;
+      }  /* for n, k */
+      free(part->PTriangles);
+    }  /* for i */
+  }
+  else
   {
-    if (mesh->hdr.Parts[i] < 0)
-      continue;
-    part = mesh->parts[ mesh->hdr.Parts[i] ];
-    free(part);
-  }  /* for i */
+    for (n = mesh->vertices_len - 1; n >= 0; --n)
+      free(mesh->vertices[n]);
+    for (n = mesh->triangles_len - 1; n >= 0; --n)
+      free(mesh->triangles[n]);
+
+    for (i = mesh->parts_len - 1; i >= 0 ; --i)
+    {
+      if (mesh->hdr.Parts[i] < 0)
+        continue;
+      part = mesh->parts[ mesh->hdr.Parts[i] ];
+      free(part->PTriangles);
+      free(part->PVertices);
+    }  /* for i */
+  }
+
+#ifdef FCEC_STATE
+  if (mesh->state & kFceLibFlagPartsDirty)
+#else
+  if (1)
+#endif
+  {
+    for (i = mesh->parts_len - 1; i >= 0 ; --i)
+    {
+      if (mesh->hdr.Parts[i] < 0)
+        continue;
+      free(mesh->parts[ mesh->hdr.Parts[i] ]);
+    }  /* for i */
+  }
+  else
+  {
+    for (i = mesh->parts_len - 1; i >= 0 ; --i)
+      free(mesh->parts[i]);
+  }
 
   if (mesh->hdr.Parts)
     free(mesh->hdr.Parts);
@@ -187,7 +253,7 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
 
   C API: mesh must have been initialized
 */
-void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
+FcelibMesh *FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
 {
 #ifndef FCELIB_PYTHON_BINDINGS
 #ifdef __cplusplus
@@ -196,7 +262,7 @@ void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
   if (mesh->release && mesh->release != &FCELIB_TYPES_FreeMesh)
   {
     fprintf(stderr, "InitMesh: mesh is not free and cannot be initialized.\n");
-    return;
+    return NULL;
   }
 #endif
 #endif
@@ -205,10 +271,12 @@ void FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
   *mesh = {};
 #else
   memset(mesh, 0, sizeof(*mesh));
+  /* array_dirty = 0; */
 #endif
 
   mesh->hdr.NumArts = 1;
   mesh->release = &FCELIB_TYPES_FreeMesh;
+  return mesh;
 }
 
 /* Returns: 1 = valid mesh, -1 = empty valid mesh, 0 = invalid mesh */
@@ -220,6 +288,11 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh *mesh)
   int sum_triags = 0;
   int sum_verts = 0;
   FcelibPart *part = NULL;
+
+  if (!mesh->release)
+    return 0;
+  if (mesh->release != &FCELIB_TYPES_FreeMesh)
+    return 0;
 
   if (mesh->parts_len == 0     && !mesh->parts     && !mesh->hdr.Parts &&
       mesh->triangles_len == 0 && !mesh->triangles &&
@@ -368,20 +441,31 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh *mesh)
 
 /* service ------------------------------------------------------------------ */
 
+int FCELIB_TYPES_GetFirstUnusedGlobalPartIdx(const FcelibMesh *mesh)
+{
+  int pidx = mesh->parts_len - 1;
+
+  while (pidx >= 0 && mesh->hdr.Parts[pidx] < 0)
+    --pidx;
+  ++pidx;
+
+  return pidx;
+}
+
 /* Assumes mesh->hdr.NumParts > 0 */
 int FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(const FcelibMesh *mesh)
 {
   int tidx = -1;
   int i;
-  int pid;
+  int pidx;
   FcelibPart *part;
 
   for (i = 0; i < mesh->parts_len; ++i)
   {
-    pid = mesh->hdr.Parts[i];
-    if (pid < 0)
+    pidx = mesh->hdr.Parts[i];
+    if (pidx < 0)
       continue;
-    part = mesh->parts[pid];
+    part = mesh->parts[pidx];
     if (part->ptriangles_len > 0)
       tidx = -FCELIB_UTIL_Min(-tidx, -FCELIB_UTIL_ArrMax(part->PTriangles, part->ptriangles_len));
   }
@@ -394,15 +478,15 @@ int FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(const FcelibMesh *mesh)
 {
   int vidx = -1;
   int i;
-  int pid;
+  int pidx;
   FcelibPart *part;
 
   for (i = 0; i < mesh->parts_len; ++i)
   {
-    pid = mesh->hdr.Parts[i];
-    if (pid < 0)
+    pidx = mesh->hdr.Parts[i];
+    if (pidx < 0)
       continue;
-    part = mesh->parts[pid];
+    part = mesh->parts[pidx];
     if (part->pvertices_len > 0)
       vidx = -FCELIB_UTIL_Min(-vidx, -FCELIB_UTIL_ArrMax(part->PVertices, part->pvertices_len));
   }
@@ -410,10 +494,42 @@ int FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(const FcelibMesh *mesh)
   return vidx + 1;
 }
 
+#if 0
+/* experimental */
+
+/* Not usually called directly. */
+int __FCELIB_TYPES_GetInternalIndex(int *indexes, const int indexes_len, const int idx)
+{
+  int internal_idx;
+  for (internal_idx = 0; internal_idx < indexes_len; ++internal_idx)
+  {
+    if (internal_idx == idx)
+    {
+      return internal_idx;
+    }
+  }
+  return -1;
+}
+
+int FCELIB_TYPES_GetInternalTriangleIndex(FcelibMesh *mesh, const int internal_pidx, const int tidx)
+{
+  if ((mesh->state & kFceLibFlagTrianglesDirty) == 0)
+  {
+    return tidx;
+  }
+  else
+  {
+    int internal_idx = -1;
+    FcelibPart *part = mesh->parts[internal_pidx];
+    return __FCELIB_TYPES_GetInternalIndex(part->PTriangles, part->ptriangles_len, tidx);
+  }
+}
+#endif
+
 /* Returns -1 on failure. */
 int FCELIB_TYPES_GetInternalPartIdxByOrder(const FcelibMesh *mesh, const int order)
 {
-  int pid = -1;
+  int pidx = -1;
   int count;
 
   for (;;)
@@ -424,25 +540,35 @@ int FCELIB_TYPES_GetInternalPartIdxByOrder(const FcelibMesh *mesh, const int ord
       break;
     }
 
-    for (pid = 0, count = -1; pid < mesh->parts_len; ++pid)
+#ifdef FCEC_STATE
+    if ((mesh->state & kFceLibFlagPartsDirty) == 0)
     {
-      if (mesh->hdr.Parts[pid] > -1)
-        ++count;
-      if (count == order)
+      pidx = order;
+    }
+    else
+#endif
+    {
+      for (pidx = 0, count = -1; pidx < mesh->parts_len; ++pidx)
+      {
+        if (mesh->hdr.Parts[pidx] > -1)
+          ++count;
+        if (count == order)
+          break;
+      }
+
+      if (pidx == mesh->parts_len)
+      {
+        fprintf(stderr, "GetInternalPartIdxByOrder: part %d not found\n", order);
+        pidx = -1;
         break;
+      }
     }
 
-    if (pid == mesh->parts_len)
-    {
-      fprintf(stderr, "GetInternalPartIdxByOrder: part %d not found\n", order);
-      pid = -1;
-      break;
-    }
 
     break;
   }
 
-  return pid;
+  return pidx;
 }
 
 /* Returns -1 on failure. */
@@ -459,20 +585,30 @@ int FCELIB_TYPES_GetOrderByInternalPartIdx(const FcelibMesh *mesh, const int idx
       break;
     }
 
-    for (i = 0, order = -1; i < mesh->parts_len; ++i)
+#ifdef FCEC_STATE
+    if ((mesh->state & kFceLibFlagPartsDirty) == 0)
     {
-      if (mesh->hdr.Parts[i] > -1)
-        ++order;
-      if (mesh->hdr.Parts[i] == idx)
+      order = idx;
+    }
+    else
+#endif
+    {
+      for (i = 0, order = -1; i < mesh->parts_len; ++i)
+      {
+        if (mesh->hdr.Parts[i] > -1)
+          ++order;
+        if (mesh->hdr.Parts[i] == idx)
+          break;
+      }
+
+      if (i == mesh->parts_len)
+      {
+        fprintf(stderr, "GetOrderByInternalPartIdx: internal part %d not found\n", idx);
+        order = -1;
         break;
+      }
     }
 
-    if (i == mesh->parts_len)
-    {
-      fprintf(stderr, "GetOrderByInternalPartIdx: internal part %d not found\n", idx);
-      order = -1;
-      break;
-    }
 
     break;
   }
@@ -628,7 +764,7 @@ void FCELIB_TYPES_VertAddPosition(FcelibVertex *vert, const tVector *pos)
   vert->DamgdNormPos.z += pos->z;
 }
 
-/* Assumes part belongs to mesh. Result in centroid. */
+/* Assumes part belongs to mesh. Assumes centroid is not NULL. Result in centroid. */
 int FCELIB_TYPES_GetPartCentroid(const FcelibMesh *mesh, const FcelibPart *part, tVector *centroid)
 {
   int retv = 0;
@@ -636,7 +772,7 @@ int FCELIB_TYPES_GetPartCentroid(const FcelibMesh *mesh, const FcelibPart *part,
   float* x_arr;
   float* y_arr;
   float* z_arr;
-  float* xyz_arr = NULL;
+  float* xyz_arr;
   const int PNumVertices = part->PNumVertices;
   FcelibVertex *vert;
   int count_verts = 0;
@@ -645,9 +781,7 @@ int FCELIB_TYPES_GetPartCentroid(const FcelibMesh *mesh, const FcelibPart *part,
   {
     if (PNumVertices == 0)
     {
-      centroid->x = 0.0f;
-      centroid->y = 0.0f;
-      centroid->z = 0.0f;
+      memset(centroid, 0, sizeof(*centroid));
       retv = 1;
       break;
     }
@@ -700,9 +834,6 @@ int FCELIB_TYPES_GetPartCentroid(const FcelibMesh *mesh, const FcelibPart *part,
 #endif
 
     free(xyz_arr);
-    x_arr = NULL;
-    y_arr = NULL;
-    z_arr = NULL;
 
     retv = 1;
     break;
@@ -817,10 +948,12 @@ void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh *mesh)
           mesh->hdr.DriColors[i].hue, mesh->hdr.DriColors[i].saturation,
           mesh->hdr.DriColors[i].brightness, mesh->hdr.DriColors[i].transparency);
   }
+#ifndef FCELIB_PYTHON_BINDINGS
   fflush(stdout);
+#endif
 }
 
-/* Prints ref'ed global part indexes. */
+/* Debug: Prints ref'ed global part indexes. */
 void FCELIB_TYPES_PrintMeshParts(const FcelibMesh *mesh)
 {
   int j;
@@ -832,10 +965,12 @@ void FCELIB_TYPES_PrintMeshParts(const FcelibMesh *mesh)
     printf("%d, ", mesh->hdr.Parts[j]);
 
   printf("\n]\n");
+#ifndef FCELIB_PYTHON_BINDINGS
   fflush(stdout);
+#endif
 }
 
-/* Prints ref'ed global triag indexes for each part. */
+/* Debug: Prints ref'ed global triag indexes for each part. */
 void FCELIB_TYPES_PrintMeshTriangles(const FcelibMesh *mesh)
 {
   int i;
@@ -855,10 +990,12 @@ void FCELIB_TYPES_PrintMeshTriangles(const FcelibMesh *mesh)
 
     printf("\n]\n");
   }
+#ifndef FCELIB_PYTHON_BINDINGS
   fflush(stdout);
+#endif
 }
 
-/* Prints ref'ed global vert indexes for each part. */
+/* Debug: Prints ref'ed global vert indexes for each part. */
 void FCELIB_TYPES_PrintMeshVertices(const FcelibMesh *mesh)
 {
   int i;
@@ -878,11 +1015,9 @@ void FCELIB_TYPES_PrintMeshVertices(const FcelibMesh *mesh)
 
     printf("\n]\n");
   }
+#ifndef FCELIB_PYTHON_BINDINGS
   fflush(stdout);
-}
-
-#ifdef __cplusplus
-}  /* extern "C" */
 #endif
+}
 
 #endif  /* FCELIB_TYPES_H_ */

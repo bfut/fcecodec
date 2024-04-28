@@ -1,6 +1,6 @@
 /*
   fcelib_io.h
-  fcecodec Copyright (C) 2021-2023 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021-2024 Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -33,10 +33,6 @@
 #include "./fcelib_fcetypes.h"
 #include "./fcelib_types.h"
 #include "./fcelib_util.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* decode formats ----------------------------------------------------------- */
 
@@ -273,7 +269,7 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
         __FCELIB_IO_DECODE_HASVERTICES(&retv, mesh);
         if (retv == 1)
           break;
-        if (mesh->triangles_len == 0)  /* Allow vertices w/o triangles */
+        if (mesh->triangles_len == 0)  /* TODO: to allow vertices w/o triangles, first decode the vertices */
         {
           retv = 1;
           break;
@@ -1467,11 +1463,11 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int buf
         part = mesh->parts[ mesh->hdr.Parts[i] ];
         FCELIB_TYPES_GetPartCentroid(mesh, part, &centroid);
 #if FCECVERBOSE >= 1
-        fprintf(stdout, "<%s> centroid: (%f, %f, %f) partpos: (%f, %f, %f)\n", part->PartName, centroid.x, centroid.y, centroid.z, part->PartPos.x, part->PartPos.y, part->PartPos.z);
+        printf("<%s> centroid: (%f, %f, %f) partpos: (%f, %f, %f)\n", part->PartName, centroid.x, centroid.y, centroid.z, part->PartPos.x, part->PartPos.y, part->PartPos.z);
 #endif
         FCELIB_TYPES_ResetPartCenter(mesh, part, centroid);
 #if FCECVERBOSE >= 1
-        fprintf(stdout, "<%s> new partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
+        printf("<%s> new partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
 #endif
         ++j;
       }
@@ -1509,8 +1505,8 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int buf
             continue;
         }
 #if FCECVERBOSE >= 1
-        fprintf(stdout, "HalfSize: <%s> partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
-        fprintf(stdout, "HalfSize: PNumVertices: %d\n", part->PNumVertices);
+        printf("HalfSize: <%s> partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
+        printf("HalfSize: PNumVertices: %d\n", part->PNumVertices);
 #endif
 
         /* n - internal vert index, k - vert order */
@@ -1794,8 +1790,9 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int buf
 
 /*
   Assumes (mesh != NULL). If necessary, will initialize mesh.
+  Otherwise, expects non-NULL parameters.
 
-  C API: mesh must have been initialized
+  C API: Assumes mesh must have been initialized
 */
 int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
                                 int *vert_idxs, const int vert_idxs_len,  /* N*3, N triags */
@@ -1807,7 +1804,6 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
   FcelibPart *part = NULL;
   FcelibTriangle *triag;
   FcelibVertex *vert;
-  int i;
   int j;
   int vidx_1st;
   int tidx_1st;
@@ -1876,12 +1872,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     }
 
     /* Get first unused index */
-    i = mesh->parts_len - 1;
-    while (i >= 0 && mesh->hdr.Parts[i] < 0)
-      --i;
-    ++i;
-    new_pid = i;
-
+    new_pid = FCELIB_TYPES_GetFirstUnusedGlobalPartIdx(mesh);
     if (new_pid > 0)
     {
       tidx_1st = FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(mesh);
@@ -1894,7 +1885,24 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     }
 
     /* Add part */
-    mesh->hdr.Parts[new_pid] = 1 + FCELIB_UTIL_ArrMax(mesh->hdr.Parts, mesh->parts_len);
+#ifdef FCEC_STATE
+    if (mesh->state & kFceLibFlagPartsDirty)
+#else
+    if (1)
+#endif
+    {
+      mesh->hdr.Parts[new_pid] = 1 + FCELIB_UTIL_ArrMax(mesh->hdr.Parts, mesh->parts_len);
+      if (mesh->hdr.Parts[new_pid] < 0)
+      {
+        fprintf(stderr, "GeomDataToNewPart: Cannot set new part index\n");
+        new_pid = -1;
+        break;
+      }
+    }
+    else
+    {
+      mesh->hdr.Parts[new_pid] = mesh->hdr.NumParts;
+    }
 
     part = (FcelibPart *)malloc(sizeof(*part));
     if (!part)
@@ -1924,6 +1932,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     {
       if (!FCELIB_TYPES_AddTrianglesToMesh(mesh, tidx_1st + part->PNumTriangles - mesh->triangles_len))
       {
+        /* this is a fatal error */
         fprintf(stderr, "GeomDataToNewPart: Cannot add triangles\n");
         new_pid = -1;
         break;
@@ -1939,6 +1948,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       triag = mesh->triangles[tidx_1st + j];
       if (!triag)
       {
+        /* this is a fatal error */
         fprintf(stderr, "GeomDataToNewPart: Cannot allocate memory (triag)\n");
         new_pid = -1;
         break;
@@ -1964,6 +1974,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     {
       if (!FCELIB_TYPES_AddVerticesToMesh(mesh, vidx_1st + part->PNumVertices - mesh->vertices_len))
       {
+        /* this is a fatal error */
         fprintf(stderr, "GeomDataToNewPart: Cannot add vertices\n");
         new_pid = -1;
         break;
@@ -2003,6 +2014,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     new_pid = FCELIB_TYPES_GetOrderByInternalPartIdx(mesh, mesh->hdr.Parts[new_pid]);
     if (new_pid < 0)
     {
+      /* this is inconvenient but not a fatal error itself */
       fprintf(stderr, "GeomDataToNewPart: Cannot get new_pid\n");
       break;
     }
@@ -2012,9 +2024,5 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
 
   return new_pid;
 }
-
-#ifdef __cplusplus
-}  /* extern "C" */
-#endif
 
 #endif  /* FCELIB_IO_H_ */
