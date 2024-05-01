@@ -1,0 +1,67 @@
+name: release_scripts
+
+on:
+  [push, pull_request, workflow_dispatch]
+
+env:
+  DEST: fcecodec
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    name: Ubuntu
+    steps:
+
+    - uses: actions/checkout@v4
+      # with:
+      #   repository: "bfut/fcecodec"
+
+    - name: Get the version
+      run: |
+        export FCEC_VERS=$(grep "FCECVERS" 'src/fcelib/fcelib.h' | sed -n "s/^.*FCECVERS \"\s*\(\S*\)\".*$/\1/p")
+        echo "${FCEC_VERS}"
+        export FCEC_VERS_NODOT="${FCEC_VERS//./}"
+        echo "${FCEC_VERS_NODOT}"
+
+        echo "version=${FCEC_VERS_NODOT}" >> "$GITHUB_ENV"
+
+    - name: Create archive
+      run: |
+        echo "${version}" ${{ env.version }}
+
+        cp ./notebooks/bfut_FceConverter.ipynb ./bfut_FceConverter.ipynb
+
+        git clone https://github.com/bfut/PyScripts utils/bfut_PyScripts
+        rm -rf utils/bfut_PyScripts/.git
+
+        wget https://github.com/bfut/fshtool/releases/download/1.22%2B/fshtool_noprompt.zip -P utils
+        7z x -y utils/fshtool_noprompt.zip -outils/fshtool_noprompt
+        rm -rf utils/fshtool_noprompt.zip
+
+        wget https://raw.githubusercontent.com/bfut/unvivtool/main/scripts/unvivtool_script.py -P utils
+
+        7z a -tzip "${{ env.DEST }}${{ env.version }}_scripts.zip" \
+        utils/fshtool_noprompt/* \
+        utils/bfut_PyScripts/* \
+        utils/unvivtool_script.py \
+        scripts/* \
+        tests/fce/Snowman_car.fce \
+        tests/fce/Snowman_README.txt \
+        python/README.md \
+        python/bfut_mywrappers.py \
+        README.md \
+        bfut_FceConverter.ipynb
+
+        ls -lg
+
+        # Uploading zip artifact to Github Actions creates a nested zip at this time. Hence...
+        # Extract archive to folder, subsequently upload folder as artifact
+        7z x -y "${{ env.DEST }}${{ env.version }}_scripts.zip" -o"${{ env.DEST }}${{ env.version }}_scripts"
+
+    - name: Store archive
+      uses: actions/upload-artifact@v4
+      with:
+        name: "${{ env.DEST }}${{ env.version }}_scripts"
+        path: "${{ env.DEST }}${{ env.version }}_scripts"
+        compression-level: 9
+        retention-days: 7
