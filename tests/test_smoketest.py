@@ -21,6 +21,7 @@
 import os
 import pathlib
 import platform
+import re
 import sys
 
 import pytest
@@ -417,11 +418,10 @@ def test_FceVersion(vers, path):
 
 def test_version():
     script_path = pathlib.Path(__file__).parent.resolve()
-    os.chdir(script_path)
-    with open(script_path / "../src/fcelib/fcelib.h", mode="r", encoding="utf8") as f:
-        for _ in range(38 - 1):
-            next(f)
-        __version__ = f.readline().rstrip().split("\"")[-2]
+    __version__ = re.findall(
+        r"#define FCECVERS \"(.*)\"",
+        (script_path / "../src/fcelib/fcelib.h").read_text("utf-8")
+    )[0]
     print(f"VERSION_INFO={__version__}")
     if hasattr(fc, "__version__"):
         print(f"fc.__version__={fc.__version__}")

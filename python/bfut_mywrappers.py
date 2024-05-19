@@ -82,10 +82,12 @@ def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
         assert fc.ValidateFce(buf) == 1
         f.write(buf)
 
-def ExportObj(mesh, objpath, mtlpath, texname, print_damage, print_dummies,
-              use_part_positions, print_part_positions):
-    mesh.IoExportObj(str(objpath), str(mtlpath), str(texname), print_damage,
-                     print_dummies, use_part_positions, print_part_positions)
+def ExportObj(mesh, objpath, mtlpath, texname,
+              print_damage, print_dummies, use_part_positions, print_part_positions,
+              filter_triagflags_0xfff=True):
+    mesh.IoExportObj(str(objpath), str(mtlpath), str(texname),
+                     print_damage, print_dummies, use_part_positions, print_part_positions,
+                     filter_triagflags_0xfff)
 
 def GetMeshPartnames(mesh):
     return [mesh.PGetName(pid) for pid in range(mesh.MNumParts)]
@@ -104,3 +106,41 @@ def GetPartGlobalOrderVidxs(mesh, pid):
         # print(part_vidxs[i], map_verts[part_vidxs[i]])
         part_vidxs[i] = map_verts[part_vidxs[i]]
     return part_vidxs
+
+def FilterTexpageTriags(mesh, drop_texpages: int | list | None = None, select_texpages: int | list | None = None):
+    # Delete triangles with texpage in drop_texpages
+    if drop_texpages is not None and select_texpages is None:
+        if not isinstance(drop_texpages, list):
+            drop_texpages = [drop_texpages]
+        for pid in reversed(range(mesh.MNumParts)):
+            texp = mesh.PGetTriagsTexpages(pid)
+            mask = np.isin(texp, drop_texpages)
+            x = mask.nonzero()[0]
+            assert mesh.OpDeletePartTriags(pid, x)
+
+    # Delete triangles with texpage not in select_texpages
+    elif drop_texpages is None and select_texpages is not None:
+        print(f"FilterTexpageTriags: select_texpages={select_texpages}")
+        if not isinstance(select_texpages, list):
+            select_texpages = [select_texpages]
+        for pid in reversed(range(mesh.MNumParts)):
+            print(f"before mesh.PNumTriags(pid)={mesh.PNumTriags(pid)}")
+            texp = mesh.PGetTriagsTexpages(pid)
+            mask = np.isin(texp, select_texpages)
+            mask = np.invert(mask)
+            x = mask.nonzero()[0]
+            print(mesh.PGetName(pid), texp.shape, x.shape, np.unique(texp))
+            assert mesh.OpDeletePartTriags(pid, x)
+            print(f"after: mesh.PNumTriags(pid)={mesh.PNumTriags(pid)}")
+
+    else:
+        ValueError("FilterTexpageTriags: call with either drop_texpages or select_texpages, not both")
+
+    assert mesh.OpDelUnrefdVerts()
+    return mesh
+
+def DeleteEmptyParts(mesh):
+    for pid in reversed(range(mesh.MNumParts)):
+        if mesh.PNumTriags(pid) == 0:
+            mesh.OpDeletePart(pid)
+    return mesh

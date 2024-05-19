@@ -25,11 +25,12 @@ jobs:
 
         echo "version=${FCEC_VERS_NODOT}" >> "$GITHUB_ENV"
 
-    - name: Create archive
+    - name: Create archive (bfut_FceConverter)
       run: |
         echo "${version}" ${{ env.version }}
 
-        cp ./notebooks/bfut_FceConverter.ipynb ./bfut_FceConverter.ipynb
+        # cp ./notebooks/bfut_FceConverter.ipynb ./bfut_FceConverter.ipynb
+        wget https://raw.githubusercontent.com/bfut/notebooks/main/fcecodec/bfut_FceConverter.ipynb
 
         git clone https://github.com/bfut/PyScripts utils/bfut_PyScripts
         rm -rf utils/bfut_PyScripts/.git
@@ -40,7 +41,7 @@ jobs:
 
         wget https://raw.githubusercontent.com/bfut/unvivtool/main/scripts/unvivtool_script.py -P utils
 
-        7z a -tzip "${{ env.DEST }}${{ env.version }}_scripts.zip" \
+        7z a -tzip "${{ env.DEST }}${{ env.version }}_bfut_FceConverter.zip" \
         utils/fshtool_noprompt/* \
         utils/bfut_PyScripts/* \
         utils/unvivtool_script.py \
@@ -56,9 +57,40 @@ jobs:
 
         # Uploading zip artifact to Github Actions creates a nested zip at this time. Hence...
         # Extract archive to folder, subsequently upload folder as artifact
+        7z x -y "${{ env.DEST }}${{ env.version }}_bfut_FceConverter.zip" -o"${{ env.DEST }}${{ env.version }}_bfut_FceConverter"
+
+    - name: Store archive (bfut_FceConverter)
+      uses: actions/upload-artifact@v4
+      with:
+        name: "${{ env.DEST }}${{ env.version }}_bfut_FceConverter"
+        path: "${{ env.DEST }}${{ env.version }}_bfut_FceConverter"
+        compression-level: 9
+        retention-days: 7
+
+    - name: Create archive (fcecodec_scripts)
+      run: |
+        echo "${version}" ${{ env.version }}
+
+        rm -rf utils/bfut_PyScripts
+        git clone https://github.com/bfut/PyScripts utils/bfut_PyScripts
+        rm -rf utils/bfut_PyScripts/.git
+
+        7z a -tzip "${{ env.DEST }}${{ env.version }}_scripts.zip" \
+        utils/bfut_PyScripts/* \
+        scripts/* \
+        tests/fce/Snowman_car.fce \
+        tests/fce/Snowman_README.txt \
+        python/README.md \
+        python/bfut_mywrappers.py \
+        README.md
+
+        ls -lg
+
+        # Uploading zip artifact to Github Actions creates a nested zip at this time. Hence...
+        # Extract archive to folder, subsequently upload folder as artifact
         7z x -y "${{ env.DEST }}${{ env.version }}_scripts.zip" -o"${{ env.DEST }}${{ env.version }}_scripts"
 
-    - name: Store archive
+    - name: Store archive (fcecodec_scripts)
       uses: actions/upload-artifact@v4
       with:
         name: "${{ env.DEST }}${{ env.version }}_scripts"

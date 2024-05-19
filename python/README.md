@@ -9,7 +9,8 @@ Requires Python 3.10+
 python -m pip install fcecodec
 ``
 
-Though `numpy` is not required, it is recommended
+Though `numpy` is not required, it is recommended.
+
 ``
 python -m pip install --upgrade numpy
 ``
@@ -22,9 +23,9 @@ For a script template and handy function wrappers, see
 ```py
 import fcecodec as fc
 
-filepath_fce_input = "path/to/car_src.fce"
-filepath_fce_input2 = "path/to/car_src2.fce"
-filepath_fce_output = "path/to/car.fce"
+filepath_fce_input = "path/to/car.fce"
+filepath_fce_input2 = "path/to/another/car.fce"
+filepath_fce_output = "path/to/output/car.fce"
 
 with open(filepath_fce_input, "rb") as f:
     fce_buf = f.read()
@@ -101,7 +102,7 @@ CLASSES
      |      IoEncode_Fce4M(self: fcecodec.Mesh, center_parts: bool = True) -> bytes
      |
      |  IoExportObj(...)
-     |      IoExportObj(self: fcecodec.Mesh, objpath: str, mtlpath: str, texname: str, print_damage: int = 0, print_dummies: int = 0, use_part_positions: int = 1, print_part_positions: int = 0) -> None
+     |      IoExportObj(self: fcecodec.Mesh, objpath: str, mtlpath: str, texname: str, print_damage: int = 0, print_dummies: int = 0, use_part_positions: int = 1, print_part_positions: int = 0, filter_triagflags_0xfff: int = 1) -> None
      |
      |  IoGeomDataToNewPart(...)
      |      IoGeomDataToNewPart(self: fcecodec.Mesh, vert_idxs: numpy.ndarray[numpy.int32], vert_texcoords: numpy.ndarray[numpy.float32], vert_pos: numpy.ndarray[numpy.float32], normals: numpy.ndarray[numpy.float32]) -> int

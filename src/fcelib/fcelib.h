@@ -20,11 +20,10 @@
 */
 
 /**
-  high level library interface: library users should only use functions from this header externally,
-    whereas functions from here are never used internally
+  high level library interface: only functions from this header for external use, never for internal use
 
-  fcelib_types.h defines library structs
   fcelib_fcetypes.h defines FCE structs and includes extensive FCE format documentation
+  fcelib_types.h defines library structs
 
   "TODO:" in comments marks nitpicks
 **/
@@ -210,11 +209,13 @@ int FCELIB_ExportObj(const FcelibMesh *mesh,
                      const char *texture_name,
                      const int print_damage, const int print_dummies,
                      const int use_part_positions,
-                     const int print_part_positions)
+                     const int print_part_positions,
+                     const int filter_triagflags_0xfff)
 {
   return FCELIB_IO_ExportObj(mesh, objpath, mtlpath, texture_name,
                              print_damage, print_dummies,
-                             use_part_positions, print_part_positions);
+                             use_part_positions, print_part_positions,
+                             filter_triagflags_0xfff);
 }
 
 int FCELIB_EncodeFce3(unsigned char **buf, const int buf_size,

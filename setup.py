@@ -21,6 +21,7 @@ setup.py - adapted from https://github.com/pybind/python_example/blob/master/set
 import os
 import platform
 import pathlib
+import re
 import setuptools
 
 # Available at setup time due to pyproject.toml
@@ -32,14 +33,11 @@ if os.environ.get("FCECVERBOSE") is not None:
 script_path = pathlib.Path(__file__).parent.resolve()
 os.chdir(script_path)
 
-print("try reading VERSION_INFO from fcelib.h...")
-with open(script_path / "./src/fcelib/fcelib.h", mode="r", encoding="utf8") as f:
-    for _ in range(38 - 1):
-        next(f)
-    __version__ = f.readline()
-    print(f"readline() yields '{__version__}'")
-    __version__ = __version__.rstrip().split("\"")[-2]
-    print(f"VERSION_INFO={__version__}")
+__version__ = re.findall(
+    r"#define FCECVERS \"(.*)\"",
+    (script_path / "./src/fcelib/fcelib.h").read_text("utf-8")
+)[0]
+print(f"VERSION_INFO={__version__}")
 
 long_description = (script_path / "./python/README.md").read_text(encoding="utf-8")
 
@@ -153,5 +151,5 @@ setuptools.setup(
     # # level" feature, but in the future it may provide more features.
     cmdclass={"build_ext": build_ext},
     zip_safe=False,
-    python_requires=">=3.9",
+    python_requires=">=3.10",
 )

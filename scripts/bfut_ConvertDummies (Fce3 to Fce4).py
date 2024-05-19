@@ -26,6 +26,7 @@ REQUIRES
 """
 import argparse
 import pathlib
+import re
 
 import fcecodec as fc
 import numpy as np
@@ -98,7 +99,9 @@ def DummiesFce3ToFce4(dms_pos, dms_names):
     for i in range(len(dms_names)):
         x = dms_names[i]
         tmp = []
-        if x[0] == "H":
+        if bool(re.search(r"\d", x)) or x[0] == ":":  # name contains integer
+            pass  # do not convert canonical FCE4/FCE4M names
+        elif x[0] == "H":
             tmp.append("HWY")  # kind, color, breakable
             if len(x) > 3:
                 tmp.append(x[3])  # flashing

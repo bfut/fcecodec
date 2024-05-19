@@ -574,17 +574,20 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
                         const char *texture_name,
                         const int print_damage, const int print_dummies,
                         const int use_part_positions,
-                        const int print_part_positions)
+                        const int print_part_positions,
+                        const int filter_triagflags_0xfff)
 {
   int retv = 1;
   int i;
   int j;
   int n;
+  int k;
   FILE *outf = NULL;
   int sum_verts = 0;
   int sum_triags = 0;
   int *global_mesh_to_global_obj_idxs;
   FcelibPart *part;
+  FcelibTriangle *triag;
 
   global_mesh_to_global_obj_idxs = (int *)malloc(mesh->vertices_len * sizeof(*global_mesh_to_global_obj_idxs));
   if (!global_mesh_to_global_obj_idxs)
@@ -597,9 +600,9 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
   {
     /* Print mtl (used triangle 12-bit flags as materials) ------------------ */
     {
-      char mtls[4096];
+      char mtls[4096] = {0};
       int count_mtls = 0;
-      memset(mtls, '0', sizeof(mtls));
+      /* memset(mtls, '0', sizeof(mtls)); */
 
       for (i = 0; i < mesh->triangles_len; ++i)
       {
@@ -683,18 +686,6 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
       }
 
       /* BEGIN printing undamaged part */
-      /* Create map: global vert index to local part idx (of used-in-this-part verts) */
-      memset(global_mesh_to_global_obj_idxs, 0xFF, mesh->vertices_len * sizeof(*global_mesh_to_global_obj_idxs));
-      for (j = 0; j < part->pvertices_len; ++j)
-      {
-        if (part->PVertices[j] < 0)
-          continue;
-
-        global_mesh_to_global_obj_idxs[
-          part->PVertices[j]
-        ] = j + 1 + sum_verts;
-      }
-
       fprintf(outf, "\no %s\n", part->PartName);
 
       fprintf(outf, "#part position %f %f %f\n",
@@ -794,32 +785,54 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
       fflush(outf);
 
       /* Triangles */
-      fprintf(outf, "#%d faces (verts: %d..%d)\n", part->PNumTriangles, sum_verts + 1, sum_verts + part->PNumVertices);
-      for (j = 0; j < part->ptriangles_len; ++j)
+      /* Create map: global vert index to global obj idx (of used-in-this-part verts) */
+      memset(global_mesh_to_global_obj_idxs, 0xFF, mesh->vertices_len * sizeof(*global_mesh_to_global_obj_idxs));
+      for (n = 0, k = 0; n < part->pvertices_len && k < part->PNumVertices; ++n)
       {
-        if (part->PTriangles[j] < 0)
+        if (part->PVertices[n] < 0)
           continue;
+        global_mesh_to_global_obj_idxs[ part->PVertices[n] ] = k + 1 + sum_verts;
+        ++k;
+      }
 
-        fprintf(outf,
-                "usemtl 0x%03x\n"
-                "s 1\n",
-                mesh->triangles[ part->PTriangles[j] ]->flag & 0xfff);
+      fprintf(outf, "#%d faces (verts: %d..%d)\n", part->PNumTriangles, sum_verts + 1, sum_verts + part->PNumVertices);
+      for (n = 0, k = 0; n < part->ptriangles_len && k < part->PNumTriangles; ++n)
+      {
+        if (part->PTriangles[n] < 0)
+          continue;
+        triag = mesh->triangles[ part->PTriangles[n] ];
+
+        if (filter_triagflags_0xfff == 1)
+        {
+          fprintf(outf,
+                  "usemtl 0x%03x\n"
+                  "s 1\n",
+                  triag->flag & 0xfff);
+        }
+        else
+        {
+          fprintf(outf,
+                  "usemtl 0x%08x\n"
+                  "s 1\n",
+                  triag->flag);
+        }
 
         fprintf(outf,
                 "f %d/%d/%d %d/%d/%d %d/%d/%d\n",
-                global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[0] ],
-                3 * (j + sum_triags) + 1 + 0,
-                global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[0] ],
+                global_mesh_to_global_obj_idxs[ triag->vidx[0] ],
+                3 * (sum_triags + k) + 1 + 0,
+                global_mesh_to_global_obj_idxs[ triag->vidx[0] ],
 
-                global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[1] ],
-                3 * (j + sum_triags) + 1 + 1,
-                global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[1] ],
+                global_mesh_to_global_obj_idxs[ triag->vidx[1] ],
+                3 * (sum_triags + k) + 1 + 1,
+                global_mesh_to_global_obj_idxs[ triag->vidx[1] ],
 
-                global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[2] ],
-                3 * (j + sum_triags) + 1 + 2,
-                global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[2] ]
+                global_mesh_to_global_obj_idxs[ triag->vidx[2] ],
+                3 * (sum_triags + k) + 1 + 2,
+                global_mesh_to_global_obj_idxs[ triag->vidx[2] ]
         );
-      }  /* for j triangles */
+        ++k;
+      }  /* for n,k triangles */
       fprintf(outf, "\n");
       fflush(outf);
 
@@ -831,18 +844,6 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
       /* BEGIN printing damaged part */
       if (print_damage)
       {
-        /* Create map: global vert index to local part idx (of used-in-this-part verts) */
-        memset(global_mesh_to_global_obj_idxs, 0xFF, mesh->vertices_len * sizeof(*global_mesh_to_global_obj_idxs));
-        for (j = 0; j < part->pvertices_len; ++j)
-        {
-          if (part->PVertices[j] < 0)
-            continue;
-
-          global_mesh_to_global_obj_idxs[
-            part->PVertices[j]
-          ] = j + 1 + sum_verts;
-        }
-
         fprintf(outf, "\no DAMAGE_%s\n", part->PartName);
 
         fprintf(outf, "#part position %f %f %f\n",
@@ -924,32 +925,53 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
         fflush(outf);
 
         /* Triangles */
-        fprintf(outf, "#%d faces (verts: %d..%d)\n", part->PNumTriangles, sum_verts + 1, sum_verts + part->PNumVertices);
-        for (j = 0; j < part->ptriangles_len; ++j)
+        /* Create map: global vert index to local part idx (of used-in-this-part verts) */
+        memset(global_mesh_to_global_obj_idxs, 0xFF, mesh->vertices_len * sizeof(*global_mesh_to_global_obj_idxs));
+        for (n = 0, k = 0; n < part->pvertices_len && k < part->PNumVertices; ++n)
         {
-          if (part->PTriangles[j] < 0)
+          if (part->PVertices[n] < 0)
             continue;
+          global_mesh_to_global_obj_idxs[ part->PVertices[n] ] = k + 1 + sum_verts;
+          ++k;
+        }
+        fprintf(outf, "#%d faces (verts: %d..%d)\n", part->PNumTriangles, sum_verts + 1, sum_verts + part->PNumVertices);
+        for (n = 0, k = 0; n < part->ptriangles_len && k < part->PNumTriangles; ++n)
+      {
+        if (part->PTriangles[n] < 0)
+          continue;
+        triag = mesh->triangles[ part->PTriangles[n] ];
 
+        if (filter_triagflags_0xfff == 1)
+        {
           fprintf(outf,
                   "usemtl 0x%03x\n"
                   "s 1\n",
-                  mesh->triangles[ part->PTriangles[j] ]->flag & 0xfff);
-
+                  triag->flag & 0xfff);
+        }
+        else
+        {
           fprintf(outf,
-                  "f %d/%d/%d %d/%d/%d %d/%d/%d\n",
-                  global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[0] ],
-                  3 * (j + sum_triags) + 1 + 0,
-                  global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[0] ],
+                  "usemtl 0x%08x\n"
+                  "s 1\n",
+                  triag->flag);
+        }
 
-                  global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[1] ],
-                  3 * (j + sum_triags) + 1 + 1,
-                  global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[1] ],
+        fprintf(outf,
+                "f %d/%d/%d %d/%d/%d %d/%d/%d\n",
+                global_mesh_to_global_obj_idxs[ triag->vidx[0] ],
+                3 * (sum_triags + k) + 1 + 0,
+                global_mesh_to_global_obj_idxs[ triag->vidx[0] ],
 
-                  global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[2] ],
-                  3 * (j + sum_triags) + 1 + 2,
-                  global_mesh_to_global_obj_idxs[ mesh->triangles[ part->PTriangles[j] ]->vidx[2] ]
-          );
-        }  /* for j triangles */
+                global_mesh_to_global_obj_idxs[ triag->vidx[1] ],
+                3 * (sum_triags + k) + 1 + 1,
+                global_mesh_to_global_obj_idxs[ triag->vidx[1] ],
+
+                global_mesh_to_global_obj_idxs[ triag->vidx[2] ],
+                3 * (sum_triags + k) + 1 + 2,
+                global_mesh_to_global_obj_idxs[ triag->vidx[2] ]
+        );
+        ++k;
+      }  /* for n,k triangles */
         fprintf(outf, "\n");
         fflush(outf);
 

@@ -6,10 +6,11 @@ Python bindings are written in C++ (pybind11). Supported on Windows and Linux.
 Tested on macOS.
 
 The intended usage is for transparent pre- and post-processing tasks specific to FCE.
-Exporting OBJ is supported out-of-the-box.
-Importing OBJ has mainstream support via script.
-The need for this new implementation arose as vintage FCE tools are generally closed source, unmaintainable, and exclusive to ancient Windows.
-As a result, many previously manual chores are now automatized in simple Python scripts.
+Exporting OBJ is supported in library, importing OBJ is fully supported via script.
+This modern FCE implementation was needed as vintage tools are generally closed source, unmaintainable and exclusive to Windows.
+Given `fcecodec`, many previously manual chores can be automatized in simple Python scripts.
+
+Blender Import/Export Add-on: [fcecodec_blender](https://github.com/bfut/fcecodec_blender)
 
 ## Installation / Documentation
 Python extension module: [/python/README.md](/python/README.md)<br/>
@@ -48,3 +49,8 @@ FCE4M specifications own work.
 ## Information
 __fcecodec License:__ GNU General Public License v2.0+<br/>
 __Website:__ <https://github.com/bfut/fcecodec>
+
+Third party licenses
+
+__sclpython.h:__ zlib License<br/>
+__fcecodec ./scripts:__ zlib License

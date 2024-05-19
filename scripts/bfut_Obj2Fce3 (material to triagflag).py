@@ -278,10 +278,13 @@ def ShapeToPart(reader,
         materials = reader.GetMaterials()
         texps = mesh.PGetTriagsTexpages(mesh.MNumParts - 1)
         for i in range(texps.shape[0]):
-            if materials[s_matls[i]].name[:2] == "0x":
-                texps[i] = int(materials[s_matls[i]].name[2:], base=16)
+            # Blender may change the name of the material to "<name>.001" from "<name>"
+            mat_ = materials[s_matls[i]].name
+            mat_ = re.sub(r"\.(.*)", "", mat_)
+            if mat_[:2] == "0x":
+                texps[i] = int(mat_, base=16)
             else:
-                tags = materials[s_matls[i]].name.split("_")
+                tags = mat_.split("_")
                 texps[i] = GetTexPageFromTags(tags)
             if texps[i] > 0:
                 num_arts_warning = True
@@ -300,25 +303,15 @@ def ShapeToPart(reader,
         # if material name is hex value, map straight to triag flag
         # if it isn't, treat as string of tags
         for i in range(tflags.shape[0]):
-            try:
-                # print(materials[s_matls[i]].name, int(materials[s_matls[i]].name[2:], base=16))
-                tflags[i] = int(materials[s_matls[i]].name[2:], base=16)
-            except ValueError:
-                tags = materials[s_matls[i]].name.split("_")
+            # Blender may change the name of the material to "<name>.001" from "<name>"
+            mat_ = materials[s_matls[i]].name
+            mat_ = re.sub(r"\.(.*)", "", mat_)
+            if mat_[:2] == "0x":
+                tflags[i] = int(mat_, base=16)
+            else:
+                tags = mat_.split("_")
                 tflags[i] = GetFlagFromTags(tags)
         mesh.PSetTriagsFlags(mesh.MNumParts - 1, tflags)
-
-        for i in range(len(materials)):
-            tmp = materials[i].name
-            # print(tmp)
-            if tmp[:2] == "0x":
-                try:
-                    # print(tmp, "->", int(tmp[2:], base=16), f"0x{hex(int(tmp[2:], base=16))}")
-                    val = int(tmp[2:], base=16)
-                    del val
-                except ValueError:
-                    print(f"Cannot map faces material name to triangles flags ('{materials[i].name}' is not hex value) 1")
-                    break
 
     return mesh
 
@@ -331,11 +324,21 @@ def CopyDamagePartsVertsToPartsVerts(mesh):
     mesh.PrintInfo()
     for damgd_pid in range(mesh.MNumParts):
         if part_names[damgd_pid][:7] == "DAMAGE_":
+            damgd_pids += [damgd_pid]
+
             pid = np.argwhere(part_names == part_names[damgd_pid][7:])
             # print(damgd_pid, part_names[damgd_pid], pid, len(pid))
             if len(pid) < 1:
                 continue
             pid = pid[0][0]
+
+            if mesh.PNumTriags(damgd_pid) != mesh.PNumTriags(pid):
+                print(f"discarding '{part_names[damgd_pid]}', because number of triags differ to {part_names[pid]}")
+                continue
+            if mesh.PNumVerts(damgd_pid) != mesh.PNumVerts(pid):
+                print(f"discarding '{part_names[damgd_pid]}', because number of verts differ to {part_names[pid]}")
+                continue
+
             print(f"copy verts/norms of {part_names[damgd_pid]} to damaged verts/norms of {part_names[pid]}")
             damgd_part_vidxs = GetPartGlobalOrderVidxs(mesh, damgd_pid)
             part_vidxs = GetPartGlobalOrderVidxs(mesh, pid)
@@ -353,7 +356,6 @@ def CopyDamagePartsVertsToPartsVerts(mesh):
             dv[part_vidxs] = mesh.MVertsPos.reshape((-1, 3))[damgd_part_vidxs]
             mesh.MVertsDamgdNorms = dn.flatten()
             mesh.MVertsDamgdPos = dv.flatten()
-            damgd_pids += [damgd_pid]
     for i in sorted(damgd_pids, reverse=True):
         mesh.OpDeletePart(i)
     print(damgd_pids)
@@ -444,6 +446,7 @@ def CenterParts(mesh):
     for name, i in zip(part_names, range(mesh.MNumParts)):
         if name[:9] == "POSITION_":
             pos_parts[name[9:]] = i
+            pos_pids += [i]
     print(pos_parts)
     for pid in range(mesh.MNumParts):
         if part_names[pid][:9] != "POSITION_":
@@ -453,7 +456,6 @@ def CenterParts(mesh):
             else:                                 # POSITION_<partname> is available
                 pos_pid = pos_parts[part_names[pid]]
                 print(f"center {part_names[pid]} to centroid of {part_names[pos_pid]}")
-                pos_pids += [pos_pid]
                 mesh.OpCenterPart(pos_pid)
                 mesh.OpSetPartCenter(pid, mesh.PGetPos(pos_pid))
     for i in sorted(pos_pids, reverse=True):

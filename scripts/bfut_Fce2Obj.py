@@ -65,10 +65,12 @@ def LoadFce(mesh, path):
         assert mesh.MValid() is True
         return mesh
 
-def ExportObj(mesh, objpath, mtlpath, texname, print_damage, print_dummies,
-              use_part_positions, print_part_positions):
-    mesh.IoExportObj(str(objpath), str(mtlpath), str(texname), print_damage,
-                     print_dummies, use_part_positions, print_part_positions)
+def ExportObj(mesh, objpath, mtlpath, texname,
+              print_damage, print_dummies, use_part_positions, print_part_positions,
+              filter_triagflags_0xfff=True):
+    mesh.IoExportObj(str(objpath), str(mtlpath), str(texname),
+                     print_damage, print_dummies, use_part_positions, print_part_positions,
+                     filter_triagflags_0xfff)
 
 
 #
