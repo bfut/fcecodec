@@ -10,9 +10,9 @@ jobs:
     strategy:
       matrix:
         # https://github.com/actions/runner-images
-        # arm64: macos-13-xlarge, macos-latest
-        # x86_64: macos-13, macos-latest-large
-        os: [ubuntu-latest, windows-latest, macos-13, macos-13-xlarge, macos-latest, macos-latest-large]
+        # arm64: macos-latest
+        # x86_64: macos-13
+        os: [ubuntu-latest, windows-latest, macos-13, macos-latest]
 
     steps:
       - uses: actions/checkout@v4

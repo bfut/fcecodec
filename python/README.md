@@ -16,8 +16,9 @@ python -m pip install --upgrade numpy
 ``
 
 ## Examples
-For a script template and handy function wrappers, see
-[https://github.com/bfut/fcecodec/blob/main/scripts/fcecodecScriptTemplate.py](https://github.com/bfut/fcecodec/blob/main/scripts/fcecodecScriptTemplate.py) and
+For a script template and handy function wrappers, see<br/>
+[https://github.com/bfut/fcecodec/blob/main/scripts/fcecodecScriptTemplate.py](https://github.com/bfut/fcecodec/blob/main/scripts/fcecodecScriptTemplate.py)<br/>
+and<br/>
 [https://github.com/bfut/fcecodec/blob/main/python/bfut_mywrappers.py](https://github.com/bfut/fcecodec/blob/main/python/bfut_mywrappers.py)
 
 ```py
