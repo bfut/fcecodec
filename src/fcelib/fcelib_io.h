@@ -602,7 +602,6 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
     {
       char mtls[4096] = {0};
       int count_mtls = 0;
-      /* memset(mtls, '0', sizeof(mtls)); */
 
       for (i = 0; i < mesh->triangles_len; ++i)
       {
@@ -616,10 +615,10 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
         }
       }
 
-      outf = fopen((char *)mtlpath, "wb");
+      outf = fopen((const char *)mtlpath, "wb");
       if (!outf)
       {
-        fprintf(stderr, "ExportObj: cannot create file '%s'\n", (char *)mtlpath);
+        fprintf(stderr, "ExportObj: cannot create file '%s'\n", (const char *)mtlpath);
         retv = 0;
         break;
       }
@@ -627,7 +626,7 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
       fprintf(outf,
               "# fcecodec MTL File: '%s'\n"
               "# Material Count: %d\n",
-              (char *)objpath, count_mtls);
+              FCELIB_UTIL_GetFileName((const char *)objpath), count_mtls);
 
       for (i = 0; i < 4096; ++i)
       {
@@ -650,7 +649,7 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
 
       if (fclose(outf) != 0)
       {
-        fprintf(stderr, "ExportObj: cannot close file '%s'\n", (char *)mtlpath);
+        fprintf(stderr, "ExportObj: cannot close file '%s'\n", (const char *)mtlpath);
         retv = 0;
         break;
       }
@@ -658,10 +657,10 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
     }
 
     /* Print obj ------------------------------------------------------------ */
-    outf = fopen((char *)objpath, "wb");
+    outf = fopen((const char *)objpath, "wb");
     if (!outf)
     {
-      fprintf(stderr, "ExportObj: cannot create file '%s'\n", (char *)objpath);
+      fprintf(stderr, "ExportObj: cannot create file '%s'\n", (const char *)objpath);
       retv = 0;
       break;
     }
@@ -669,7 +668,7 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
     fprintf(outf,
             "# fcecodec OBJ File: '%s'\n"
             "# github.com/bfut/fcecodec\n"
-            "mtllib %s\n", (char *)objpath, (char *)mtlpath);
+            "mtllib %s\n", FCELIB_UTIL_GetFileName((const char *)objpath), FCELIB_UTIL_GetFileName((const char *)mtlpath));
     fflush(outf);
 
     for (i = 0; i < mesh->parts_len; ++i)
@@ -751,36 +750,18 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
 
       /* Normals */
       fprintf(outf, "#%d normals\n", part->PNumVertices);
-      if (use_part_positions)
+      for (j = 0; j < part->pvertices_len; ++j)
       {
-        for (j = 0; j < part->pvertices_len; ++j)
-        {
-          if (part->PVertices[j] < 0)
-            continue;
+        if (part->PVertices[j] < 0)
+          continue;
 
-          fprintf(outf,
-                  "vn %f %f %f\n",
-                  mesh->vertices[ part->PVertices[j] ]->NormPos.x + part->PartPos.x,
-                  mesh->vertices[ part->PVertices[j] ]->NormPos.y + part->PartPos.y,
-                  - ( mesh->vertices[ part->PVertices[j] ]->NormPos.z + part->PartPos.z )  /* flip sign in Z-coordinate */
-          );
-        }
+        fprintf(outf,
+                "vn %f %f %f\n",
+                mesh->vertices[ part->PVertices[j] ]->NormPos.x,
+                mesh->vertices[ part->PVertices[j] ]->NormPos.y,
+                - ( mesh->vertices[ part->PVertices[j] ]->NormPos.z )  /* flip sign in Z-coordinate */
+        );
       }
-      else
-      {
-        for (j = 0; j < part->pvertices_len; ++j)
-        {
-          if (part->PVertices[j] < 0)
-            continue;
-
-          fprintf(outf,
-                  "vn %f %f %f\n",
-                  mesh->vertices[ part->PVertices[j] ]->NormPos.x,
-                  mesh->vertices[ part->PVertices[j] ]->NormPos.y,
-                  - ( mesh->vertices[ part->PVertices[j] ]->NormPos.z )  /* flip sign in Z-coordinate */
-          );
-        }
-      }  /* if (use_part_positions) */
       fprintf(outf, "\n");
       fflush(outf);
 
@@ -916,9 +897,9 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
 
           fprintf(outf,
                   "vn %f %f %f\n",
-                  mesh->vertices[ part->PVertices[j] ]->DamgdNormPos.x + part->PartPos.x,
-                  mesh->vertices[ part->PVertices[j] ]->DamgdNormPos.y + part->PartPos.y,
-                  - ( mesh->vertices[ part->PVertices[j] ]->DamgdNormPos.z + part->PartPos.z )  /* flip sign in Z-coordinate */
+                  mesh->vertices[ part->PVertices[j] ]->DamgdNormPos.x,
+                  mesh->vertices[ part->PVertices[j] ]->DamgdNormPos.y,
+                  - ( mesh->vertices[ part->PVertices[j] ]->DamgdNormPos.z )  /* flip sign in Z-coordinate */
           );
         }
         fprintf(outf, "\n");
@@ -1079,7 +1060,7 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
 
     if (fclose(outf) != 0)
     {
-      fprintf(stderr, "ExportObj: cannot close file '%s'\n", (char *)objpath);
+      fprintf(stderr, "ExportObj: cannot close file '%s'\n", (const char *)objpath);
       retv = 0;
       break;
     }
@@ -1813,6 +1794,11 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int buf
 /*
   Assumes (mesh != NULL). If necessary, will initialize mesh.
   Otherwise, expects non-NULL parameters.
+
+  vert_idxs: 012...
+  vert_texcoords: uuuvvv...
+  vert_pos: xyzxyzxyz...
+  normals: xyzxyzxyz...
 
   C API: Assumes mesh must have been initialized
 */

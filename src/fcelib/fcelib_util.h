@@ -63,6 +63,22 @@ const int kTrianglesDiamond[8 * 3] = {
 #define FCELIB_UTIL_Abs(x) ((x)<0 ? -(x) : (x))
 #endif
 
+const char *FCELIB_UTIL_GetLastSlash(const char *path)
+{
+  const char *last_slash = strrchr(path, '/');
+  if (!last_slash)
+    last_slash = strrchr(path, '\\');
+  return last_slash;
+}
+
+const char *FCELIB_UTIL_GetFileName(const char *path)
+{
+  const char *last_slash = FCELIB_UTIL_GetLastSlash(path);
+  if (!last_slash || !last_slash[1])
+    return path;
+  return ++last_slash;
+}
+
 /* Returns 0 if a==b, 1 if a>b, -1 if a<b */
 int FCELIB_UTIL_CompareFloats(const void *a, const void *b)
 {

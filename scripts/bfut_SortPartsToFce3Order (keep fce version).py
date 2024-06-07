@@ -1,4 +1,4 @@
-# Copyright (C) 2022 and later Benjamin Futasz <https://github.com/bfut>
+# Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the authors be held liable for any damages
@@ -29,6 +29,8 @@ import pathlib
 
 import fcecodec as fc
 
+from bfut_mywrappers import *  # fcecodec/scripts/bfut_mywrappers.py
+
 CONFIG = {
     "fce_version"  : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
 }
@@ -44,59 +46,19 @@ if len(args.path) < 2:
 else:
     filepath_fce_output = pathlib.Path(args.path[1])
 
-
-# -------------------------------------- wrappers
-def GetFceVersion(path):
-    with open(path, "rb") as f:
-        version = fc.GetFceVersion(f.read(0x2038))
-        assert version > 0
-        return version
-
-def PrintFceInfo(path):
-    with open(path, "rb") as f:
-        buf = f.read()
-        fc.PrintFceInfo(buf)
-        assert fc.ValidateFce(buf) == 1
-
-def LoadFce(mesh, path):
-    with open(path, "rb") as f:
-        mesh.IoDecode(f.read())
-        assert mesh.MValid() is True
-        return mesh
-
-def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
-    if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
-        mesh = mesh_function(mesh, version)
-    with open(path, "wb") as f:
-        if version in ("3", 3):
-            buf = mesh.IoEncode_Fce3(center_parts)
-        elif version in ("4", 4):
-            buf = mesh.IoEncode_Fce4(center_parts)
-        else:
-            buf = mesh.IoEncode_Fce4M(center_parts)
-        assert fc.ValidateFce(buf) == 1
-        f.write(buf)
-
-def GetMeshPartnameIdx(mesh, partname):
-    for pid in range(mesh.MNumParts):
-        if mesh.PGetName(pid) == partname:
-            return pid
-    print(f"GetMeshPartnameIdx: Warning: cannot find \"{partname}\"")
-    return -1
-
-
-# -------------------------------------- script functions
+#
 def PrintMeshParts_order(mesh, part_names_sorted):
     print("pid  IS                          SHOULD")
     for pid in range(mesh.MNumParts):
         print(f"{pid:<2} {mesh.PGetName(pid):<12} {part_names_sorted[pid]:<12}")
 
-def AssertPartsOrder(mesh, part_names_sorted):
+def AssertPartsOrder(mesh, part_names_sorted, onlywarn=False):
     for pid in range(mesh.MNumParts):
         if mesh.PGetName(pid) != part_names_sorted[pid]:
             PrintMeshParts_order(mesh, part_names_sorted)
-            raise AssertionError (f"pid={pid} {mesh.PGetName(pid)} != {part_names_sorted[pid]}")
-
+            if not onlywarn:
+                raise AssertionError (f"pid={pid} {mesh.PGetName(pid)} != {part_names_sorted[pid]}")
+            print(f"AssertPartsOrder: Warning pid={pid} {mesh.PGetName(pid)} != {part_names_sorted[pid]}")
 
 #
 def main():
@@ -154,14 +116,12 @@ def main():
             # print(f" {pname} {current_idx} -> {target_idx}")
             while current_idx > target_idx:
                 current_idx = mesh.OpMovePart(current_idx)
-        AssertPartsOrder(mesh, part_names_sorted)
+        AssertPartsOrder(mesh, part_names_sorted, onlywarn=True)
         # PrintMeshParts(mesh, part_names_sorted)
-
 
     WriteFce(fce_outversion, mesh, filepath_fce_output)
     PrintFceInfo(filepath_fce_output)
     print(f"OUTPUT = {filepath_fce_output}", flush=True)
-
 
 if __name__ == "__main__":
     main()

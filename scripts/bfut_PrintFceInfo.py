@@ -28,6 +28,8 @@ import argparse
 
 import fcecodec as fc
 
+from bfut_mywrappers import *  # fcecodec/scripts/bfut_mywrappers.py
+
 # Parse command-line
 parser = argparse.ArgumentParser()
 parser.add_argument("path", nargs="+", help="file path")
@@ -35,15 +37,6 @@ args = parser.parse_args()
 
 # Handle paths: mandatory inpath
 filepath_fce_input = args.path[0]
-
-
-# -------------------------------------- wrappers
-def PrintFceInfo(path):
-    with open(path, "rb") as f:
-        buf = f.read()
-        fc.PrintFceInfo(buf)
-        assert fc.ValidateFce(buf) == 1
-
 
 #
 def main():

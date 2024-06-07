@@ -748,20 +748,15 @@ void FCELIB_TYPES_CpyVert(FcelibVertex *dest, const FcelibVertex *src)
   dest->Animation = src->Animation;
 }
 
+/* Does not change vertex normal. */
 void FCELIB_TYPES_VertAddPosition(FcelibVertex *vert, const tVector *pos)
 {
   vert->VertPos.x += pos->x;
   vert->VertPos.y += pos->y;
   vert->VertPos.z += pos->z;
-  vert->NormPos.x += pos->x;
-  vert->NormPos.y += pos->y;
-  vert->NormPos.z += pos->z;
   vert->DamgdVertPos.x += pos->x;
   vert->DamgdVertPos.y += pos->y;
   vert->DamgdVertPos.z += pos->z;
-  vert->DamgdNormPos.x += pos->x;
-  vert->DamgdNormPos.y += pos->y;
-  vert->DamgdNormPos.z += pos->z;
 }
 
 /* Assumes part belongs to mesh. Assumes centroid is not NULL. Result in centroid. */
@@ -859,15 +854,9 @@ void FCELIB_TYPES_ResetPartCenter(const FcelibMesh *mesh, FcelibPart *part, cons
     vert->VertPos.x += part->PartPos.x - new_PartPos.x;
     vert->VertPos.y += part->PartPos.y - new_PartPos.y;
     vert->VertPos.z += part->PartPos.z - new_PartPos.z;
-    vert->NormPos.x += part->PartPos.x - new_PartPos.x;
-    vert->NormPos.y += part->PartPos.y - new_PartPos.y;
-    vert->NormPos.z += part->PartPos.z - new_PartPos.z;
     vert->DamgdVertPos.x += part->PartPos.x - new_PartPos.x;
     vert->DamgdVertPos.y += part->PartPos.y - new_PartPos.y;
     vert->DamgdVertPos.z += part->PartPos.z - new_PartPos.z;
-    vert->DamgdNormPos.x += part->PartPos.x - new_PartPos.x;
-    vert->DamgdNormPos.y += part->PartPos.y - new_PartPos.y;
-    vert->DamgdNormPos.z += part->PartPos.z - new_PartPos.z;
     ++count_verts;
   }
   memcpy(&part->PartPos.x, &new_PartPos.x, sizeof(float));

@@ -81,28 +81,29 @@ Name    Application example                     Application example
 0x00E     car.fce   semi-transparent windows
 0x00F     car.fce
 
-A triangle is visible behind a semi-transparent triangle, if
-its index is smaller.
+A triangle is visible behind a semi-transparent triangle, if its index is smaller.
 */
 
 /*
   FCE4   tTriangle->flag   12 bit
-      0x000   default             body parts: reflection,
-                                  interior etc.: no reflection
-0:    0x001   matte (no chrome)
-1:    0x002   high chrome         body parts: used for windows etc.
-2:    0x004   no cull             two-faced triangle
-3:    0x008   semi-transparent    body parts: used for windows etc.
+      0x0000   default             body parts: reflection,
+                                   interior etc.: no reflection
+0:    0x0001   matte (no chrome)
+1:    0x0002   high chrome         body parts: used for windows etc.
+2:    0x0004   no cull             two-faced triangle
+3:    0x0008   semi-transparent    body parts: used for windows etc.
 
-4:    0x010   ?                   elni/car.fce :OH :OD :OLM :ORM :H**W :M**W, partial :HB :MB :LB :TB
-5:    0x020   all windows
-6:    0x040   front window
-7:    0x080   left window
+4:    0x0010   ?                   elni/car.fce :OH :OD :OLM :ORM :H**W :M**W, partial :HB :MB :LB :TB
+5:    0x0020   all windows
+6:    0x0040   front window
+7:    0x0080   left window
 
-8:    0x100   back window
-9:    0x200   right window
-10:   0x400   broken window
-11:   0x800   ?
+8:    0x0100   back window
+9:    0x0200   right window
+10:   0x0400   broken window
+11:   0x0800   ?
+  FCE4M  tTriangle->flag   13 bit
+12:   0x1000   ?                   <model>/part.fst
 
 car.fce   body               default
 car.fce   underbody          no reflection
@@ -137,7 +138,12 @@ Name    Application example                     Application example
 0x62E   car.fce   right window broken
 */
 
-/* Length = 56. Vertex indices are local. Values from 'P1stVertices' make them global. */
+/* Length = 56. Vertex indices are local. Values from 'P1stVertices' make them global.
+
+  Each vertex index points to a position and a normal. (FCE4/FCE4M: also damage position and damage normal)
+  Vert positions and normals are stored in global coordinates.
+  Vert positions are offset by their part positions, respectively. Normals are not offset.
+*/
 struct tTriangle {
 /* 0x00 */  int   tex_page;     /* Texture page number; > 0 in FCE3/FCE4 officer models, FCE4 pursuit road objects, FCE4M damage textures. Requires NumArts=max(tex_pages)-1 apart from the last */
 /* 0x04 */  int   vidx1;        /* Vertex #1 local index */
@@ -198,9 +204,9 @@ struct FceHeader3 {
 /* 0x0020 */  int      Reserve2offset     ;  /* len() = len(VertTbl) */
 /* 0x0024 */  int      Reserve3offset     ;  /* len() = len(VertTbl) */
 
-/* 0x0028 */  float    XHalfSize          ;  /* X half-size width of whole model */
-/* 0x002C */  float    YHalfSize          ;  /* Y half-size heigth of whole model */
-/* 0x0030 */  float    ZHalfSize          ;  /* Z half-size length of whole model */
+/* 0x0028 */  float    XHalfSize          ;  /* X half-size width of whole model, defines bounding box for collision detection */
+/* 0x002C */  float    YHalfSize          ;  /* Y half-size heigth of whole model, defines bounding box for collision detection */
+/* 0x0030 */  float    ZHalfSize          ;  /* Z half-size length of whole model, defines bounding box for collision detection */
 
 /* 0x0034 */  int      NumDummies         ;  /* Number of light sources 0..16 */
 /* 0x0038 */  tVector  Dummies[16]        ;  /* Coordinates of dummies */
@@ -268,16 +274,20 @@ cop#.fce (FCE3) - officer (# = 0-4)
 Description              Idx  UsesFlag  Light  Reflection
 officer                  0
 
-cone.fce (FCE3) - traffic cone
-Name/Description         Idx  UsesFlag  Light  Reflection
-ConeH                    0
-ConeM                    1
-ConeL                    2
+cone.fce (FCE3) - traffic cone, unused
+Name/Description         Idx  HasFlag  Light  Reflection
+ConeH                    0    Y
+ConeM                    1    Y
+ConeL                    2    Y
 
 go0#.fce (FCE3) - track menu model (# = 0-8)
 Name/Description         Idx  UsesFlag  Light  Reflection
-Loft01                   0
+Loft01                   0    Y
 Loft02                   1    Y
+
+gengo.viv->go00.fce (FCE3) - developer logo, unused
+Name/Description         Idx  UsesFlag  Light  Reflection
+Line06                   0    Y
 */
 
 /* 0x2038  -  size of this header */
@@ -307,9 +317,9 @@ struct FceHeader4 {
 
 /* 0x0048 */  int      Reserve6offset      ;  /* len() = 12 * NumTriangles, null
                                                 FCE4M: len() += NumVertices */
-/* 0x004c */  float    XHalfSize           ;  /* X half-size width of whole model */
-/* 0x0050 */  float    YHalfSize           ;  /* Y half-size heigth of whole model */
-/* 0x0054 */  float    ZHalfSize           ;  /* Z half-size length of whole model */
+/* 0x004c */  float    XHalfSize           ;  /* X half-size width of whole model, defines bounding box for collision detection */
+/* 0x0050 */  float    YHalfSize           ;  /* Y half-size heigth of whole model, defines bounding box for collision detection */
+/* 0x0054 */  float    ZHalfSize           ;  /* Z half-size length of whole model, defines bounding box for collision detection */
 
 /* 0x0058 */  int      NumDummies          ;  /* Number of light sources */
 /* 0x005c */  tVector  Dummies[16]         ;  /* Coordinates of dummies */
@@ -330,7 +340,7 @@ struct FceHeader4 {
 /* 0x08a4 */  tColor4  SecColors[16]       ;  /* Secondary colors */
 /* 0x08e4 */  tColor4  DriColors[16]       ;  /* Driver hair colors */
 
-/* 0x0924 */  int      Unknown3            ;  /* FCE4: nullable, FCE4M: ? */
+/* 0x0924 */  int      Unknown3            ;  /* FCE4: nullable, FCE4M: nullable */
 /* 0x0928 */  char     Unknown2[256]       ;  /* nullable */
 
 /* 0x0a28 */  char     DummyNames[64 * 16] ;  /* Dummy object names (ASCIIZ, role only by name) */
@@ -368,7 +378,7 @@ const char *kFce4HiBodyParts[kFceLibNumFce4HiBodyParts] = {
 
 /*
 car.fce (FCE4)
-High body is the only mandatory part
+":HB" is the only mandatory part
 Name    Description              Damage  FallOf  UsesFlag  Light  Animated   Pursuit
 :HB     high body                Y       N       Y         N      N          N
 :MB     mid body                 Y       N       Y         N      N          N
@@ -399,16 +409,33 @@ Name    Description              Damage  FallOf  UsesFlag  Light  Animated   Pur
 :MLRW   mid left rear wheel      N       N       N         N      Y          N
 :MRRW   mid right rear wheel     N       N       N         N      Y          N
 
+cop.fce (FCE4) - officer, in pursuit car.viv
+Name        UsesFlag  Light  Reflection
+<partname>  Y                N
+
 hel.fce (FCE4) - helicopter
-Name    Description               UsesFlag  Animated
-'body'  body                      Y         N
-'main'  rotor                     Y         Y
-'tail'  tail rotor                Y         Y
-:LB     low body                  Y
-:Lmain  low rotor                 Y
-:Ltail  low tail rotor            Y
+Name    Description     UsesFlag  Animated
+'main'  rotor           Y         Y
+'tail'  tail rotor      Y         Y
+'body'  body            Y         N
+:LB     low body        Y
+:Lmain  low rotor       Y
+:Ltail  low tail rotor  Y
+
+<track>.fce (FCE4) - track menu model (trkgo.viv) - role by name
+Name     Description       UsesFlag  Animated
+DIAMOND                    N
+TRACK0                     N
+TRACK1                     N
+TRACK2                     N
+TRACK3   (all except gt3)  N
+
+track.fce (FCE4M) - track menu model
+Name        UsesFlag  Animated
+<partname>
 
 part.fce (FCE4M) - car
+":PPLFwheel" and ":PPLRwheel" are the only mandatory parts
 Name              Description                   Damage  FallOf  UsesFlag  Light  Animated
 :Hboards          running boards                Y       N       Y         N      N
 :Hbody            high body                     Y       N       Y         N      N
@@ -427,6 +454,7 @@ Name              Description                   Damage  FallOf  UsesFlag  Light 
 :Hrbrake          right front brake
 :Hlmirror         left mirror                   N       Y       Y         N      N
 :Hrmirror         right mirror                  N       Y       Y         N      N
+:Hscoopfact       hood with factory scoop
 :Hscoopsmall      hood scoop small
 :Hscooplarge      hood scoop large
 :Hskirt           rear wheel fender skirt
@@ -447,35 +475,35 @@ Name              Description                   Damage  FallOf  UsesFlag  Light 
 
   FCE4M loads meshes for wheels, drivers, and enhanced parts from central files.
   They are positioned via the following dummy-parts:
-Name              Description                                         FoundIn         LinksTo
-:PPdriver                                                             *.viv/part.fce  DRIVER##.viv/part.fce
-:PPLFwheel        left front wheel                                    *.viv/part.fce
-:PPRFwheel        right front wheel                                   *.viv/part.fce
-:PPLRwheel        left rear wheel                                     *.viv/part.fce
-:PPRRwheel        right rear wheel                                    *.viv/part.fce
-:PPaircleaner                                                         *.viv/part.fce
-:PPcarb                                                               blowlarg.viv/part.fce
-:PPAdash          on top of console left-hand                         *.viv/part.fce
-:PPBdash          on top of console center                            *.viv/part.fce
-:PPCdash          on hood in front of driver in front of windshield   *.viv/part.fce
-:PPengine                                                             *.viv/part.fce
-:PPLfog           left fog headlight                                  *.viv/part.fce
-:PPRfog           right fog headlight                                 *.viv/part.fce
-:PPfrontsusp      front suspension                                    *.viv/part.fce
-:PPfuzzydice      fuzzy dice for rearview mirror                      *.viv/part.fce
-:PPfuzzydicechop  rear mirror fuzzy dice (chopped roof)               *.viv/part.fce
-:PPhoodorn        hood ornament                                       *.viv/part.fce
-:PPhoodpivot      hood scoop                                          *.viv/part.fce
-:PPlicense        rear license plate                                  *.viv/part.fce
-:PPrearsusp       rear suspension                                     *.viv/part.fce
-:PPLpipetip       left rear exhaust pipe                              *.viv/part.fce
-:PPRpipetip       right rear exhaust pipe                             *.viv/part.fce
-:PPLsidepipe      left side exhaust pipe                              *.viv/part.fce
-:PPRsidepipe      right side exhaust pipe                             *.viv/part.fce
-:PPsiren          roof siren (from cancelled pursuit mode)            *.viv/part.fce  siren.viv/part.fce
-:PPspot           spotlight (from cancelled pursuit mode)             *.viv/part.fce  spotlite.viv/part.fce
-:PPspoiler        rear spoiler                                        *.viv/part.fce  *.viv/spoiler.fce
-:PPwheelie        wheelie bar                                         *.viv/part.fce
+Name              Description                                         FoundIn          LinksTo
+:PPdriver                                                             *.viv->part.fce  DRIVER##.viv->part.fce
+:PPLFwheel        left front wheel                                    *.viv->part.fce
+:PPRFwheel        right front wheel                                   *.viv->part.fce
+:PPLRwheel        left rear wheel                                     *.viv->part.fce
+:PPRRwheel        right rear wheel                                    *.viv->part.fce
+:PPaircleaner                                                         *.viv->part.fce
+:PPcarb                                                               blowlarg.viv->part.fce
+:PPAdash          on top of console left-hand                         *.viv->part.fce
+:PPBdash          on top of console center                            *.viv->part.fce
+:PPCdash          on hood in front of driver in front of windshield   *.viv->part.fce
+:PPengine                                                             *.viv->part.fce
+:PPLfog           left fog headlight                                  *.viv->part.fce
+:PPRfog           right fog headlight                                 *.viv->part.fce
+:PPfrontsusp      front suspension                                    *.viv->part.fce
+:PPfuzzydice      fuzzy dice for rearview mirror                      *.viv->part.fce
+:PPfuzzydicechop  rear mirror fuzzy dice (chopped roof)               *.viv->part.fce
+:PPhoodorn        hood ornament                                       *.viv->part.fce
+:PPhoodpivot      hood scoop                                          *.viv->part.fce
+:PPlicense        rear license plate                                  *.viv->part.fce
+:PPrearsusp       rear suspension                                     *.viv->part.fce
+:PPLpipetip       left rear exhaust pipe                              *.viv->part.fce
+:PPRpipetip       right rear exhaust pipe                             *.viv->part.fce
+:PPLsidepipe      left side exhaust pipe                              *.viv->part.fce
+:PPRsidepipe      right side exhaust pipe                             *.viv->part.fce
+:PPsiren          roof siren (from cancelled pursuit mode)            *.viv->part.fce  siren.viv->part.fce
+:PPspot           spotlight (from cancelled pursuit mode)             *.viv->part.fce  spotlite.viv->part.fce
+:PPspoiler        rear spoiler                                        *.viv->part.fce  *.viv->spoiler.fce
+:PPwheelie        wheelie bar                                         *.viv->part.fce
 
 DRIVER##.viv/part.fce (FCE4M) - driver (## = 1-33)
 Name              Description     Animated
@@ -542,35 +570,45 @@ valvefh.viv/part.fce (FCE4M) -
 valvev8.viv/part.fce (FCE4M) -
 wheelie.viv/part.fce (FCE4M) - wheelie bar
 
-names are collections of :tags - not necessarily unique
+names are collections of :tags - not unique, not cAsE-sEnSiTiVe
 dash.fce                                            FallOf  UsesFlag  Light  Animated
-:F L_DM                   left driver mirror        Y       Y
-:F R_DM                   right driver mirror       Y       Y
-:L_PM                     left passenger mirror     Y       Y
+:L_DM                     left driver mirror        Y       Y
 :R_PM                     right passenger mirror    Y       Y
+:B                        visible in back  view
 :F                        visible in front view
 :L                        visible in left  view
 :R                        visible in right view
-:B                        visible in back  view
-:B_TOP                    roof
 :S                        (used on roof)
-:F_W                      steering wheel                                     Y
+:B_TOP                    roof
+:L_TOP                    roof
+:S_TOP                    roof
+:F_DASH                   unlit dash                                  N
+:R_DASH                   unlit dash                                  N
+:F_LDASH                  lit dash                                    Y
+:R_LDASH                  lit dash                                    Y
+:F_MPH (0.0 to 0.55/60)   dial                                        N      Y
 :F_RPM (0.0 to 0.55)      dial                                        N      Y
-:F_MPH (0.0 to 0.55)      dial                                        N      Y
+:F_W                      steering wheel                                     Y
+:R_W                      steering wheel                                     Y
 
 FCE4 only:
-:R_DASH                   unlit dash                                  N
-:R_LDASH                  lit dash                                    Y
+:R_DM                     right driver mirror       Y       Y
+:L_PM                     left passenger mirror     Y       Y
+:reflectdriver            nr34/car.viv
+:reflectpassenger         nr34/car.viv
 
 FCE4M only:
 :S_DM                     side driver mirror
 :S_PM                     side passenger mirror
-:L_W                      steering wheel                                     Y
-:S_W                      steering wheel                                     Y
-:F_DASH                   unlit dash                                  N
+:R_TOP                    roof
+:L_W
+:S_W
 :L_DASH                   unlit dash                                  N
+:S_DASH
+:B_LDASH                  lit dash                                    Y
 :F_LDASH                  lit dash                                    Y
 :L_LDASH                  lit dash                                    Y
+:L_MPH (0.0 to 0.55/110)  dial                                               Y
 :R_MPH (0.0 to 0.55/110)  dial                                               Y
 :F_SHIFT                  shifter
 */
@@ -1146,6 +1184,34 @@ int FCELIB_FCETYPES_Fce4ComputeSize(const int Version,
   return fsize;
 }
 
+float FCELIB_FCETYPES_GetWheelbase4M(const FceHeader4 *hdr, int *count_wheels)
+{
+  int i;
+  float wheelbase = 0.0;
+  *count_wheels = 0;
+  for (i = 0; i < FCELIB_UTIL_Min(hdr->NumParts, 64); ++i)
+  {
+    if (!strcmp(":PPLFwheel", hdr->PartNames + (i * 64)) || !strcmp(":PPLRwheel", hdr->PartNames + (i * 64)))
+    {
+      if (!*count_wheels)
+      {
+        wheelbase = hdr->PartPos[i].z;
+        *count_wheels = 1;
+      }
+      else
+      {
+        wheelbase = FCELIB_UTIL_Abs(hdr->PartPos[i].z - wheelbase);
+        *count_wheels = 2;
+        break;
+      }
+    }
+  }
+  if (*count_wheels < 2)
+    return 0.0;
+  else
+    return wheelbase;
+}
+
 /* Assumes sizeof(*header) = 0x2038. Returns boolean */
 int FCELIB_FCETYPES_Fce4ValidateHeader(const int infilesize, const void *header, const FceHeader4 *hdr)
 {
@@ -1506,6 +1572,14 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const int infilesize, const void *header,
     {
       fprintf(stderr, "Fce4ValidateHeader: Warning HalfSizes may crash game\n");
     }
+
+    if (hdr->Version == 0x00101015)
+    {
+      int count_wheels;
+      float wheelbase = FCELIB_FCETYPES_GetWheelbase4M(hdr, &count_wheels);
+      if (wheelbase < 2.45 || wheelbase > 3.44)
+        fprintf(stderr, "Fce4ValidateHeader: Warning Wheelbase may crash game (%f; %d)\n", wheelbase, count_wheels);
+    }
     break;
   }
 
@@ -1634,6 +1708,17 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const void *header, const int fce_size)
     printf("XHalfSize = %f\n", hdr.XHalfSize);
     printf("YHalfSize = %f\n", hdr.YHalfSize);
     printf("ZHalfSize = %f\n", hdr.ZHalfSize);
+    if (hdr.Version == 0x00101015)
+    {
+      int count_wheels;
+      float wheelbase = FCELIB_FCETYPES_GetWheelbase4M(&hdr, &count_wheels);
+      if (count_wheels < 1)
+        printf("Wheelbase = %f (%d wheels)\n", wheelbase, count_wheels);
+      if (count_wheels == 1)
+        printf("Wheelbase = %f (%d wheel)\n", wheelbase, count_wheels);
+      else
+        printf("Wheelbase = %f (%d wheels)\n", wheelbase, count_wheels);
+    }
 
     printf("NumParts = %d\n", hdr.NumParts);
     printf("NumDummies = %d\n", hdr.NumDummies);

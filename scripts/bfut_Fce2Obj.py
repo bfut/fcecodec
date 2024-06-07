@@ -31,10 +31,11 @@ REQUIRES
     installing <https://github.com/bfut/fcecodec>
 """
 import argparse
-import os
 import pathlib
 
 import fcecodec as fc
+
+from bfut_mywrappers import *  # fcecodec/scripts/bfut_mywrappers.py
 
 # Parse command-line
 parser = argparse.ArgumentParser()
@@ -51,32 +52,60 @@ else:
 filepath_mtl_output = filepath_obj_output.with_suffix(".mtl")
 
 CONFIG = {
-    "objtexname"           : filepath_fce_input.stem + "00.png",  # texture file path in MTL file
-    "print_damage"         : 1,  # prints parts damage model to shapes named DAMAGE_<partname> (relevant for FCE4, FCE4M)
+    "fallback_texname"     : filepath_fce_input.stem + ".png",  # texture file path in MTL file
+    "print_damage"         : 2,  # prints parts damage model to shapes named DAMAGE_<partname> (relevant for FCE4, FCE4M)
     "print_dummies"        : 1,  # prints shapes named DUMMY_##_<dummyname> for each dummy, centered on dummy position
     "use_part_positions"   : 1,
     "print_part_positions" : 1,  # prints shapes named PARTPOS_<partname> for each part, centered on part position
 }
 
-# -------------------------------------- wrappers
-def LoadFce(mesh, path):
-    with open(path, "rb") as f:
-        mesh.IoDecode(f.read())
-        assert mesh.MValid() is True
-        return mesh
+# -------------------------------------- more wrappers
+def HeuristicTgaSearch(path, suffix=".tga"):
+    """
+    Heuristic search for TGA file in the same directory as the given file path.
+    Returns "path/to/texname.tga" if found, else empty string.
 
-def ExportObj(mesh, objpath, mtlpath, texname,
-              print_damage, print_dummies, use_part_positions, print_part_positions,
-              filter_triagflags_0xfff=True):
-    mesh.IoExportObj(str(objpath), str(mtlpath), str(texname),
-                     print_damage, print_dummies, use_part_positions, print_part_positions,
-                     filter_triagflags_0xfff)
-
+    priority: <file>.tga <file>00.tga <any>.tga
+    """
+    path = pathlib.Path(path)
+    suffix = str(suffix).lower()
+    if not path.is_dir() and path.is_file():
+        pdir = path.parent
+    else:
+        pdir = path
+    texname = None
+    pl = list(pdir.iterdir())
+    pl.sort()
+    for f in pl:
+        fp = pathlib.Path(f.name)
+        if fp.suffix.lower() != suffix:
+            continue
+        if fp.stem.lower() == path.stem.lower():
+            texname = pdir / fp
+            break
+        if fp.stem.lower() == path.stem.lower() + "00":
+            texname = pdir / fp
+            break
+    if not texname:
+        for f in pl:
+            fp = pathlib.Path(f.name)
+            if fp.suffix.lower() == suffix:
+                texname = pdir / fp
+                break
+    return str(texname) if texname else ""
 
 #
 def main():
-    if CONFIG["print_damage"] == 1:
+    print_damage = CONFIG["print_damage"]
+    if print_damage == 2 and GetFceVersion(filepath_fce_input) in ["3", 3]:
+        print_damage = 0
+    else:
+        print_damage = 1
+    if print_damage == 1:
         print("printing parts damage model to extra shapes")
+    else:
+        print("ignoring parts damage model")
+
     if CONFIG["print_dummies"] == 1:
         print("printing extra shapes for each dummy")
     if CONFIG["use_part_positions"] == 0:
@@ -85,14 +114,23 @@ def main():
         print("printing extra shapes for each part position")
     mesh = fc.Mesh()
     mesh = LoadFce(mesh, filepath_fce_input)
-    os.chdir(filepath_obj_output.parent)
-    print(flush=True)
+
+    texname = HeuristicTgaSearch(filepath_fce_input.parent)
+    if texname == "":
+        texname = HeuristicTgaSearch(filepath_fce_input.parent, ".png")
+    if texname == "":
+        texname = HeuristicTgaSearch(filepath_fce_input.parent, ".bmp")
+    if texname == "":
+        texname = HeuristicTgaSearch(filepath_fce_input.parent, ".jpg")
+    texname = texname if texname != "" else CONFIG["fallback_texname"]
+    print(f"texname: {texname}")
+
     ExportObj(mesh,
-        filepath_obj_output.name, filepath_mtl_output.name, CONFIG["objtexname"],
-        CONFIG["print_damage"], CONFIG["print_dummies"],
+        filepath_obj_output, filepath_mtl_output, texname,
+        print_damage, CONFIG["print_dummies"],
         CONFIG["use_part_positions"], CONFIG["print_part_positions"])
-    print(filepath_obj_output)
-    print(filepath_mtl_output)
+    print(f"filepath_obj_output: {filepath_obj_output}")
+    print(f"filepath_mtl_output: {filepath_mtl_output}")
 
 if __name__ == "__main__":
     main()

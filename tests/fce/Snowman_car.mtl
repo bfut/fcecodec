@@ -1,0 +1,18 @@
+# fcecodec MTL File: 'Snowman_car.obj'
+# Material Count: 2
+
+newmtl 0x000
+Ka 1.000 1.000 1.000
+Kd 1.000 1.000 1.000
+Ks 0.000 0.000 0.000
+d 0.7
+illum 2
+map_Kd Snowman_car.png
+
+newmtl 0x001
+Ka 1.000 1.000 1.000
+Kd 1.000 1.000 1.000
+Ks 0.000 0.000 0.000
+d 0.7
+illum 2
+map_Kd Snowman_car.png

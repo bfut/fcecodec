@@ -42,7 +42,7 @@ def HiBody_ReorderTriagsTransparentToLast(mesh, version):
     """ Not implemented for FCE4M because windows are separate parts """
     if version in ("3", 3):
         mesh = ReorderTriagsTransparentDetachedAndToLast(mesh, 0)  # high body
-        if mesh.MNumParts >= 12:
+        if mesh.MNumParts > 12:
             mesh = ReorderTriagsTransparentDetachedAndToLast(mesh, 12)  # high headlights
     elif version in ("4", 4):
         for partname in (":HB", ":OT", ":OL"):
@@ -92,11 +92,12 @@ def ExportObj(mesh, objpath, mtlpath, texname,
 def GetMeshPartnames(mesh):
     return [mesh.PGetName(pid) for pid in range(mesh.MNumParts)]
 
-def GetMeshPartnameIdx(mesh, partname):
+def GetMeshPartnameIdx(mesh, partname, verbose=True):
     for pid in range(mesh.MNumParts):
         if mesh.PGetName(pid) == partname:
             return pid
-    print(f"GetMeshPartnameIdx: Warning: cannot find '{partname}'")
+    if verbose:
+        print(f"GetMeshPartnameIdx: Warning: cannot find '{partname}'")
     return -1
 
 def GetPartGlobalOrderVidxs(mesh, pid):
@@ -134,7 +135,7 @@ def FilterTexpageTriags(mesh, drop_texpages: int | list | None = None, select_te
             print(f"after: mesh.PNumTriags(pid)={mesh.PNumTriags(pid)}")
 
     else:
-        ValueError("FilterTexpageTriags: call with either drop_texpages or select_texpages, not both")
+        raise ValueError("FilterTexpageTriags: call with either drop_texpages or select_texpages, not both")
 
     assert mesh.OpDelUnrefdVerts()
     return mesh
@@ -144,3 +145,18 @@ def DeleteEmptyParts(mesh):
         if mesh.PNumTriags(pid) == 0:
             mesh.OpDeletePart(pid)
     return mesh
+
+def GetVertsAtIdx(v_arr, vidx: int | list | np.ndarray) -> np.ndarray:
+    vidx = np.array(vidx)
+    v_arr = v_arr.reshape(-1, 3)
+    if np.max(vidx) >= v_arr.shape[0]:
+        raise IndexError(f"vertex index {np.max(vidx)} is out of bounds for {v_arr.shape[0]} vertices")
+    return v_arr[vidx].ravel()
+
+def SetVertsAtIdx(v_arr, values, vidx: int | list | np.ndarray, ) -> np.ndarray:
+    vidx = np.array(vidx)
+    v_arr = v_arr.reshape(-1, 3)
+    if np.max(vidx) >= v_arr.shape[0]:
+        raise IndexError(f"vertex index {np.max(vidx)} is out of bounds for {v_arr.shape[0]} vertices")
+    v_arr[vidx] = values.reshape(-1, 3)
+    return v_arr.ravel()

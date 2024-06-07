@@ -1,4 +1,4 @@
-# Copyright (C) 2023 and later Benjamin Futasz <https://github.com/bfut>
+# Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the authors be held liable for any damages
@@ -31,6 +31,8 @@ import sys
 import fcecodec as fc
 import numpy as np
 
+from bfut_mywrappers import *  # fcecodec/scripts/bfut_mywrappers.py
+
 CONFIG = {
     "fce_version"  : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
     "center_parts" : False,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
@@ -50,11 +52,7 @@ if len(args.path) < 2:
 else:
     filepath_fce_output = pathlib.Path(args.path[1])
 
-
-# -------------------------------------- wrappers
-sys.path.append(str(pathlib.Path(__file__).resolve()))
-sys.path.append(str((pathlib.Path(__file__).parent / "../python/").resolve()))
-from bfut_mywrappers import *
+# custom functions go here
 
 
 #

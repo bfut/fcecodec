@@ -7,8 +7,6 @@ Tested on macOS.
 
 The intended usage is for transparent pre- and post-processing tasks specific to FCE.
 Exporting OBJ is supported in library, importing OBJ is fully supported via script.
-This modern FCE implementation was needed as vintage tools are generally closed source, unmaintainable and exclusive to Windows.
-Given `fcecodec`, many previously manual chores can be automatized in simple Python scripts.
 
 Blender Import/Export Add-on: [fcecodec_blender](https://github.com/bfut/fcecodec_blender)
 
@@ -53,4 +51,5 @@ __Website:__ <https://github.com/bfut/fcecodec>
 Third party licenses
 
 __sclpython.h:__ zlib License<br/>
-__fcecodec scripts:__ zlib License
+__fcecodec scripts:__ zlib License<br/>
+__bfut_mywrappers.py:__ zlib License

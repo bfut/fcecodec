@@ -1,4 +1,4 @@
-# Copyright (C) 2023 and later Benjamin Futasz <https://github.com/bfut>
+# Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the authors be held liable for any damages
@@ -34,44 +34,13 @@ import pathlib
 
 import fcecodec as fc
 
+from bfut_mywrappers import *  # fcecodec/scripts/bfut_mywrappers.py
+
 CONFIG = {
     "fce_version"  : "keep",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
     "center_parts" : True,  # localize part vertice positions to part centroid, setting part position (expects 0|1)
     "rescale_factor" : 1.2,  # 1.1 and 1.2 give good results for vanilla FCE4/FCE4M models; unchanged if 1.0 or smaller than 0.1
 }
-
-
-# -------------------------------------- wrappers
-def GetFceVersion(path):
-    with open(path, "rb") as f:
-        version = fc.GetFceVersion(f.read(0x2038))
-        assert version > 0
-        return version
-
-def PrintFceInfo(path):
-    with open(path, "rb") as f:
-        buf = f.read()
-        fc.PrintFceInfo(buf)
-        assert fc.ValidateFce(buf) == 1
-
-def LoadFce(mesh, path):
-    with open(path, "rb") as f:
-        mesh.IoDecode(f.read())
-        assert mesh.MValid() is True
-        return mesh
-
-def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
-    if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
-        mesh = mesh_function(mesh, version)
-    with open(path, "wb") as f:
-        if version in ("3", 3):
-            buf = mesh.IoEncode_Fce3(center_parts)
-        elif version in ("4", 4):
-            buf = mesh.IoEncode_Fce4(center_parts)
-        else:
-            buf = mesh.IoEncode_Fce4M(center_parts)
-        assert fc.ValidateFce(buf) == 1
-        f.write(buf)
 
 
 #
@@ -113,7 +82,7 @@ def main():
 
     # Rescale
     print(f"rescale_factor={rescale_factor}")
-    if rescale_factor > 0.0 and abs(rescale_factor) > 0.1:
+    if rescale_factor >= 0.01:
         for pid in reversed(range(mesh.MNumParts)):
             mesh.OpCenterPart(pid)
             ppos = mesh.PGetPos(pid)  # xyz

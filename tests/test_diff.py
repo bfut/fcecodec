@@ -23,41 +23,29 @@ import pathlib
 import subprocess
 import sys
 
+import fcecodec as fc
 import pytest
 
-# Look for local build, if not installed
-try:
-    import fcecodec as fc
-except ModuleNotFoundError:
-    import sys
-    PATH = pathlib.Path(pathlib.Path(__file__).parent / "../python/build")
-    print(PATH)
-    for x in PATH.glob("**"):
-        sys.path.append(str(x.resolve()))
-    del PATH
+sys.path.append(str((pathlib.Path(__file__).parent / "../scripts/").resolve()))
+from bfut_mywrappers import *  # fcecodec/scripts/bfut_mywrappers.py
 
-    import fcecodec as fc
 
-script_path = pathlib.Path(__file__).parent
-filepath_fce_input = script_path / "fce/Snowman_car.fce"
-filepath_fce3_output = script_path / ".out/test_diff3.fce"
-filepath_fce4_output = script_path / ".out/test_diff4.fce"
-filepath_fce4m_output = script_path / ".out/test_diff4m.fce"
+SCRIPT_PATH = pathlib.Path(__file__).parent
+filepath_fce_input = SCRIPT_PATH / "fce/Snowman_car.fce"
+filepath_fce3_output = SCRIPT_PATH / ".out/test_diff3.fce"
+filepath_fce4_output = SCRIPT_PATH / ".out/test_diff4.fce"
+filepath_fce4m_output = SCRIPT_PATH / ".out/test_diff4m.fce"
 
-filepath_obj_output = script_path / ".out/test_diff.obj"
-filepath_mtl_output = script_path / ".out/test_diff.mtl"
+filepath_obj_output = SCRIPT_PATH / ".out/test_diff.obj"
+filepath_mtl_output = SCRIPT_PATH / ".out/test_diff.mtl"
 objtexname = "car00_Snowman.png"
 
 #
-if (script_path / ".out").exists() and not (script_path / ".out").is_dir():
-    os.remove(script_path / ".out")
-    os.mkdir(script_path / ".out")
-elif not (script_path / ".out").exists():
-    os.mkdir(script_path / ".out")
-
-#
-sys.path.append(str((pathlib.Path(__file__).parent / "../python/").resolve()))
-from bfut_mywrappers import *
+if (SCRIPT_PATH / ".out").exists() and not (SCRIPT_PATH / ".out").is_dir():
+    os.remove(SCRIPT_PATH / ".out")
+    os.mkdir(SCRIPT_PATH / ".out")
+elif not (SCRIPT_PATH / ".out").exists():
+    os.mkdir(SCRIPT_PATH / ".out")
 
 
 # Generate src->X and src->X->Y

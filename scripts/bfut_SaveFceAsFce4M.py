@@ -1,4 +1,4 @@
-# Copyright (C) 2023 and later Benjamin Futasz <https://github.com/bfut>
+# Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
 #
 # This software is provided 'as-is', without any express or implied
 # warranty.  In no event will the authors be held liable for any damages
@@ -29,6 +29,8 @@ import pathlib
 
 import fcecodec as fc
 
+from bfut_mywrappers import *  # fcecodec/scripts/bfut_mywrappers.py
+
 CONFIG = {
     "fce_version"        : "4M",  # output format version; expects "keep" or "3"|"4"|"4M" for FCE3, FCE4, FCE4M, respectively
 }
@@ -44,27 +46,6 @@ if len(args.path) < 2:
     filepath_fce_output = filepath_fce_input.parent / (filepath_fce_input.stem + "_out" + filepath_fce_input.suffix)
 else:
     filepath_fce_output = pathlib.Path(args.path[1])
-
-
-# -------------------------------------- wrappers
-def LoadFce(mesh, path):
-    with open(path, "rb") as f:
-        mesh.IoDecode(f.read())
-        assert mesh.MValid() is True
-        return mesh
-
-def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
-    if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
-        mesh = mesh_function(mesh, version)
-    with open(path, "wb") as f:
-        if version in ("3", 3):
-            buf = mesh.IoEncode_Fce3(center_parts)
-        elif version in ("4", 4):
-            buf = mesh.IoEncode_Fce4(center_parts)
-        else:
-            buf = mesh.IoEncode_Fce4M(center_parts)
-        assert fc.ValidateFce(buf) == 1
-        f.write(buf)
 
 #
 def main():

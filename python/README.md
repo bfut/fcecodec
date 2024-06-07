@@ -5,71 +5,21 @@ module.
 ## Installation
 Requires Python 3.10+
 
-``
+```py
 python -m pip install fcecodec
-``
+```
 
 Though `numpy` is not required, it is recommended.
 
-``
+```py
 python -m pip install --upgrade numpy
-``
+```
 
 ## Examples
-For a script template and handy function wrappers, see<br/>
-[https://github.com/bfut/fcecodec/blob/main/scripts/fcecodecScriptTemplate.py](https://github.com/bfut/fcecodec/blob/main/scripts/fcecodecScriptTemplate.py)<br/>
+See<br/>
+[https://github.com/bfut/fcecodec/blob/main/scripts](https://github.com/bfut/fcecodec/blob/main/scripts)<br/>
 and<br/>
 [https://github.com/bfut/fcecodec/blob/main/python/bfut_mywrappers.py](https://github.com/bfut/fcecodec/blob/main/python/bfut_mywrappers.py)
-
-```py
-import fcecodec as fc
-
-filepath_fce_input = "path/to/car.fce"
-filepath_fce_input2 = "path/to/another/car.fce"
-filepath_fce_output = "path/to/output/car.fce"
-
-with open(filepath_fce_input, "rb") as f:
-    fce_buf = f.read()
-
-# Print FCE stats
-fc.PrintFceInfo(fce_buf)
-
-# Create Mesh object
-mesh = fc.Mesh()
-
-# Load FCE data to Mesh object
-mesh.IoDecode(fce_buf)
-
-# Print Mesh object stats
-mesh.PrintInfo()
-print(mesh.MNumParts)
-print(mesh.MNumTriags)
-print(mesh.MNumVerts)
-
-# Validate Mesh object
-assert mesh.MValid() == 1
-
-# Merge parts 0, 3 to new part
-new_pid = mesh.OpMergeParts(0, 3)
-assert new_pid != -1
-
-# Copy part 1
-new_pid = mesh.OpCopyPart(1)
-assert new_pid != -1
-
-# Insert/copy part 1 from mesh2 to mesh
-with open(filepath_fce_input2, "rb") as f:
-    fce_buf2 = f.read()
-mesh2 = fc.Mesh()
-mesh2.IoDecode(fce_buf2)
-new_pid = mesh.OpInsertPart(mesh2, 1)
-assert new_pid != -1
-
-# Encode to FCE4
-out_buf = mesh.IoEncode_Fce4()
-with open(filepath_fce_output, "wb") as f:
-    f.write(out_buf)
-```
 
 ## Documentation
 ```
@@ -308,5 +258,5 @@ FUNCTIONS
         Returns 1 for valid FCE data, 0 otherwise.
 
 VERSION
-    1.6
+    1.7
 ```
