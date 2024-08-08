@@ -99,29 +99,11 @@ struct FcelibHeader {
   int      *Parts;         /* ordered list of part indexes, -1 for unused; length given by mesh.parts_len */
 };
 
-#ifdef FCEC_STATE
-#ifndef __cplusplus
-enum { kFceLibFlagPartsDirty = (1 << 0) };
-enum { kFceLibFlagTrianglesDirty = (1 << 1) };
-enum { kFceLibFlagVerticesDirty = (1 << 2) };
-#else
-static const int kFceLibFlagPartsDirty = (1 << 0);
-static const int kFceLibFlagTrianglesDirty = (1 << 1);
-static const int kFceLibFlagVerticesDirty = (1 << 2);
-#endif
-#endif  /* FCEC_STATE */
-
 struct FcelibMesh {
 #ifdef __cplusplus
   int              _consumed = 0;      /* previously decoded? yes/no 1/0, internal fcelib use only */
-#ifdef FCEC_STATE
-  int              state = 0;    /* flags index arrays as dirty */
-#endif  /* FCEC_STATE */
 #else
   int              _consumed;          /* previously decoded? yes/no 1/0, internal fcelib use only */
-#ifdef FCEC_STATE
-  int              state;        /* flags index arrays as dirty */
-#endif  /* FCEC_STATE */
 #endif
 
   int              parts_len;          /* capacity: array length */
@@ -165,81 +147,42 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
   FcelibPart *part;
 
   /* If index arrays are dirty, safe access for free'ing. */
-#ifdef FCEC_STATE
-  if (mesh->state & (kFceLibFlagVerticesDirty | kFceLibFlagTrianglesDirty))
-#else
-  if (1)
-#endif
+  for (i = mesh->parts_len - 1; i >= 0 ; --i)
   {
-    for (i = mesh->parts_len - 1; i >= 0 ; --i)
+    if (mesh->hdr.Parts[i] < 0)
+      continue;
+    part = mesh->parts[ mesh->hdr.Parts[i] ];
+
+    for (n = part->pvertices_len - 1, k = part->PNumVertices - 1; n >= 0 && k >= 0; --n)
     {
-      if (mesh->hdr.Parts[i] < 0)
+      if (part->PVertices[n] < 0)
         continue;
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
+      free(mesh->vertices[ part->PVertices[n] ]);
+      --k;
+    }  /* for n, k */
+    free(part->PVertices);
 
-      for (n = part->pvertices_len - 1, k = part->PNumVertices - 1; n >= 0 && k >= 0; --n)
-      {
-        if (part->PVertices[n] < 0)
-          continue;
-        free(mesh->vertices[ part->PVertices[n] ]);
-        --k;
-      }  /* for n, k */
-      free(part->PVertices);
-
-      for (n = part->ptriangles_len - 1, k = part->PNumTriangles - 1; n >= 0 && k >= 0; --n)
-      {
-        if (part->PTriangles[n] < 0)
-          continue;
-        free(mesh->triangles[ part->PTriangles[n] ]);
-        --k;
-      }  /* for n, k */
-      free(part->PTriangles);
-    }  /* for i */
-  }
-  else
-  {
-    for (n = mesh->vertices_len - 1; n >= 0; --n)
-      free(mesh->vertices[n]);
-    for (n = mesh->triangles_len - 1; n >= 0; --n)
-      free(mesh->triangles[n]);
-
-    for (i = mesh->parts_len - 1; i >= 0 ; --i)
+    for (n = part->ptriangles_len - 1, k = part->PNumTriangles - 1; n >= 0 && k >= 0; --n)
     {
-      if (mesh->hdr.Parts[i] < 0)
+      if (part->PTriangles[n] < 0)
         continue;
-      part = mesh->parts[ mesh->hdr.Parts[i] ];
-      free(part->PTriangles);
-      free(part->PVertices);
-    }  /* for i */
-  }
+      free(mesh->triangles[ part->PTriangles[n] ]);
+      --k;
+    }  /* for n, k */
+    free(part->PTriangles);
+  }  /* for i */
 
-#ifdef FCEC_STATE
-  if (mesh->state & kFceLibFlagPartsDirty)
-#else
-  if (1)
-#endif
+  for (i = mesh->parts_len - 1; i >= 0 ; --i)
   {
-    for (i = mesh->parts_len - 1; i >= 0 ; --i)
-    {
-      if (mesh->hdr.Parts[i] < 0)
-        continue;
-      free(mesh->parts[ mesh->hdr.Parts[i] ]);
-    }  /* for i */
-  }
-  else
-  {
-    for (i = mesh->parts_len - 1; i >= 0 ; --i)
-      free(mesh->parts[i]);
-  }
+    if (mesh->hdr.Parts[i] < 0)
+      continue;
+    free(mesh->parts[ mesh->hdr.Parts[i] ]);
+  }  /* for i */
 
-  if (mesh->hdr.Parts)
-    free(mesh->hdr.Parts);
-  if (mesh->parts)
-    free(mesh->parts);
-  if (mesh->triangles)
-    free(mesh->triangles);
-  if (mesh->vertices)
-    free(mesh->vertices);
+  if (mesh->hdr.Parts)  free(mesh->hdr.Parts);
+  if (mesh->parts)  free(mesh->parts);
+  if (mesh->triangles)  free(mesh->triangles);
+  if (mesh->vertices)  free(mesh->vertices);
 
 #ifdef __cplusplus
   *mesh = {};
@@ -540,30 +483,20 @@ int FCELIB_TYPES_GetInternalPartIdxByOrder(const FcelibMesh *mesh, const int ord
       break;
     }
 
-#ifdef FCEC_STATE
-    if ((mesh->state & kFceLibFlagPartsDirty) == 0)
+    for (pidx = 0, count = -1; pidx < mesh->parts_len; ++pidx)
     {
-      pidx = order;
-    }
-    else
-#endif
-    {
-      for (pidx = 0, count = -1; pidx < mesh->parts_len; ++pidx)
-      {
-        if (mesh->hdr.Parts[pidx] > -1)
-          ++count;
-        if (count == order)
-          break;
-      }
-
-      if (pidx == mesh->parts_len)
-      {
-        fprintf(stderr, "GetInternalPartIdxByOrder: part %d not found\n", order);
-        pidx = -1;
+      if (mesh->hdr.Parts[pidx] > -1)
+        ++count;
+      if (count == order)
         break;
-      }
     }
 
+    if (pidx == mesh->parts_len)
+    {
+      fprintf(stderr, "GetInternalPartIdxByOrder: part %d not found\n", order);
+      pidx = -1;
+      break;
+    }
 
     break;
   }
@@ -585,30 +518,20 @@ int FCELIB_TYPES_GetOrderByInternalPartIdx(const FcelibMesh *mesh, const int idx
       break;
     }
 
-#ifdef FCEC_STATE
-    if ((mesh->state & kFceLibFlagPartsDirty) == 0)
+    for (i = 0, order = -1; i < mesh->parts_len; ++i)
     {
-      order = idx;
-    }
-    else
-#endif
-    {
-      for (i = 0, order = -1; i < mesh->parts_len; ++i)
-      {
-        if (mesh->hdr.Parts[i] > -1)
-          ++order;
-        if (mesh->hdr.Parts[i] == idx)
-          break;
-      }
-
-      if (i == mesh->parts_len)
-      {
-        fprintf(stderr, "GetOrderByInternalPartIdx: internal part %d not found\n", idx);
-        order = -1;
+      if (mesh->hdr.Parts[i] > -1)
+        ++order;
+      if (mesh->hdr.Parts[i] == idx)
         break;
-      }
     }
 
+    if (i == mesh->parts_len)
+    {
+      fprintf(stderr, "GetOrderByInternalPartIdx: internal part %d not found\n", idx);
+      order = -1;
+      break;
+    }
 
     break;
   }

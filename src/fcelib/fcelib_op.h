@@ -154,11 +154,6 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh_dest, FcelibMesh *mesh_src, const 
 
   for (;;)
   {
-#ifdef FCEC_STATE
-    /* TODO: this is a defensive assumption. this function may not be dirty'ing at all */
-    mesh_dest->state |= (kFceLibFlagPartsDirty | kFceLibFlagVerticesDirty | kFceLibFlagTrianglesDirty);
-#endif
-
     /* Lengthen part index map only if necessary */
     if (!mesh_dest->hdr.Parts)
     {
@@ -366,10 +361,6 @@ int FCELIB_OP_DeletePart(FcelibMesh *mesh, const int idx)
     mesh->parts[ mesh->hdr.Parts[internal_idx] ] = NULL;
     mesh->hdr.Parts[internal_idx] = -1;
 
-#ifdef FCEC_STATE
-    mesh->state |= (kFceLibFlagPartsDirty | kFceLibFlagVerticesDirty | kFceLibFlagTrianglesDirty);
-#endif
-
     retv = 1;
     break;
   }  /* for (;;) */
@@ -446,10 +437,6 @@ int FCELIB_OP_DeletePartTriags(FcelibMesh *mesh, const int pidx, const int *idxs
     mesh->hdr.NumTriangles -= idxs_len;
     free(map);
 
-#ifdef FCEC_STATE
-    mesh->state |= kFceLibFlagTrianglesDirty;
-#endif
-
     retv = 1;
     break;
   }  /* for (;;) */
@@ -500,9 +487,6 @@ int FCELIB_OP_DeleteUnrefdVerts(FcelibMesh *mesh)
       part->PVertices[j] = -1;
       --part->PNumVertices;
       --mesh->hdr.NumVertices;
-#ifdef FCEC_STATE
-      mesh->state |= kFceLibFlagVerticesDirty;
-#endif
     }
   }
 
@@ -549,11 +533,6 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
 
   for (;;)
   {
-#ifdef FCEC_STATE
-    /* TODO: this is a defensive assumption. this function may not be dirty'ing at all */
-    mesh->state |= (kFceLibFlagPartsDirty | kFceLibFlagVerticesDirty | kFceLibFlagTrianglesDirty);
-#endif
-
     if (mesh->hdr.Parts[mesh->parts_len - 1] >= 0)
     {
       if (!FCELIB_TYPES_AddParts(mesh, 1))
@@ -775,9 +754,6 @@ int FCELIB_OP_MoveUpPart(FcelibMesh *mesh, const int idx)
     const int tmp = mesh->hdr.Parts[internal_index_idx];
     mesh->hdr.Parts[internal_index_idx] = mesh->hdr.Parts[internal_index_j];
     mesh->hdr.Parts[internal_index_j] = tmp;
-#ifdef FCEC_STATE
-    mesh->state |= kFceLibFlagPartsDirty;
-#endif
   }
 
   return idx - 1;

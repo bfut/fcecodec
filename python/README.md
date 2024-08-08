@@ -19,7 +19,7 @@ python -m pip install --upgrade numpy
 See<br/>
 [https://github.com/bfut/fcecodec/blob/main/scripts](https://github.com/bfut/fcecodec/blob/main/scripts)<br/>
 and<br/>
-[https://github.com/bfut/fcecodec/blob/main/python/bfut_mywrappers.py](https://github.com/bfut/fcecodec/blob/main/python/bfut_mywrappers.py)
+[https://github.com/bfut/fcecodec/blob/main/scripts/bfut_mywrappers.py](https://github.com/bfut/fcecodec/blob/main/scripts/bfut_mywrappers.py)
 
 ## Documentation
 ```
@@ -258,5 +258,5 @@ FUNCTIONS
         Returns 1 for valid FCE data, 0 otherwise.
 
 VERSION
-    1.7
+    1.8
 ```

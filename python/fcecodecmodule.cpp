@@ -150,7 +150,7 @@ private:
 
 void Mesh::IoDecode(const std::string &buf)
 {
-  if (!FCELIB_DecodeFce(buf.c_str(), buf.size(), &mesh_))
+  if (!FCELIB_DecodeFce(&mesh_, buf.c_str(), buf.size()))
     throw std::runtime_error("IoDecode: Cannot parse FCE data");
 }
 
@@ -160,7 +160,7 @@ py::bytes Mesh::IoEncode_Fce3(const bool center_parts) const
   unsigned char *buf_ = (unsigned char *)malloc(bufsize_ * sizeof(*buf_));
   if (!buf_)
     throw std::runtime_error("IoEncode_Fce3: Cannot allocate memory");
-  if (!FCELIB_EncodeFce3(&buf_, bufsize_, &mesh_, static_cast<int>(center_parts)))
+  if (!FCELIB_EncodeFce3(&mesh_, &buf_, bufsize_, static_cast<int>(center_parts)))
     throw std::runtime_error("IoEncode_Fce3: Cannot encode FCE3");
   py::bytes result = py::bytes((char *)buf_, bufsize_);
   free(buf_);
@@ -173,7 +173,7 @@ py::bytes Mesh::IoEncode_Fce4(const bool center_parts) const
   unsigned char *buf_ = (unsigned char *)malloc(bufsize_ * sizeof(*buf_));
   if (!buf_)
     throw std::runtime_error("IoEncode_Fce4: Cannot allocate memory");
-  if (!FCELIB_EncodeFce4(&buf_, bufsize_, &mesh_, static_cast<int>(center_parts)))
+  if (!FCELIB_EncodeFce4(&mesh_, &buf_, bufsize_, static_cast<int>(center_parts)))
     throw std::runtime_error("IoEncode_Fce4: Cannot encode FCE4");
   py::bytes result = py::bytes((char *)buf_, bufsize_);
   free(buf_);
@@ -186,7 +186,7 @@ py::bytes Mesh::IoEncode_Fce4M(const bool center_parts) const
   unsigned char *buf_ = (unsigned char *)malloc(bufsize_ * sizeof(*buf_));
   if (!buf_)
     throw std::runtime_error("IoEncode_Fce4M: Cannot allocate memory");
-  if (!FCELIB_EncodeFce4M(&buf_, bufsize_, &mesh_, static_cast<int>(center_parts)))
+  if (!FCELIB_EncodeFce4M(&mesh_, &buf_, bufsize_, static_cast<int>(center_parts)))
     throw std::runtime_error("IoEncode_Fce4M: Cannot encode FCE4M");
   py::bytes result = py::bytes((char *)buf_, bufsize_);
   free(buf_);
@@ -1150,7 +1150,7 @@ void FCECODECMODULE_PrintFceInfo(const std::string &buf)
 {
   if (buf.size() < 0x1F04)
     throw std::runtime_error("PrintFceInfo: Invalid buffer size (expects >= 0x1F04)");
-  FCELIB_PrintFceInfo(buf.size(), std::move(buf.c_str()));
+  FCELIB_PrintFceInfo(buf.c_str(), buf.size());
 }
 
 // fcecodec.

@@ -48,8 +48,9 @@ if "PYMEM_MALLOC" in os.environ:
 if "FCELIB_PYTHON_DEBUG" in os.environ:
     print(f'FCELIB_PYTHON_DEBUG={os.environ["FCELIB_PYTHON_DEBUG"]}')
     extra_compile_args += [ "-FCELIB_PYTHON_DEBUG" ]
-if platform.system() == "Windows":
+if platform.system().lower() == "windows":
     extra_compile_args += [
+        ("/D_CRT_NONSTDC_NO_WARNINGS"),
         ("/wd4267"),  # prevents warnings on conversion from size_t to int
         ("/std:c++latest"), ("/Zc:__cplusplus"),  # sets __cplusplus
     ]
@@ -57,7 +58,7 @@ else:
     extra_compile_args += [
         # # debug
         # ("-g"), ("-O0"),
-        ("-pedantic-errors"),
+        # ("-pedantic-errors"),
         ("-fvisibility=hidden"),  # sets the default symbol visibility to hidden
         ("-Wformat-security"),
         ("-Wdeprecated-declarations"),
@@ -65,6 +66,8 @@ else:
 
     if "gcc" in platform.python_compiler().lower():
         extra_compile_args += [
+            # ("-I/usr/include/python3.11"),  # DEBUG
+
             ("-Wno-unused-parameter"),
             ("-Wno-missing-field-initializers"),
 
@@ -98,6 +101,7 @@ else:
         extra_compile_args += [
             # ("-Weverything"),
             ("-Wno-braced-scalar-init"),
+            ("-Wno-deprecated-declarations"),
             # ("-Wno-newline-eof"),
         ]
 

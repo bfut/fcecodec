@@ -1893,23 +1893,12 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     }
 
     /* Add part */
-#ifdef FCEC_STATE
-    if (mesh->state & kFceLibFlagPartsDirty)
-#else
-    if (1)
-#endif
+    mesh->hdr.Parts[new_pid] = 1 + FCELIB_UTIL_ArrMax(mesh->hdr.Parts, mesh->parts_len);
+    if (mesh->hdr.Parts[new_pid] < 0)
     {
-      mesh->hdr.Parts[new_pid] = 1 + FCELIB_UTIL_ArrMax(mesh->hdr.Parts, mesh->parts_len);
-      if (mesh->hdr.Parts[new_pid] < 0)
-      {
-        fprintf(stderr, "GeomDataToNewPart: Cannot set new part index\n");
-        new_pid = -1;
-        break;
-      }
-    }
-    else
-    {
-      mesh->hdr.Parts[new_pid] = mesh->hdr.NumParts;
+      fprintf(stderr, "GeomDataToNewPart: Cannot set new part index\n");
+      new_pid = -1;
+      break;
     }
 
     part = (FcelibPart *)malloc(sizeof(*part));
