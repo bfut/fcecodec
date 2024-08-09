@@ -156,39 +156,39 @@ void Mesh::IoDecode(const std::string &buf)
 
 py::bytes Mesh::IoEncode_Fce3(const bool center_parts) const
 {
-  const int bufsize_ = FCELIB_FCETYPES_Fce3ComputeSize(mesh_.hdr.NumVertices, mesh_.hdr.NumTriangles);
-  unsigned char *buf_ = (unsigned char *)malloc(bufsize_ * sizeof(*buf_));
+  const int bufsz_ = FCELIB_FCETYPES_Fce3ComputeSize(mesh_.hdr.NumVertices, mesh_.hdr.NumTriangles);
+  unsigned char *buf_ = (unsigned char *)malloc(bufsz_ * sizeof(*buf_));
   if (!buf_)
     throw std::runtime_error("IoEncode_Fce3: Cannot allocate memory");
-  if (!FCELIB_EncodeFce3(&mesh_, &buf_, bufsize_, static_cast<int>(center_parts)))
+  if (!FCELIB_EncodeFce3(&mesh_, &buf_, bufsz_, static_cast<int>(center_parts)))
     throw std::runtime_error("IoEncode_Fce3: Cannot encode FCE3");
-  py::bytes result = py::bytes((char *)buf_, bufsize_);
+  py::bytes result = py::bytes((char *)buf_, bufsz_);
   free(buf_);
   return result;
 }
 
 py::bytes Mesh::IoEncode_Fce4(const bool center_parts) const
 {
-  const int bufsize_ = FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, mesh_.hdr.NumVertices, mesh_.hdr.NumTriangles);
-  unsigned char *buf_ = (unsigned char *)malloc(bufsize_ * sizeof(*buf_));
+  const int bufsz_ = FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, mesh_.hdr.NumVertices, mesh_.hdr.NumTriangles);
+  unsigned char *buf_ = (unsigned char *)malloc(bufsz_ * sizeof(*buf_));
   if (!buf_)
     throw std::runtime_error("IoEncode_Fce4: Cannot allocate memory");
-  if (!FCELIB_EncodeFce4(&mesh_, &buf_, bufsize_, static_cast<int>(center_parts)))
+  if (!FCELIB_EncodeFce4(&mesh_, &buf_, bufsz_, static_cast<int>(center_parts)))
     throw std::runtime_error("IoEncode_Fce4: Cannot encode FCE4");
-  py::bytes result = py::bytes((char *)buf_, bufsize_);
+  py::bytes result = py::bytes((char *)buf_, bufsz_);
   free(buf_);
   return result;
 }
 
 py::bytes Mesh::IoEncode_Fce4M(const bool center_parts) const
 {
-  const int bufsize_ = FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, mesh_.hdr.NumVertices, mesh_.hdr.NumTriangles);
-  unsigned char *buf_ = (unsigned char *)malloc(bufsize_ * sizeof(*buf_));
+  const int bufsz_ = FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, mesh_.hdr.NumVertices, mesh_.hdr.NumTriangles);
+  unsigned char *buf_ = (unsigned char *)malloc(bufsz_ * sizeof(*buf_));
   if (!buf_)
     throw std::runtime_error("IoEncode_Fce4M: Cannot allocate memory");
-  if (!FCELIB_EncodeFce4M(&mesh_, &buf_, bufsize_, static_cast<int>(center_parts)))
+  if (!FCELIB_EncodeFce4M(&mesh_, &buf_, bufsz_, static_cast<int>(center_parts)))
     throw std::runtime_error("IoEncode_Fce4M: Cannot encode FCE4M");
-  py::bytes result = py::bytes((char *)buf_, bufsize_);
+  py::bytes result = py::bytes((char *)buf_, bufsz_);
   free(buf_);
   return result;
 }
@@ -313,28 +313,10 @@ void Mesh::MSetColors(py::array_t<unsigned char, py::array::c_style | py::array:
     mesh_.hdr.DriColors[i].transparency = ptr[i * 16 + 3 * 4 + 3];
   }
 
-  for (int i = nrows; i < 16; ++i)
-  {
-    mesh_.hdr.PriColors[i].hue          = 0;
-    mesh_.hdr.PriColors[i].saturation   = 0;
-    mesh_.hdr.PriColors[i].brightness   = 0;
-    mesh_.hdr.PriColors[i].transparency = 0;
-
-    mesh_.hdr.IntColors[i].hue          = 0;
-    mesh_.hdr.IntColors[i].saturation   = 0;
-    mesh_.hdr.IntColors[i].brightness   = 0;
-    mesh_.hdr.IntColors[i].transparency = 0;
-
-    mesh_.hdr.SecColors[i].hue          = 0;
-    mesh_.hdr.SecColors[i].saturation   = 0;
-    mesh_.hdr.SecColors[i].brightness   = 0;
-    mesh_.hdr.SecColors[i].transparency = 0;
-
-    mesh_.hdr.DriColors[i].hue          = 0;
-    mesh_.hdr.DriColors[i].saturation   = 0;
-    mesh_.hdr.DriColors[i].brightness   = 0;
-    mesh_.hdr.DriColors[i].transparency = 0;
-  }
+  memset(mesh_.hdr.PriColors + nrows, 0, (16 - nrows) * sizeof(mesh_.hdr.PriColors[0]));
+  memset(mesh_.hdr.IntColors + nrows, 0, (16 - nrows) * sizeof(mesh_.hdr.IntColors[0]));
+  memset(mesh_.hdr.SecColors + nrows, 0, (16 - nrows) * sizeof(mesh_.hdr.SecColors[0]));
+  memset(mesh_.hdr.DriColors + nrows, 0, (16 - nrows) * sizeof(mesh_.hdr.DriColors[0]));
 
   mesh_.hdr.NumColors = nrows;
   mesh_.hdr.NumSecColors = nrows;
@@ -415,10 +397,10 @@ int Mesh::PNumTriags(const int pid) const
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PNumTriags: failure");
 #endif
-  const int idx = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
-  if (idx < 0)
+  const int internal_pid = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
+  if (internal_pid < 0)
     throw std::out_of_range("PNumTriags: part index (pid) out of range");
-  return mesh_.parts[ mesh_.hdr.Parts[idx] ]->PNumTriangles;
+  return mesh_.parts[ mesh_.hdr.Parts[internal_pid] ]->PNumTriangles;
 }
 int Mesh::PNumVerts(const int pid) const
 {
@@ -426,10 +408,10 @@ int Mesh::PNumVerts(const int pid) const
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PNumVerts: failure");
 #endif
-  const int idx = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
-  if (idx < 0)
+  const int internal_pid = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
+  if (internal_pid < 0)
     throw std::out_of_range("PNumVerts: part index (pid) out of range");
-  return mesh_.parts[ mesh_.hdr.Parts[idx] ]->PNumVertices;
+  return mesh_.parts[ mesh_.hdr.Parts[internal_pid] ]->PNumVertices;
 }
 
 const std::string Mesh::PGetName(const int pid) const
@@ -438,10 +420,10 @@ const std::string Mesh::PGetName(const int pid) const
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetName: failure");
 #endif
-  const int idx = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
-  if (idx < 0)
+  const int internal_pid = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
+  if (internal_pid < 0)
     throw std::out_of_range("PGetName: part index (pid) out of range");
-  return std::string(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName);
+  return std::string(mesh_.parts[ mesh_.hdr.Parts[internal_pid] ]->PartName);
 }
 void Mesh::PSetName(const int pid, const std::string &s)
 {
@@ -449,11 +431,11 @@ void Mesh::PSetName(const int pid, const std::string &s)
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetName: failure");
 #endif
-  const int idx = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
-  if (idx < 0)
+  const int internal_pid = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
+  if (internal_pid < 0)
     throw std::out_of_range("PSetName: part index (pid) out of range");
-  strncpy(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName, s.c_str(),
-          sizeof(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName) - 1);  // max 63 chars
+  strncpy(mesh_.parts[ mesh_.hdr.Parts[internal_pid] ]->PartName, s.c_str(),
+          sizeof(mesh_.parts[ mesh_.hdr.Parts[internal_pid] ]->PartName) - 1);  // max 63 chars
 }
 
 py::buffer Mesh::PGetPos(const int pid) const
@@ -462,15 +444,15 @@ py::buffer Mesh::PGetPos(const int pid) const
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PGetPos: failure");
 #endif
-  const int idx = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
-  if (idx < 0)
+  const int internal_pid = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
+  if (internal_pid < 0)
     throw std::out_of_range("PGetPos: part index (pid) out of range");
 
   py::array_t<float> result = py::array_t<float>({ 3 }, {  });
   auto buf = result.mutable_unchecked<1>();
-  memcpy(&buf(0), &mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.x, sizeof(float));
-  memcpy(&buf(1), &mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.y, sizeof(float));
-  memcpy(&buf(2), &mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.z, sizeof(float));
+  memcpy(&buf(0), &mesh_.parts[ mesh_.hdr.Parts[internal_pid] ]->PartPos.x, sizeof(float));
+  memcpy(&buf(1), &mesh_.parts[ mesh_.hdr.Parts[internal_pid] ]->PartPos.y, sizeof(float));
+  memcpy(&buf(2), &mesh_.parts[ mesh_.hdr.Parts[internal_pid] ]->PartPos.z, sizeof(float));
   return result;
 }
 void Mesh::PSetPos(const int pid, py::array_t<float, py::array::c_style | py::array::forcecast> arr)
@@ -479,8 +461,8 @@ void Mesh::PSetPos(const int pid, py::array_t<float, py::array::c_style | py::ar
   if (!FCELIB_ValidateMesh(&mesh_))
     std::runtime_error("PSetPos: failure");
 #endif
-  const int idx = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
-  if (idx < 0)
+  const int internal_pid = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid);
+  if (internal_pid < 0)
     throw std::out_of_range("PSetPos: part index (pid) out of range");
 
   py::buffer_info buf = arr.request();
@@ -491,9 +473,9 @@ void Mesh::PSetPos(const int pid, py::array_t<float, py::array::c_style | py::ar
   if (buf.shape[0] != 3)
     throw std::runtime_error("PSetPos: Shape must be (3, )");
   ptr = static_cast<float *>(buf.ptr);
-  memcpy(&mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.x, ptr + 0, sizeof(float));
-  memcpy(&mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.y, ptr + 1, sizeof(float));
-  memcpy(&mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartPos.z, ptr + 2, sizeof(float));
+  memcpy(&mesh_.parts[ mesh_.hdr.Parts[internal_pid] ]->PartPos.x, ptr + 0, sizeof(float));
+  memcpy(&mesh_.parts[ mesh_.hdr.Parts[internal_pid] ]->PartPos.y, ptr + 1, sizeof(float));
+  memcpy(&mesh_.parts[ mesh_.hdr.Parts[internal_pid] ]->PartPos.z, ptr + 2, sizeof(float));
 }
 
 /* triags --------------------------- */
@@ -1056,11 +1038,11 @@ int Mesh::OpAddHelperPart(const std::string &s, py::array_t<float, py::array::c_
   if (pid_new < 0)
     throw std::runtime_error("OpAddHelperPart: Cannot add helper part");
   Mesh::PSetPos(pid_new, new_center);
-  const int idx = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid_new);
-  if (idx < 0)
+  const int internal_pid_new = FCELIB_GetInternalPartIdxByOrder(&mesh_, pid_new);
+  if (internal_pid_new < 0)
     throw std::out_of_range("OpAddHelperPart: part index (pid) out of range");
-  strncpy(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName, s.c_str(),
-          sizeof(mesh_.parts[ mesh_.hdr.Parts[idx] ]->PartName) - 1);  // max 63 chars
+  strncpy(mesh_.parts[ mesh_.hdr.Parts[internal_pid_new] ]->PartName, s.c_str(),
+          sizeof(mesh_.parts[ mesh_.hdr.Parts[internal_pid_new] ]->PartName) - 1);  // max 63 chars
   return pid_new;
 }
 

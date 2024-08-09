@@ -364,13 +364,13 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh *mesh)
 
 int FCELIB_TYPES_GetFirstUnusedGlobalPartIdx(const FcelibMesh *mesh)
 {
-  int pidx = mesh->parts_len - 1;
+  int pid = mesh->parts_len - 1;
 
-  while (pidx >= 0 && mesh->hdr.Parts[pidx] < 0)
-    --pidx;
-  ++pidx;
+  while (pid >= 0 && mesh->hdr.Parts[pid] < 0)
+    --pid;
+  ++pid;
 
-  return pidx;
+  return pid;
 }
 
 /* Assumes mesh->hdr.NumParts > 0 */
@@ -378,15 +378,15 @@ int FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(const FcelibMesh *mesh)
 {
   int tidx = -1;
   int i;
-  int pidx;
+  int pid;
   FcelibPart *part;
 
   for (i = 0; i < mesh->parts_len; ++i)
   {
-    pidx = mesh->hdr.Parts[i];
-    if (pidx < 0)
+    pid = mesh->hdr.Parts[i];
+    if (pid < 0)
       continue;
-    part = mesh->parts[pidx];
+    part = mesh->parts[pid];
     if (part->ptriangles_len > 0)
       tidx = -FCELIB_UTIL_Min(-tidx, -FCELIB_UTIL_ArrMax(part->PTriangles, part->ptriangles_len));
   }
@@ -399,15 +399,15 @@ int FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(const FcelibMesh *mesh)
 {
   int vidx = -1;
   int i;
-  int pidx;
+  int pid;
   FcelibPart *part;
 
   for (i = 0; i < mesh->parts_len; ++i)
   {
-    pidx = mesh->hdr.Parts[i];
-    if (pidx < 0)
+    pid = mesh->hdr.Parts[i];
+    if (pid < 0)
       continue;
-    part = mesh->parts[pidx];
+    part = mesh->parts[pid];
     if (part->pvertices_len > 0)
       vidx = -FCELIB_UTIL_Min(-vidx, -FCELIB_UTIL_ArrMax(part->PVertices, part->pvertices_len));
   }
@@ -432,7 +432,7 @@ int __FCELIB_TYPES_GetInternalIndex(int *indexes, const int indexes_len, const i
   return -1;
 }
 
-int FCELIB_TYPES_GetInternalTriangleIndex(FcelibMesh *mesh, const int internal_pidx, const int tidx)
+int FCELIB_TYPES_GetInternalTriangleIndex(FcelibMesh *mesh, const int internal_pid, const int tidx)
 {
   if ((mesh->state & kFceLibFlagTrianglesDirty) == 0)
   {
@@ -441,7 +441,7 @@ int FCELIB_TYPES_GetInternalTriangleIndex(FcelibMesh *mesh, const int internal_p
   else
   {
     int internal_idx = -1;
-    FcelibPart *part = mesh->parts[internal_pidx];
+    FcelibPart *part = mesh->parts[internal_pid];
     return __FCELIB_TYPES_GetInternalIndex(part->PTriangles, part->ptriangles_len, tidx);
   }
 }
@@ -450,7 +450,7 @@ int FCELIB_TYPES_GetInternalTriangleIndex(FcelibMesh *mesh, const int internal_p
 /* Returns -1 on failure. */
 int FCELIB_TYPES_GetInternalPartIdxByOrder(const FcelibMesh *mesh, const int order)
 {
-  int pidx = -1;
+  int pid = -1;
   int count;
 
   for (;;)
@@ -461,25 +461,25 @@ int FCELIB_TYPES_GetInternalPartIdxByOrder(const FcelibMesh *mesh, const int ord
       break;
     }
 
-    for (pidx = 0, count = -1; pidx < mesh->parts_len; ++pidx)
+    for (pid = 0, count = -1; pid < mesh->parts_len; ++pid)
     {
-      if (mesh->hdr.Parts[pidx] > -1)
+      if (mesh->hdr.Parts[pid] > -1)
         ++count;
       if (count == order)
         break;
     }
 
-    if (pidx == mesh->parts_len)
+    if (pid == mesh->parts_len)
     {
       fprintf(stderr, "GetInternalPartIdxByOrder: part %d not found\n", order);
-      pidx = -1;
+      pid = -1;
       break;
     }
 
     break;
   }
 
-  return pidx;
+  return pid;
 }
 
 /* Returns -1 on failure. */

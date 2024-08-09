@@ -29,8 +29,10 @@
 #define FCELIB_UTIL_Fce3PartsImplemented 13
 #define FCELIB_UTIL_Fce4PartsHighBody 18
 
-/* Represent FCE dummies (light/fx objects)
-   Mainly used for OBJ output, hence kTrianglesDiamond has 1-based indexes. */
+/*
+  Represent FCE dummies (light/fx objects)
+  Mainly used for OBJ output, hence kTrianglesDiamond has 1-based indexes.
+*/
 static
 const float kVertDiamond[6 * 3] = {
   1.0,  0.0,  0.0,

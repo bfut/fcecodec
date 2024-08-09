@@ -143,7 +143,7 @@ int __FCELIB_IO_DECODE_GETPARTS(FcelibMesh *mesh, const char *header_PartNames, 
   Assumes (mesh != NULL). Silently releases and re-initializes existing mesh.
   Assumes valid FCE data.
 */
-int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size)
+int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *inbuf, int inbufsz)
 {
   int retv = 0;
   int i;
@@ -153,9 +153,9 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
 
   for (;;)
   {
-    if (!buf || buf_size <= 0)
+    if (!inbuf || inbufsz <= 0)
     {
-      fprintf(stderr, "DecodeFce: buf is NULL\n");
+      fprintf(stderr, "DecodeFce: inbuf is NULL\n");
       break;
     }
 
@@ -171,53 +171,53 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
     }
 #endif
 
-    if (buf_size < 0x1F04)
+    if (inbufsz < 0x1F04)
     {
       fprintf(stderr, "DecodeFce: Format error: header too small\n");
       break;
     }
 
-    memcpy(&fce_version, buf, 4);
+    memcpy(&fce_version, inbuf, 4);
 
     switch (fce_version)
     {
       case 0x00101014: case 0x00101015:
       {
         const int kHdrSize = 0x2038;
-        FceHeader4 header;
+        FceHeader4 hdr;
 
-        if (buf_size < kHdrSize)
+        if (inbufsz < kHdrSize)
         {
           fprintf(stderr, "DecodeFce: Format error: header too small\n");
           break;
         }
 
-        header = FCELIB_FCETYPES_GetFceHeader4(buf);
+        FCELIB_FCETYPES_GetFceHeader4(&hdr, inbuf);
 
-        if (!FCELIB_FCETYPES_Fce4ValidateHeader(buf_size, buf, &header))
+        if (!FCELIB_FCETYPES_Fce4ValidateHeader(&hdr, inbuf, inbufsz))
           return 0;
 
         /* Header ----------------------------------------------------------- */
           /* NumTriangles - counted below */
           /* NumVertices - counted below */
-        mesh->hdr.NumArts = header.NumArts;
+        mesh->hdr.NumArts = hdr.NumArts;
         if (fce_version == 0x00101015)
-          mesh->hdr.Unknown3 = header.Unknown3;  /* FCE4M experimental */
-        mesh->hdr.NumParts = header.NumParts;
+          mesh->hdr.Unknown3 = hdr.Unknown3;  /* FCE4M experimental */
+        mesh->hdr.NumParts = hdr.NumParts;
         mesh->parts_len = mesh->hdr.NumParts;
 
-        mesh->hdr.NumDummies = header.NumDummies;
+        mesh->hdr.NumDummies = hdr.NumDummies;
         for (i = 0; i < mesh->hdr.NumDummies; ++i)
         {
-          memcpy(&mesh->hdr.Dummies[i].x, buf + 0x005c + i * 12 + 0x0, 4);
-          memcpy(&mesh->hdr.Dummies[i].y, buf + 0x005c + i * 12 + 0x4, 4);
-          memcpy(&mesh->hdr.Dummies[i].z, buf + 0x005c + i * 12 + 0x8, 4);
+          memcpy(&mesh->hdr.Dummies[i].x, inbuf + 0x005c + i * 12 + 0x0, 4);
+          memcpy(&mesh->hdr.Dummies[i].y, inbuf + 0x005c + i * 12 + 0x4, 4);
+          memcpy(&mesh->hdr.Dummies[i].z, inbuf + 0x005c + i * 12 + 0x8, 4);
         }
-        memcpy(&mesh->hdr.DummyNames, buf + 0x0a28, 16 * 64);
+        memcpy(&mesh->hdr.DummyNames, inbuf + 0x0a28, 16 * 64);
         for (i = 0; i < 15; ++i)
           mesh->hdr.DummyNames[(i + 1) * 64 - 1] = '\0';  /* ensure strings */
 
-        mesh->hdr.NumColors = header.NumColors;
+        mesh->hdr.NumColors = hdr.NumColors;
         if (fce_version == 0x00101015)
         {
           if (mesh->hdr.NumColors > 16)
@@ -228,32 +228,32 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
         mesh->hdr.NumSecColors = mesh->hdr.NumColors;
         for (i = 0; i < mesh->hdr.NumColors; ++i)
         {
-          memcpy(&mesh->hdr.PriColors[i].hue,          buf + 0x0824 + i * 4 + 0x0, 1);
-          memcpy(&mesh->hdr.PriColors[i].saturation,   buf + 0x0824 + i * 4 + 0x1, 1);
-          memcpy(&mesh->hdr.PriColors[i].brightness,   buf + 0x0824 + i * 4 + 0x2, 1);
-          memcpy(&mesh->hdr.PriColors[i].transparency, buf + 0x0824 + i * 4 + 0x3, 1);
+          memcpy(&mesh->hdr.PriColors[i].hue,          inbuf + 0x0824 + i * 4 + 0x0, 1);
+          memcpy(&mesh->hdr.PriColors[i].saturation,   inbuf + 0x0824 + i * 4 + 0x1, 1);
+          memcpy(&mesh->hdr.PriColors[i].brightness,   inbuf + 0x0824 + i * 4 + 0x2, 1);
+          memcpy(&mesh->hdr.PriColors[i].transparency, inbuf + 0x0824 + i * 4 + 0x3, 1);
 
-          memcpy(&mesh->hdr.IntColors[i].hue,          buf + 0x0864 + i * 4 + 0x0, 1);
-          memcpy(&mesh->hdr.IntColors[i].saturation,   buf + 0x0864 + i * 4 + 0x1, 1);
-          memcpy(&mesh->hdr.IntColors[i].brightness,   buf + 0x0864 + i * 4 + 0x2, 1);
-          memcpy(&mesh->hdr.IntColors[i].transparency, buf + 0x0864 + i * 4 + 0x3, 1);
+          memcpy(&mesh->hdr.IntColors[i].hue,          inbuf + 0x0864 + i * 4 + 0x0, 1);
+          memcpy(&mesh->hdr.IntColors[i].saturation,   inbuf + 0x0864 + i * 4 + 0x1, 1);
+          memcpy(&mesh->hdr.IntColors[i].brightness,   inbuf + 0x0864 + i * 4 + 0x2, 1);
+          memcpy(&mesh->hdr.IntColors[i].transparency, inbuf + 0x0864 + i * 4 + 0x3, 1);
 
-          memcpy(&mesh->hdr.SecColors[i].hue,          buf + 0x08a4 + i * 4 + 0x0, 1);
-          memcpy(&mesh->hdr.SecColors[i].saturation,   buf + 0x08a4 + i * 4 + 0x1, 1);
-          memcpy(&mesh->hdr.SecColors[i].brightness,   buf + 0x08a4 + i * 4 + 0x2, 1);
-          memcpy(&mesh->hdr.SecColors[i].transparency, buf + 0x08a4 + i * 4 + 0x3, 1);
+          memcpy(&mesh->hdr.SecColors[i].hue,          inbuf + 0x08a4 + i * 4 + 0x0, 1);
+          memcpy(&mesh->hdr.SecColors[i].saturation,   inbuf + 0x08a4 + i * 4 + 0x1, 1);
+          memcpy(&mesh->hdr.SecColors[i].brightness,   inbuf + 0x08a4 + i * 4 + 0x2, 1);
+          memcpy(&mesh->hdr.SecColors[i].transparency, inbuf + 0x08a4 + i * 4 + 0x3, 1);
 
-          memcpy(&mesh->hdr.DriColors[i].hue,          buf + 0x08e4 + i * 4 + 0x0, 1);
-          memcpy(&mesh->hdr.DriColors[i].saturation,   buf + 0x08e4 + i * 4 + 0x1, 1);
-          memcpy(&mesh->hdr.DriColors[i].brightness,   buf + 0x08e4 + i * 4 + 0x2, 1);
-          memcpy(&mesh->hdr.DriColors[i].transparency, buf + 0x08e4 + i * 4 + 0x3, 1);
+          memcpy(&mesh->hdr.DriColors[i].hue,          inbuf + 0x08e4 + i * 4 + 0x0, 1);
+          memcpy(&mesh->hdr.DriColors[i].saturation,   inbuf + 0x08e4 + i * 4 + 0x1, 1);
+          memcpy(&mesh->hdr.DriColors[i].brightness,   inbuf + 0x08e4 + i * 4 + 0x2, 1);
+          memcpy(&mesh->hdr.DriColors[i].transparency, inbuf + 0x08e4 + i * 4 + 0x3, 1);
         }
 
         /* Parts ------------------------------------------------------------ */
         __FCELIB_IO_DECODE_HASPARTS(&retv, mesh);
         if (retv == 1)
           break;
-        if (!__FCELIB_IO_DECODE_GETPARTS(mesh, header.PartNames, header.PartPos, header.PNumVertices, header.PNumTriangles))
+        if (!__FCELIB_IO_DECODE_GETPARTS(mesh, hdr.PartNames, hdr.PartPos, hdr.PNumVertices, hdr.PNumTriangles))
           break;
 
         /* Triangles -------------------------------------------------------- */
@@ -290,16 +290,16 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
               break;
             }
 
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->tex_page, buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x00, 4);
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->vidx,     buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x04, 12);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->tex_page, inbuf + kHdrSize + hdr.TriaTblOffset + (j + hdr.P1stTriangles[i]) * 56 + 0x00, 4);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->vidx,     inbuf + kHdrSize + hdr.TriaTblOffset + (j + hdr.P1stTriangles[i]) * 56 + 0x04, 12);
 
             /* Globalize vert index references */
             for (n = 0; n < 3; ++n)
               mesh->triangles[mesh->hdr.NumTriangles]->vidx[n] += mesh->hdr.NumVertices;
 
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->flag, buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x1C, 4);
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->U,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x20, 12);
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->V,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x2C, 12);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->flag, inbuf + kHdrSize + hdr.TriaTblOffset + (j + hdr.P1stTriangles[i]) * 56 + 0x1C, 4);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->U,    inbuf + kHdrSize + hdr.TriaTblOffset + (j + hdr.P1stTriangles[i]) * 56 + 0x20, 12);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->V,    inbuf + kHdrSize + hdr.TriaTblOffset + (j + hdr.P1stTriangles[i]) * 56 + 0x2C, 12);
 
             /* if (fce_version == 0x00101014) */
             {
@@ -339,23 +339,23 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
               break;
             }
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.x, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.y, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.z, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.x, inbuf + kHdrSize + hdr.VertTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.y, inbuf + kHdrSize + hdr.VertTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.z, inbuf + kHdrSize + hdr.VertTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.x, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.y, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.z, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.x, inbuf + kHdrSize + hdr.NormTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.y, inbuf + kHdrSize + hdr.NormTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.z, inbuf + kHdrSize + hdr.NormTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.x, buf + kHdrSize + header.DamgdVertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.y, buf + kHdrSize + header.DamgdVertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.z, buf + kHdrSize + header.DamgdVertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.x, inbuf + kHdrSize + hdr.DamgdVertTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.y, inbuf + kHdrSize + hdr.DamgdVertTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.z, inbuf + kHdrSize + hdr.DamgdVertTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.x, buf + kHdrSize + header.DamgdNormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.y, buf + kHdrSize + header.DamgdNormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.z, buf + kHdrSize + header.DamgdNormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.x, inbuf + kHdrSize + hdr.DamgdNormTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.y, inbuf + kHdrSize + hdr.DamgdNormTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.z, inbuf + kHdrSize + hdr.DamgdNormTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->Animation, buf + kHdrSize + header.AnimationTblOffset + (j + header.P1stVertices[i]) * 4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->Animation, inbuf + kHdrSize + hdr.AnimationTblOffset + (j + hdr.P1stVertices[i]) * 4, 4);
 
             ++mesh->hdr.NumVertices;
           }
@@ -368,64 +368,65 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
       default:  /* FCE3 */
       {
         const int kHdrSize = 0x1F04;
-        FceHeader3 header = FCELIB_FCETYPES_GetFceHeader3(buf);
+        FceHeader3 hdr;
+        FCELIB_FCETYPES_GetFceHeader3(&hdr, inbuf);
 
-        if (!FCELIB_FCETYPES_Fce3ValidateHeader(buf_size, buf, &header))
+        if (!FCELIB_FCETYPES_Fce3ValidateHeader(&hdr, inbuf, inbufsz))
           return 0;
 
         /* Header ----------------------------------------------------------- */
           /* NumTriangles - counted below */
           /* NumVertices - counted below */
-        mesh->hdr.NumArts = header.NumArts;
-        mesh->hdr.NumParts = header.NumParts;
+        mesh->hdr.NumArts = hdr.NumArts;
+        mesh->hdr.NumParts = hdr.NumParts;
         mesh->parts_len = mesh->hdr.NumParts;
 
-        mesh->hdr.NumDummies = header.NumDummies;
+        mesh->hdr.NumDummies = hdr.NumDummies;
         for (i = 0; i < mesh->hdr.NumDummies; ++i)
         {
-          memcpy(&mesh->hdr.Dummies[i].x, buf + 0x0038 + i * 12 + 0x0, 4);
-          memcpy(&mesh->hdr.Dummies[i].y, buf + 0x0038 + i * 12 + 0x4, 4);
-          memcpy(&mesh->hdr.Dummies[i].z, buf + 0x0038 + i * 12 + 0x8, 4);
+          memcpy(&mesh->hdr.Dummies[i].x, inbuf + 0x0038 + i * 12 + 0x0, 4);
+          memcpy(&mesh->hdr.Dummies[i].y, inbuf + 0x0038 + i * 12 + 0x4, 4);
+          memcpy(&mesh->hdr.Dummies[i].z, inbuf + 0x0038 + i * 12 + 0x8, 4);
         }
-        memcpy(&mesh->hdr.DummyNames, buf + 0x0A04, 16 * 64);
+        memcpy(&mesh->hdr.DummyNames, inbuf + 0x0A04, 16 * 64);
         for (i = 0; i < 15; ++i)
           mesh->hdr.DummyNames[(i + 1) * 64 - 1] = '\0';  /* ensure strings */
 
-        mesh->hdr.NumColors = header.NumPriColors;
+        mesh->hdr.NumColors = hdr.NumPriColors;
         for (i = 0; i < mesh->hdr.NumColors; ++i)
         {
           /* unsigned char from little-endian int */
-          memcpy(&mesh->hdr.PriColors[i].hue,          buf + 0x0800 + i * 16 + 0x0, 1);
-          memcpy(&mesh->hdr.PriColors[i].saturation,   buf + 0x0800 + i * 16 + 0x4, 1);
-          memcpy(&mesh->hdr.PriColors[i].brightness,   buf + 0x0800 + i * 16 + 0x8, 1);
-          memcpy(&mesh->hdr.PriColors[i].transparency, buf + 0x0800 + i * 16 + 0xC, 1);
+          memcpy(&mesh->hdr.PriColors[i].hue,          inbuf + 0x0800 + i * 16 + 0x0, 1);
+          memcpy(&mesh->hdr.PriColors[i].saturation,   inbuf + 0x0800 + i * 16 + 0x4, 1);
+          memcpy(&mesh->hdr.PriColors[i].brightness,   inbuf + 0x0800 + i * 16 + 0x8, 1);
+          memcpy(&mesh->hdr.PriColors[i].transparency, inbuf + 0x0800 + i * 16 + 0xC, 1);
 
-          memcpy(&mesh->hdr.DriColors[i].hue,          buf + 0x0800 + i * 16 + 0x0, 1);
-          memcpy(&mesh->hdr.DriColors[i].saturation,   buf + 0x0800 + i * 16 + 0x4, 1);
-          memcpy(&mesh->hdr.DriColors[i].brightness,   buf + 0x0800 + i * 16 + 0x8, 1);
-          memcpy(&mesh->hdr.DriColors[i].transparency, buf + 0x0800 + i * 16 + 0xC, 1);
+          memcpy(&mesh->hdr.DriColors[i].hue,          inbuf + 0x0800 + i * 16 + 0x0, 1);
+          memcpy(&mesh->hdr.DriColors[i].saturation,   inbuf + 0x0800 + i * 16 + 0x4, 1);
+          memcpy(&mesh->hdr.DriColors[i].brightness,   inbuf + 0x0800 + i * 16 + 0x8, 1);
+          memcpy(&mesh->hdr.DriColors[i].transparency, inbuf + 0x0800 + i * 16 + 0xC, 1);
         }
 
-        mesh->hdr.NumSecColors = header.NumSecColors;
+        mesh->hdr.NumSecColors = hdr.NumSecColors;
         for (i = 0; i < mesh->hdr.NumSecColors; ++i)
         {
           /* unsigned char from little-endian int */
-          memcpy(&mesh->hdr.SecColors[i].hue,          buf + 0x0904 + i * 16 + 0x0, 1);
-          memcpy(&mesh->hdr.SecColors[i].saturation,   buf + 0x0904 + i * 16 + 0x4, 1);
-          memcpy(&mesh->hdr.SecColors[i].brightness,   buf + 0x0904 + i * 16 + 0x8, 1);
-          memcpy(&mesh->hdr.SecColors[i].transparency, buf + 0x0904 + i * 16 + 0xC, 1);
+          memcpy(&mesh->hdr.SecColors[i].hue,          inbuf + 0x0904 + i * 16 + 0x0, 1);
+          memcpy(&mesh->hdr.SecColors[i].saturation,   inbuf + 0x0904 + i * 16 + 0x4, 1);
+          memcpy(&mesh->hdr.SecColors[i].brightness,   inbuf + 0x0904 + i * 16 + 0x8, 1);
+          memcpy(&mesh->hdr.SecColors[i].transparency, inbuf + 0x0904 + i * 16 + 0xC, 1);
 
-          memcpy(&mesh->hdr.IntColors[i].hue,          buf + 0x0904 + i * 16 + 0x0, 1);
-          memcpy(&mesh->hdr.IntColors[i].saturation,   buf + 0x0904 + i * 16 + 0x4, 1);
-          memcpy(&mesh->hdr.IntColors[i].brightness,   buf + 0x0904 + i * 16 + 0x8, 1);
-          memcpy(&mesh->hdr.IntColors[i].transparency, buf + 0x0904 + i * 16 + 0xC, 1);
+          memcpy(&mesh->hdr.IntColors[i].hue,          inbuf + 0x0904 + i * 16 + 0x0, 1);
+          memcpy(&mesh->hdr.IntColors[i].saturation,   inbuf + 0x0904 + i * 16 + 0x4, 1);
+          memcpy(&mesh->hdr.IntColors[i].brightness,   inbuf + 0x0904 + i * 16 + 0x8, 1);
+          memcpy(&mesh->hdr.IntColors[i].transparency, inbuf + 0x0904 + i * 16 + 0xC, 1);
         }
 
         /* Parts ------------------------------------------------------------ */
         __FCELIB_IO_DECODE_HASPARTS(&retv, mesh);
         if (retv == 1)
           break;
-        if (!__FCELIB_IO_DECODE_GETPARTS(mesh, header.PartNames, header.PartPos, header.PNumVertices, header.PNumTriangles))
+        if (!__FCELIB_IO_DECODE_GETPARTS(mesh, hdr.PartNames, hdr.PartPos, hdr.PNumVertices, hdr.PNumTriangles))
           break;
 
         /* Triangles -------------------------------------------------------- */
@@ -462,16 +463,16 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
               break;
             }
 
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->tex_page, buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x00, 4);
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->vidx,     buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x04, 12);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->tex_page, inbuf + kHdrSize + hdr.TriaTblOffset + (j + hdr.P1stTriangles[i]) * 56 + 0x00, 4);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->vidx,     inbuf + kHdrSize + hdr.TriaTblOffset + (j + hdr.P1stTriangles[i]) * 56 + 0x04, 12);
 
             /* Globalize vert index references */
             for (n = 0; n < 3; ++n)
               mesh->triangles[mesh->hdr.NumTriangles]->vidx[n] += mesh->hdr.NumVertices;
 
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->flag, buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x1C, 4);
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->U,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x20, 12);
-            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->V,    buf + kHdrSize + header.TriaTblOffset + (j + header.P1stTriangles[i]) * 56 + 0x2C, 12);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->flag, inbuf + kHdrSize + hdr.TriaTblOffset + (j + hdr.P1stTriangles[i]) * 56 + 0x1C, 4);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->U,    inbuf + kHdrSize + hdr.TriaTblOffset + (j + hdr.P1stTriangles[i]) * 56 + 0x20, 12);
+            memcpy(&mesh->triangles[mesh->hdr.NumTriangles]->V,    inbuf + kHdrSize + hdr.TriaTblOffset + (j + hdr.P1stTriangles[i]) * 56 + 0x2C, 12);
 
             ++mesh->hdr.NumTriangles;
           }
@@ -505,21 +506,21 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
               break;
             }
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.x, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.y, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.z, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.x, inbuf + kHdrSize + hdr.VertTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.y, inbuf + kHdrSize + hdr.VertTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->VertPos.z, inbuf + kHdrSize + hdr.VertTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.x, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.y, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.z, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.x, inbuf + kHdrSize + hdr.NormTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.y, inbuf + kHdrSize + hdr.NormTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->NormPos.z, inbuf + kHdrSize + hdr.NormTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.x, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.y, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.z, buf + kHdrSize + header.VertTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.x, inbuf + kHdrSize + hdr.VertTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.y, inbuf + kHdrSize + hdr.VertTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdVertPos.z, inbuf + kHdrSize + hdr.VertTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x8, 4);
 
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.x, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x0, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.y, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x4, 4);
-            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.z, buf + kHdrSize + header.NormTblOffset + (j + header.P1stVertices[i]) * 12 + 0x8, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.x, inbuf + kHdrSize + hdr.NormTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x0, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.y, inbuf + kHdrSize + hdr.NormTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x4, 4);
+            memcpy(&mesh->vertices[mesh->hdr.NumVertices]->DamgdNormPos.z, inbuf + kHdrSize + hdr.NormTblOffset + (j + hdr.P1stVertices[i]) * 12 + 0x8, 4);
 
             mesh->vertices[mesh->hdr.NumVertices]->Animation = 0x0;
 
@@ -1068,7 +1069,7 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
 
   If center_parts == 1, centroids and vert positions will be recalculated and reset for all parts. This would change *mesh.
 */
-int FCELIB_IO_EncodeFce3(FcelibMesh *mesh, unsigned char **outbuf, const int outbuf_size, const int center_parts)
+int FCELIB_IO_EncodeFce3(FcelibMesh *mesh, unsigned char **outbuf, const int outbufsz, const int center_parts)
 {
   int retv = 0;
   int i;
@@ -1087,9 +1088,9 @@ int FCELIB_IO_EncodeFce3(FcelibMesh *mesh, unsigned char **outbuf, const int out
   {
     {
       const int fsize = FCELIB_FCETYPES_Fce3ComputeSize(mesh->hdr.NumVertices, mesh->hdr.NumTriangles);
-      if (outbuf_size < fsize)
+      if (outbufsz < fsize)
       {
-        fprintf(stderr, "EncodeFce3: Buffer too small (expects buf_size >= %d)\n", fsize);
+        fprintf(stderr, "EncodeFce3: Buffer too small (expects outbufsz >= %d)\n", fsize);
         break;
       }
     }
@@ -1101,7 +1102,7 @@ int FCELIB_IO_EncodeFce3(FcelibMesh *mesh, unsigned char **outbuf, const int out
       break;
     }
 
-    memset(*outbuf, 0, outbuf_size * sizeof(**outbuf));
+    memset(*outbuf, 0, outbufsz * sizeof(**outbuf));
 
     /* Header --------------------------------------------------------------- */
     /* tmp = 0;
@@ -1366,8 +1367,7 @@ int FCELIB_IO_EncodeFce3(FcelibMesh *mesh, unsigned char **outbuf, const int out
 
   If center_parts == 1, centroids and vert positions will be recalculated and reset for all parts. This would change *mesh.
 */
-int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int buf_size,
-                         const int center_parts, const int fce_version)
+int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int outbufsz, const int center_parts, const int fce_version)
 {
   int retv = 0;
   int *global_mesh_to_local_fce_idxs = NULL;
@@ -1385,9 +1385,9 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int buf
   {
     {
       const int fsize = FCELIB_FCETYPES_Fce4ComputeSize(fce_version, mesh->hdr.NumVertices, mesh->hdr.NumTriangles);
-      if (buf_size < fsize)
+      if (outbufsz < fsize)
       {
-        fprintf(stderr, "EncodeFce4: Buffer too small (expects buf_size >= %d)\n", fsize);
+        fprintf(stderr, "EncodeFce4: Buffer too small (expects outbufsz >= %d)\n", fsize);
         break;
       }
     }
@@ -1399,7 +1399,7 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int buf
       break;
     }
 
-    memset(*outbuf, 0, buf_size * sizeof(**outbuf));
+    memset(*outbuf, 0, outbufsz * sizeof(**outbuf));
 
     /* Header --------------------------------------------------------------- */
     if (fce_version == 0x00101015)
@@ -1799,7 +1799,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
                                 const float *vert_pos, const int vert_pos_len,  /* M*3, M verts */
                                 const float *normals, const int normals_len)  /* M*3 */
 {
-  int new_pid = -1;
+  int internal_pid_new = -1;
   FcelibPart *part = NULL;
   FcelibTriangle *triag;
   FcelibVertex *vert;
@@ -1859,8 +1859,8 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     }
 
     /* Get first unused index */
-    new_pid = FCELIB_TYPES_GetFirstUnusedGlobalPartIdx(mesh);
-    if (new_pid > 0)
+    internal_pid_new = FCELIB_TYPES_GetFirstUnusedGlobalPartIdx(mesh);
+    if (internal_pid_new > 0)
     {
       tidx_1st = FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(mesh);
       vidx_1st = FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(mesh);
@@ -1872,11 +1872,11 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     }
 
     /* Add part */
-    mesh->hdr.Parts[new_pid] = 1 + FCELIB_UTIL_ArrMax(mesh->hdr.Parts, mesh->parts_len);
-    if (mesh->hdr.Parts[new_pid] < 0)
+    mesh->hdr.Parts[internal_pid_new] = 1 + FCELIB_UTIL_ArrMax(mesh->hdr.Parts, mesh->parts_len);
+    if (mesh->hdr.Parts[internal_pid_new] < 0)
     {
       fprintf(stderr, "GeomDataToNewPart: Cannot set new part index\n");
-      new_pid = -1;
+      internal_pid_new = -1;
       break;
     }
 
@@ -1884,14 +1884,14 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     if (!part)
     {
       fprintf(stderr, "GeomDataToNewPart: Cannot allocate memory (part)\n");
-      new_pid = -1;
+      internal_pid_new = -1;
       break;
     }
     memset(part, 0, sizeof(*part));
 
-    mesh->parts[ mesh->hdr.Parts[new_pid] ] = part;
+    mesh->parts[ mesh->hdr.Parts[internal_pid_new] ] = part;
 
-    sprintf(part->PartName, "IoGeomDataToNewPart_%d", new_pid);  /* unlikely to exceed 63 characters */
+    sprintf(part->PartName, "IoGeomDataToNewPart_%d", internal_pid_new);  /* unlikely to exceed 63 characters */
 
     part->PNumVertices = (int)(vert_pos_len / 3);
     part->PNumTriangles = (int)(vert_idxs_len / 3);
@@ -1901,7 +1901,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     /* Add triangles */
     if (!FCELIB_TYPES_AddTrianglesToPart(part, part->PNumTriangles))
     {
-      new_pid = -1;
+      internal_pid_new = -1;
       break;
     }
     if (mesh->triangles_len < tidx_1st + part->PNumTriangles)
@@ -1910,7 +1910,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       {
         /* this is a fatal error */
         fprintf(stderr, "GeomDataToNewPart: Cannot add triangles\n");
-        new_pid = -1;
+        internal_pid_new = -1;
         break;
       }
     }
@@ -1926,7 +1926,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       {
         /* this is a fatal error */
         fprintf(stderr, "GeomDataToNewPart: Cannot allocate memory (triag)\n");
-        new_pid = -1;
+        internal_pid_new = -1;
         break;
       }
       triag->tex_page = 0x0;  /* default: textured */
@@ -1937,13 +1937,13 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       memcpy(triag->U, vert_texcoords + j * 6 + 0, 3 * sizeof(float));
       memcpy(triag->V, vert_texcoords + j * 6 + 3, 3 * sizeof(float));
     }
-    if (new_pid < 0)
+    if (internal_pid_new < 0)
       break;
 
     /* Add vertices */
     if (!FCELIB_TYPES_AddVerticesToPart(part, part->PNumVertices))
     {
-      new_pid = -1;
+      internal_pid_new = -1;
       break;
     }
     if (mesh->vertices_len < vidx_1st + part->PNumVertices)
@@ -1952,7 +1952,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       {
         /* this is a fatal error */
         fprintf(stderr, "GeomDataToNewPart: Cannot add vertices\n");
-        new_pid = -1;
+        internal_pid_new = -1;
         break;
       }
     }
@@ -1967,7 +1967,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       if (!vert)
       {
         fprintf(stderr, "GeomDataToNewPart: Cannot allocate memory (vert)\n");
-        new_pid = -1;
+        internal_pid_new = -1;
         break;
       }
       memcpy(&vert->VertPos.x, vert_pos + j * 3 + 0, sizeof(float));
@@ -1984,21 +1984,22 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       memcpy(&vert->DamgdNormPos.z, normals + j * 3 + 2, sizeof(float));
       vert->Animation = 0x0;  /* default: not immovable */
     }
-    if (new_pid < 0)
+    if (internal_pid_new < 0)
       break;
 
-    new_pid = FCELIB_TYPES_GetOrderByInternalPartIdx(mesh, mesh->hdr.Parts[new_pid]);
-    if (new_pid < 0)
+    return FCELIB_TYPES_GetOrderByInternalPartIdx(mesh, mesh->hdr.Parts[internal_pid_new]);  /* inconveniently, might fail and return -1 */
+#if 0
+    if (internal_pid_new < 0)
     {
-      /* this is inconvenient but not a fatal error itself */
-      fprintf(stderr, "GeomDataToNewPart: Cannot get new_pid\n");
+      /* this is inconvenient but not a fatal error */
+      fprintf(stderr, "GeomDataToNewPart: Cannot get new part idx\n");
       break;
     }
-
     break;
+#endif
   }
 
-  return new_pid;
+  return internal_pid_new;
 }
 
 #endif  /* FCELIB_IO_H_ */
