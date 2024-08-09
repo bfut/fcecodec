@@ -100,12 +100,6 @@ struct FcelibHeader {
 };
 
 struct FcelibMesh {
-#ifdef __cplusplus
-  int              _consumed = 0;      /* previously decoded? yes/no 1/0, internal fcelib use only */
-#else
-  int              _consumed;          /* previously decoded? yes/no 1/0, internal fcelib use only */
-#endif
-
   int              parts_len;          /* capacity: array length */
   int              triangles_len;      /* capacity: array length */
   int              vertices_len;       /* capacity: array length */
@@ -125,11 +119,7 @@ struct FcelibMesh {
   FcelibTriangle **triangles;      /* may contain NULL elements */
   FcelibVertex   **vertices;       /* may contain NULL elements */
 
-#ifdef __cplusplus
-  void           (*release)(struct FcelibMesh*) = NULL;
-#else
   void           (*release)(struct FcelibMesh*);
-#endif
 };
 
 #ifdef __cplusplus
@@ -138,7 +128,11 @@ struct FcelibMesh {
 
 /* release, init, validate -------------------------------------------------- */
 
-/* Call via mesh->release(), never directly. */
+/*
+  Call via mesh->release(), never directly.
+
+  Afterwards (!mesh->release).
+*/
 void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
 {
   int i;
@@ -184,17 +178,11 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
   if (mesh->triangles)  free(mesh->triangles);
   if (mesh->vertices)  free(mesh->vertices);
 
-#ifdef __cplusplus
-  *mesh = {};
-#else
-  memset(mesh, 0, sizeof(*mesh));
-#endif
+  mesh->release = NULL;
 }
 
 /*
-  Assumes (mesh != NULL). Silently re-initializes.
-
-  C API: mesh must have been initialized
+  Assumes (mesh). memset's mesh to 0. Silently re-initializes.
 */
 FcelibMesh *FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
 {
@@ -202,21 +190,10 @@ FcelibMesh *FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
 #ifdef __cplusplus
   if (mesh->release == &FCELIB_TYPES_FreeMesh)
     mesh->release(mesh);
-  if (mesh->release && mesh->release != &FCELIB_TYPES_FreeMesh)
-  {
-    fprintf(stderr, "InitMesh: mesh is not free and cannot be initialized.\n");
-    return NULL;
-  }
 #endif
 #endif
 
-#ifdef __cplusplus
-  *mesh = {};
-#else
   memset(mesh, 0, sizeof(*mesh));
-  /* array_dirty = 0; */
-#endif
-
   mesh->hdr.NumArts = 1;
   mesh->release = &FCELIB_TYPES_FreeMesh;
   return mesh;
@@ -232,10 +209,7 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh *mesh)
   int sum_verts = 0;
   FcelibPart *part = NULL;
 
-  if (!mesh->release)
-    return 0;
-  if (mesh->release != &FCELIB_TYPES_FreeMesh)
-    return 0;
+  if (!mesh->release || mesh->release != &FCELIB_TYPES_FreeMesh)  return 0;
 
   if (mesh->parts_len == 0     && !mesh->parts     && !mesh->hdr.Parts &&
       mesh->triangles_len == 0 && !mesh->triangles &&

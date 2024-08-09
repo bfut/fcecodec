@@ -26,13 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef __cplusplus
-enum { kFceLibImplementedFce3Parts = 13 };
-enum { kFceLibNumFce4HiBodyParts = 18 };
-#else
-static const int kFceLibImplementedFce3Parts = 13;
-static const int kFceLibNumFce4HiBodyParts = 18;
-#endif
+#define kFceLibImplementedFce3Parts 13
+#define kFceLibNumFce4HiBodyParts 18
 
 /* Represent FCE dummies (light/fx objects)
    Mainly used for OBJ output, hence kTrianglesDiamond has 1-based indexes. */
@@ -58,10 +53,8 @@ const int kTrianglesDiamond[8 * 3] = {
   4, 5, 1
 };
 
-#ifndef FCELIB_UTIL_Min
 #define FCELIB_UTIL_Min(x,y) ((x)<(y)?(x):(y))
 #define FCELIB_UTIL_Abs(x) ((x)<0 ? -(x) : (x))
-#endif
 
 const char *FCELIB_UTIL_GetLastSlash(const char *path)
 {

@@ -51,5 +51,4 @@ __Website:__ <https://github.com/bfut/fcecodec>
 Third party licenses
 
 __sclpython.h:__ zlib License<br/>
-__fcecodec scripts:__ zlib License<br/>
-__bfut_mywrappers.py:__ zlib License
+__fcecodec scripts:__ zlib License

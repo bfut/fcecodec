@@ -59,6 +59,7 @@ else:
         # # debug
         # ("-g"), ("-O0"),
         # ("-pedantic-errors"),
+        ("-pedantic"),
         ("-fvisibility=hidden"),  # sets the default symbol visibility to hidden
         ("-Wformat-security"),
         ("-Wdeprecated-declarations"),

@@ -142,8 +142,6 @@ int __FCELIB_IO_DECODE_GETPARTS(FcelibMesh *mesh, const char *header_PartNames, 
   Params: FCE buffer, FcelibMesh. Returns bool.
   Assumes (mesh != NULL). Silently releases and re-initializes existing mesh.
   Assumes valid FCE data.
-
-  C API: mesh must have been initialized
 */
 int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size)
 {
@@ -161,24 +159,17 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *buf, int buf_size
       break;
     }
 
-#ifdef __cplusplus
-    if (mesh->_consumed && mesh->release == &FCELIB_TYPES_FreeMesh)
+    if (mesh->release == &FCELIB_TYPES_FreeMesh)
     {
       mesh->release(mesh);
       FCELIB_TYPES_InitMesh(mesh);
     }
 #ifndef FCELIB_PYTHON_BINDINGS
-    else if (!mesh->release)
-      FCELIB_TYPES_InitMesh(mesh);
-    else if (mesh->_consumed || mesh->release != &FCELIB_TYPES_FreeMesh)
+    else if (!mesh->release || mesh->release != &FCELIB_TYPES_FreeMesh)
     {
-      fprintf(stderr, "DecodeFce: mesh is not free and cannot be initialized.\n");
-      break;
+      FCELIB_TYPES_InitMesh(mesh);
     }
 #endif
-#endif
-
-    mesh->_consumed = 1;
 
     if (buf_size < 0x1F04)
     {
@@ -1792,7 +1783,7 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int buf
 }
 
 /*
-  Assumes (mesh != NULL). If necessary, will initialize mesh.
+  Assumes (mesh != NULL).
   Otherwise, expects non-NULL parameters.
 
   vert_idxs: 012...
@@ -1827,19 +1818,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
       fprintf(stderr, "DecodeFce: an input is NULL\n");
       break;
     }
-
-#ifdef __cplusplus
-    if (!mesh->release)
-      FCELIB_TYPES_InitMesh(mesh);
-    else if (mesh->release != &FCELIB_TYPES_FreeMesh)
-    {
-      fprintf(stderr, "DecodeFce: mesh is not free and cannot be initialized.\n");
-      break;
-    }
 #endif
-#endif
-
-    mesh->_consumed = 1;
 
     if (vert_idxs_len % 3 != 0)
     {
