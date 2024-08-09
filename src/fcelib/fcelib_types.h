@@ -767,7 +767,7 @@ void FCELIB_TYPES_ResetPartCenter(const FcelibMesh *mesh, FcelibPart *part, cons
 
 /* stats -------------------------------------------------------------------- */
 
-void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh *mesh)
+void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh * const mesh)
 {
   int i;
   int j;
@@ -844,7 +844,7 @@ void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh *mesh)
 }
 
 /* Debug: Prints ref'ed global part indexes. */
-void FCELIB_TYPES_PrintMeshParts(const FcelibMesh *mesh)
+void FCELIB_TYPES_PrintMeshParts(const FcelibMesh * const mesh)
 {
   int j;
 
@@ -861,7 +861,7 @@ void FCELIB_TYPES_PrintMeshParts(const FcelibMesh *mesh)
 }
 
 /* Debug: Prints ref'ed global triag indexes for each part. */
-void FCELIB_TYPES_PrintMeshTriangles(const FcelibMesh *mesh)
+void FCELIB_TYPES_PrintMeshTriangles(const FcelibMesh * const mesh)
 {
   int i;
   int j;
@@ -886,7 +886,7 @@ void FCELIB_TYPES_PrintMeshTriangles(const FcelibMesh *mesh)
 }
 
 /* Debug: Prints ref'ed global vert indexes for each part. */
-void FCELIB_TYPES_PrintMeshVertices(const FcelibMesh *mesh)
+void FCELIB_TYPES_PrintMeshVertices(const FcelibMesh * const mesh)
 {
   int i;
   int j;

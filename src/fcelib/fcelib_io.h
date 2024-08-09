@@ -1799,6 +1799,7 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
                                 const float *vert_pos, const int vert_pos_len,  /* M*3, M verts */
                                 const float *normals, const int normals_len)  /* M*3 */
 {
+  int pid_new = -1;
   int internal_pid_new = -1;
   FcelibPart *part = NULL;
   FcelibTriangle *triag;
@@ -1987,19 +1988,17 @@ int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
     if (internal_pid_new < 0)
       break;
 
-    return FCELIB_TYPES_GetOrderByInternalPartIdx(mesh, mesh->hdr.Parts[internal_pid_new]);  /* inconveniently, might fail and return -1 */
-#if 0
-    if (internal_pid_new < 0)
+    pid_new = FCELIB_TYPES_GetOrderByInternalPartIdx(mesh, mesh->hdr.Parts[internal_pid_new]);
+    if (pid_new < 0)
     {
       /* this is inconvenient but not a fatal error */
-      fprintf(stderr, "GeomDataToNewPart: Cannot get new part idx\n");
+      printf("Warning:GeomDataToNewPart: Cannot get new part idx\n");
       break;
     }
     break;
-#endif
   }
 
-  return internal_pid_new;
+  return pid_new;
 }
 
 #endif  /* FCELIB_IO_H_ */
