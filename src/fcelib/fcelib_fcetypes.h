@@ -233,7 +233,7 @@ struct FceHeader3 {
 };
 
 static
-const char *kFce3PartsNames[kFceLibImplementedFce3Parts] = {
+const char *kFce3PartsNames[FCELIB_UTIL_Fce3PartsImplemented] = {
   "high body",            /* car.fce */
   "left front wheel",
   "right front wheel",
@@ -351,7 +351,7 @@ struct FceHeader4 {
 };
 
 static
-const char *kFce4HiBodyParts[kFceLibNumFce4HiBodyParts] = {
+const char *kFce4HiBodyParts[FCELIB_UTIL_Fce4PartsHighBody] = {
   ":HB",            /* car.fce */
   ":OT",
   ":OL",
@@ -1626,7 +1626,7 @@ void FCELIB_FCETYPES_PrintHeaderFce3(const void *header, const int fce_size)
 
     printf("Parts:\n"
            "Idx  Verts       Triags      (PartPos)                         Description          Name\n");
-    for (i = 0; i < FCELIB_UTIL_Min(kFceLibImplementedFce3Parts, hdr.NumParts); ++i)
+    for (i = 0; i < FCELIB_UTIL_Min(FCELIB_UTIL_Fce3PartsImplemented, hdr.NumParts); ++i)
     {
       printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %20s %s\n",
              i,
@@ -1641,7 +1641,7 @@ void FCELIB_FCETYPES_PrintHeaderFce3(const void *header, const int fce_size)
       verts += hdr.PNumVertices[i];
       triags += hdr.PNumTriangles[i];
     }
-    for (i = FCELIB_UTIL_Min(kFceLibImplementedFce3Parts, hdr.NumParts); i < FCELIB_UTIL_Min(64, hdr.NumParts); ++i)
+    for (i = FCELIB_UTIL_Min(FCELIB_UTIL_Fce3PartsImplemented, hdr.NumParts); i < FCELIB_UTIL_Min(64, hdr.NumParts); ++i)
     {
       printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %20s %s\n",
              i,

@@ -26,8 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define kFceLibImplementedFce3Parts 13
-#define kFceLibNumFce4HiBodyParts 18
+#define FCELIB_UTIL_Fce3PartsImplemented 13
+#define FCELIB_UTIL_Fce4PartsHighBody 18
 
 /* Represent FCE dummies (light/fx objects)
    Mainly used for OBJ output, hence kTrianglesDiamond has 1-based indexes. */
@@ -115,7 +115,7 @@ int FCELIB_UTIL_StrIsInArray(char *str, const char **arr)
 {
   int retv = 0;
   int i;
-  for (i = 0; i < kFceLibNumFce4HiBodyParts; ++i)
+  for (i = 0; i < FCELIB_UTIL_Fce4PartsHighBody; ++i)
   {
     if (strncmp(str, arr[i], 64) == 0)
     {

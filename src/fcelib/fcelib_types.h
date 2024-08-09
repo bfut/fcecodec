@@ -27,8 +27,6 @@
   added at the end.
 
   Many operations are carried out on index arrays.
-  Array elements (parts, triags, verts) are accessed in constant time at first.
-  Once an index array has been flagged as dirty, access is of linear complexity.
 **/
 
 #ifndef FCELIB_TYPES_H_
@@ -119,7 +117,11 @@ struct FcelibMesh {
   FcelibTriangle **triangles;      /* may contain NULL elements */
   FcelibVertex   **vertices;       /* may contain NULL elements */
 
+#ifdef __cplusplus
+  void           (*release)(struct FcelibMesh*) = NULL;
+#else
   void           (*release)(struct FcelibMesh*);
+#endif
 };
 
 #ifdef __cplusplus
@@ -187,13 +189,15 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
 FcelibMesh *FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
 {
 #ifndef FCELIB_PYTHON_BINDINGS
-#ifdef __cplusplus
-  if (mesh->release == &FCELIB_TYPES_FreeMesh)
+  if (mesh->release && mesh->release == &FCELIB_TYPES_FreeMesh)
     mesh->release(mesh);
 #endif
-#endif
 
+#ifdef __cplusplus
+  *mesh = {};
+#else
   memset(mesh, 0, sizeof(*mesh));
+#endif
   mesh->hdr.NumArts = 1;
   mesh->release = &FCELIB_TYPES_FreeMesh;
   return mesh;
@@ -799,7 +803,7 @@ void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh *mesh)
            mesh->parts[mesh->hdr.Parts[i]]->PNumVertices,
            mesh->parts[mesh->hdr.Parts[i]]->PNumTriangles,
            mesh->parts[mesh->hdr.Parts[i]]->PartPos.x, mesh->parts[mesh->hdr.Parts[i]]->PartPos.y, mesh->parts[mesh->hdr.Parts[i]]->PartPos.z,
-           j < kFceLibImplementedFce3Parts ? kFce3PartsNames[j] : "",
+           j < FCELIB_UTIL_Fce3PartsImplemented ? kFce3PartsNames[j] : "",
            mesh->parts[mesh->hdr.Parts[i]]->PartName);
 
     verts  += mesh->parts[mesh->hdr.Parts[i]]->PNumVertices;
