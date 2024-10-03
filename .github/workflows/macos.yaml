@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ macos-latest ]
-        python-version: [ "3.10", "3.11", "3.12" ]
+        python-version: [ "3.10", "3.11", "3.12", "3.13" ]
 
     name: Python ${{ matrix.python-version }} (${{ matrix.os }})
     steps:
@@ -40,8 +40,7 @@ jobs:
       run: |
         echo "import fcecodec as fc; print(f'import fcecodec as fc; fc.__version__={fc.__version__}')" > _version.py; cat _version.py
         python -c "import subprocess; import sys; retcode = subprocess.call([ sys.executable, '_version.py' ]); print('Exit code', retcode); sys.exit(0)"
-        python -c "import fcecodec as fc; help(fc)"
-
+        python -c "import fcecodec as fc; help(fc)" 
     - name: "Install requirements"
       shell: bash
       timeout-minutes: 1

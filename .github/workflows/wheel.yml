@@ -10,19 +10,20 @@ jobs:
     strategy:
       matrix:
         # https://github.com/actions/runner-images
-        # arm64: macos-latest
+        # arm64: macos-14
         # x86_64: macos-13
-        os: [ubuntu-latest, windows-latest, macos-13, macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-13, macos-14]
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Build wheels
         # https://github.com/pypa/cibuildwheel/releases
-        uses: pypa/cibuildwheel@v2.18.0
+        uses: pypa/cibuildwheel@v2.21.2
         env:
           CIBW_ARCHS_WINDOWS: "AMD64 x86"
           CIBW_SKIP: pp*
+          CIBW_FREE_THREADED_SUPPORT: 1
         with:
           package-dir: "."
           output-dir:  "./wheelhouse"

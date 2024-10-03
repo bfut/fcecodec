@@ -5,13 +5,13 @@ module.
 ## Installation
 Requires Python 3.10+
 
-```py
+```sh
 python -m pip install fcecodec
 ```
 
 Though `numpy` is not required, it is recommended.
 
-```py
+```sh
 python -m pip install --upgrade numpy
 ```
 
@@ -240,7 +240,7 @@ CLASSES
      |  ----------------------------------------------------------------------
      |  Static methods inherited from pybind11_builtins.pybind11_object:
      |
-     |  __new__(*args, **kwargs) from pybind11_builtins.pybind11_type
+     |  __new__(*args, **kwargs) class method of pybind11_builtins.pybind11_object
      |      Create and return a new object.  See help(type) for accurate signature.
 
 FUNCTIONS

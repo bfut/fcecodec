@@ -23,6 +23,8 @@ import platform
 import pathlib
 import re
 import setuptools
+import sys
+import sysconfig
 
 # Available at setup time due to pyproject.toml
 from pybind11.setup_helpers import Pybind11Extension, build_ext
@@ -41,6 +43,14 @@ print(f"VERSION_INFO={__version__}")
 
 long_description = (script_path / "./python/README.md").read_text(encoding="utf-8")
 
+if sys.version_info.minor < 13 or sysconfig.get_config_var("Py_GIL_DISABLED") != 1 or sys._is_gil_enabled() == True:
+    os.environ["PYMEM_MALLOC"] = ""
+
+if sys.version_info.minor >= 13:
+    if sysconfig.get_config_var("Py_GIL_DISABLED") == 1 and sys._is_gil_enabled() == False:
+        print(f'sysconfig.get_config_var("Py_GIL_DISABLED") = {sysconfig.get_config_var("Py_GIL_DISABLED")}')
+        print(f'sys._is_gil_enabled() = {sys._is_gil_enabled()}')
+
 extra_compile_args = []
 if "PYMEM_MALLOC" in os.environ:
     print(f'PYMEM_MALLOC={os.environ["PYMEM_MALLOC"]}')
@@ -52,14 +62,18 @@ if platform.system().lower() == "windows":
     extra_compile_args += [
         ("/D_CRT_NONSTDC_NO_WARNINGS"),
         ("/wd4267"),  # prevents warnings on conversion from size_t to int
+        ("/wd4996"),  # prevents warnings on fopen() and other POSIX functions
         ("/std:c++latest"), ("/Zc:__cplusplus"),  # sets __cplusplus
     ]
 else:
     extra_compile_args += [
         # # debug
-        # ("-g"), ("-O0"),
+        # ("-g"),
+        # ("-Og"),
+        # ("-O0"),
         # ("-pedantic-errors"),
         ("-pedantic"),
+
         ("-fvisibility=hidden"),  # sets the default symbol visibility to hidden
         ("-Wformat-security"),
         ("-Wdeprecated-declarations"),
@@ -67,8 +81,6 @@ else:
 
     if "gcc" in platform.python_compiler().lower():
         extra_compile_args += [
-            # ("-I/usr/include/python3.11"),  # DEBUG
-
             ("-Wno-unused-parameter"),
             ("-Wno-missing-field-initializers"),
 
@@ -139,17 +151,6 @@ setuptools.setup(
     description="FCE decoder/encoder",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    # classifiers=[
-    #     "Development Status :: 5 - Production/Stable",
-    #     "Intended Audience :: End Users/Desktop",
-    #     "Intended Audience :: Developers",
-    #     "Topic :: Artistic Software",
-    #     "Topic :: Games/Entertainment",
-    #     "Topic :: Multimedia :: Graphics :: 3D Modeling",
-    #     "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
-    #     "Operating System :: OS Independent",
-    #     "Programming Language :: Python :: 3",
-    # ],
     ext_modules=ext_modules,
     # extras_require={"test": "pytest"},
     # # Currently, build_ext only provides an optional "highest supported C++
