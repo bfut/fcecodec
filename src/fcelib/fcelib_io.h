@@ -203,10 +203,10 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *inbuf, int inbufs
         mesh->hdr.NumArts = hdr.NumArts;
         if (fce_version == 0x00101015)
           mesh->hdr.Unknown3 = hdr.Unknown3;  /* FCE4M experimental */
-        mesh->hdr.NumParts = hdr.NumParts;
+        mesh->hdr.NumParts = FCELIB_UTIL_Min(hdr.NumParts, 64);
         mesh->parts_len = mesh->hdr.NumParts;
 
-        mesh->hdr.NumDummies = hdr.NumDummies;
+        mesh->hdr.NumDummies = FCELIB_UTIL_Min(hdr.NumDummies, 16);
         for (i = 0; i < mesh->hdr.NumDummies; ++i)
         {
           memcpy(&mesh->hdr.Dummies[i].x, inbuf + 0x005c + i * 12 + 0x0, 4);
@@ -217,15 +217,13 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *inbuf, int inbufs
         for (i = 0; i < 15; ++i)
           mesh->hdr.DummyNames[(i + 1) * 64 - 1] = '\0';  /* ensure strings */
 
-        mesh->hdr.NumColors = hdr.NumColors;
+        mesh->hdr.NumColors = FCELIB_UTIL_Min(hdr.NumColors, 16);
         if (fce_version == 0x00101015)
         {
-          if (mesh->hdr.NumColors > 16)
-            mesh->hdr.NumColors = 16;
           if (mesh->hdr.NumColors < 0)
             mesh->hdr.NumColors = 0;
         }
-        mesh->hdr.NumSecColors = mesh->hdr.NumColors;
+        mesh->hdr.NumSecColors = FCELIB_UTIL_Min(hdr.NumColors, 16);
         for (i = 0; i < mesh->hdr.NumColors; ++i)
         {
           memcpy(&mesh->hdr.PriColors[i].hue,          inbuf + 0x0824 + i * 4 + 0x0, 1);
@@ -381,7 +379,7 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *inbuf, int inbufs
         mesh->hdr.NumParts = hdr.NumParts;
         mesh->parts_len = mesh->hdr.NumParts;
 
-        mesh->hdr.NumDummies = hdr.NumDummies;
+        mesh->hdr.NumDummies = FCELIB_UTIL_Min(hdr.NumDummies, 16);
         for (i = 0; i < mesh->hdr.NumDummies; ++i)
         {
           memcpy(&mesh->hdr.Dummies[i].x, inbuf + 0x0038 + i * 12 + 0x0, 4);
@@ -392,7 +390,7 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *inbuf, int inbufs
         for (i = 0; i < 15; ++i)
           mesh->hdr.DummyNames[(i + 1) * 64 - 1] = '\0';  /* ensure strings */
 
-        mesh->hdr.NumColors = hdr.NumPriColors;
+        mesh->hdr.NumColors = FCELIB_UTIL_Min(hdr.NumPriColors, 16);
         for (i = 0; i < mesh->hdr.NumColors; ++i)
         {
           /* unsigned char from little-endian int */
@@ -407,7 +405,7 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *inbuf, int inbufs
           memcpy(&mesh->hdr.DriColors[i].transparency, inbuf + 0x0800 + i * 16 + 0xC, 1);
         }
 
-        mesh->hdr.NumSecColors = hdr.NumSecColors;
+        mesh->hdr.NumSecColors = FCELIB_UTIL_Min(hdr.NumSecColors, 16);
         for (i = 0; i < mesh->hdr.NumSecColors; ++i)
         {
           /* unsigned char from little-endian int */

@@ -71,6 +71,7 @@ else:
         # ("-g"),
         # ("-Og"),
         # ("-O0"),
+        ("-O2"),
         # ("-pedantic-errors"),
         ("-pedantic"),
 

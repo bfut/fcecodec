@@ -352,7 +352,7 @@ py::buffer Mesh::MGetDummyPos() const
   const int len = static_cast<py::ssize_t>(mesh_.hdr.NumDummies * 3);
   py::array_t<float> result = py::array_t<float>({ static_cast<py::ssize_t>(len) }, {  });
   auto buf = result.mutable_unchecked<1>();
-  for (int i = 0; i < len; ++i)
+  for (int i = 0; i < mesh_.hdr.NumDummies; ++i)
   {
     buf(i * 3 + 0) = mesh_.hdr.Dummies[i].x;
     buf(i * 3 + 1) = mesh_.hdr.Dummies[i].y;
