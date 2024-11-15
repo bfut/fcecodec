@@ -388,7 +388,7 @@ int FCELIB_TYPES_GetFirstUnusedGlobalTriangleIdx(const FcelibMesh *mesh)
       continue;
     part = mesh->parts[pid];
     if (part->ptriangles_len > 0)
-      tidx = -FCELIB_UTIL_Min(-tidx, -FCELIB_UTIL_ArrMax(part->PTriangles, part->ptriangles_len));
+      tidx = -SCL_min(-tidx, -FCELIB_UTIL_ArrMax(part->PTriangles, part->ptriangles_len));
   }
 
   return tidx + 1;
@@ -409,43 +409,11 @@ int FCELIB_TYPES_GetFirstUnusedGlobalVertexIdx(const FcelibMesh *mesh)
       continue;
     part = mesh->parts[pid];
     if (part->pvertices_len > 0)
-      vidx = -FCELIB_UTIL_Min(-vidx, -FCELIB_UTIL_ArrMax(part->PVertices, part->pvertices_len));
+      vidx = -SCL_min(-vidx, -FCELIB_UTIL_ArrMax(part->PVertices, part->pvertices_len));
   }
 
   return vidx + 1;
 }
-
-#if 0
-/* experimental */
-
-/* Not usually called directly. */
-int __FCELIB_TYPES_GetInternalIndex(int *indexes, const int indexes_len, const int idx)
-{
-  int internal_idx;
-  for (internal_idx = 0; internal_idx < indexes_len; ++internal_idx)
-  {
-    if (internal_idx == idx)
-    {
-      return internal_idx;
-    }
-  }
-  return -1;
-}
-
-int FCELIB_TYPES_GetInternalTriangleIndex(FcelibMesh *mesh, const int internal_pid, const int tidx)
-{
-  if ((mesh->state & kFceLibFlagTrianglesDirty) == 0)
-  {
-    return tidx;
-  }
-  else
-  {
-    int internal_idx = -1;
-    FcelibPart *part = mesh->parts[internal_pid];
-    return __FCELIB_TYPES_GetInternalIndex(part->PTriangles, part->ptriangles_len, tidx);
-  }
-}
-#endif
 
 /* Returns -1 on failure. */
 int FCELIB_TYPES_GetInternalPartIdxByOrder(const FcelibMesh *mesh, const int order)
@@ -720,9 +688,9 @@ int FCELIB_TYPES_GetPartCentroid(const FcelibMesh *mesh, const FcelibPart *part,
 #if FCECVERBOSE >= 2
     printf("<%s> min: (%f, %f, %f) max: (%f, %f, %f)\n", part->PartName, x_arr[0], y_arr[0], z_arr[0], x_arr[count_verts - 1], y_arr[count_verts - 1], z_arr[count_verts - 1]);
 #endif
-    centroid->x = 0.5f * FCELIB_UTIL_Abs(x_arr[count_verts - 1] - x_arr[0]) + x_arr[0];
-    centroid->y = 0.5f * FCELIB_UTIL_Abs(y_arr[count_verts - 1] - y_arr[0]) + y_arr[0];
-    centroid->z = 0.5f * FCELIB_UTIL_Abs(z_arr[count_verts - 1] - z_arr[0]) + z_arr[0];
+    centroid->x = 0.5f * SCL_abs(x_arr[count_verts - 1] - x_arr[0]) + x_arr[0];
+    centroid->y = 0.5f * SCL_abs(y_arr[count_verts - 1] - y_arr[0]) + y_arr[0];
+    centroid->z = 0.5f * SCL_abs(z_arr[count_verts - 1] - z_arr[0]) + z_arr[0];
 #if FCECVERBOSE >= 2
     printf("centroid->x: %f (%f, %f)\n", centroid->x, x_arr[count_verts - 1], x_arr[0]);
     printf("centroid->y: %f (%f, %f)\n", centroid->y, y_arr[count_verts - 1], y_arr[0]);
@@ -763,6 +731,32 @@ void FCELIB_TYPES_ResetPartCenter(const FcelibMesh *mesh, FcelibPart *part, cons
   memcpy(&part->PartPos.x, &new_PartPos.x, sizeof(float));
   memcpy(&part->PartPos.y, &new_PartPos.y, sizeof(float));
   memcpy(&part->PartPos.z, &new_PartPos.z, sizeof(float));
+}
+
+/* assumes typesz=1|4 */
+void FCELIB_TYPES_SetFceColors(tColor4 *dest, const int NumColors, const unsigned char * const src, const int typesz)
+{
+  int i;
+  for (i = 0; i < NumColors; ++i)
+  {
+    memcpy(&dest[i].hue,          src + (i * 4 + 0x0) * typesz, 1);
+    memcpy(&dest[i].saturation,   src + (i * 4 + 0x1) * typesz, 1);
+    memcpy(&dest[i].brightness,   src + (i * 4 + 0x2) * typesz, 1);
+    memcpy(&dest[i].transparency, src + (i * 4 + 0x3) * typesz, 1);
+  }
+}
+
+/* assumes typesz=1|4 */
+void FCELIB_TYPES_WriteFceColors(unsigned char *dest, const tColor4 * const src, const int NumColors, const int typesz)
+{
+  int i;
+  for (i = 0; i < NumColors; ++i)
+  {
+    memcpy(dest + (i * 4 + 0x0) * typesz, &src[i].hue,          1);
+    memcpy(dest + (i * 4 + 0x1) * typesz, &src[i].saturation,   1);
+    memcpy(dest + (i * 4 + 0x2) * typesz, &src[i].brightness,   1);
+    memcpy(dest + (i * 4 + 0x3) * typesz, &src[i].transparency, 1);
+  }
 }
 
 /* stats -------------------------------------------------------------------- */

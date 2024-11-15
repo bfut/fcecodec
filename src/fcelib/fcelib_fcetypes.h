@@ -48,7 +48,6 @@ extern "C" {
 #endif
 
 #ifndef __cplusplus
-typedef struct tTriangle tTriangle;
 typedef struct tVector tVector;
 typedef struct tColor3 tColor3;
 typedef struct tColor4 tColor4;
@@ -144,24 +143,16 @@ Name    Application example                     Application example
   Vert positions and normals are stored in global coordinates.
   Vert positions are offset by their part positions, respectively. Normals are not offset.
 */
-struct tTriangle {
-/* 0x00 */  int   tex_page;     /* Texture page number; > 0 in FCE3/FCE4 officer models, FCE4 pursuit road objects, FCE4M damage textures. Requires NumArts=max(tex_pages)-1 apart from the last */
-/* 0x04 */  int   vidx1;        /* Vertex #1 local index */
-/* 0x08 */  int   vidx2;
-/* 0x0C */  int   vidx3;
-/* 0x10 */  char  unknown[12];  /* all items = 0xFF00 or 0xFFFF */
-/* 0x1C */  int   flag;         /* triangle flag */
 #if 0
-/* 0x20 */  float U[3];         /* at 0: vertex #1 texture U-coordinate, etc. */
-/* 0x2C */  float V[3];         /* at 0: vertex #1 texture V-coordinate, etc. */
-#endif
-/* 0x20 */  float U1;           /* Vertex #1 texture U-coordinate */
-/* 0x24 */  float U2;
-/* 0x28 */  float U3;
-/* 0x2C */  float V1;           /* Vertex #1 texture V-coordinate */
-/* 0x30 */  float V2;
-/* 0x34 */  float V3;
+struct tTriangle {
+/* 0x00 */  int   tex_page;        /* Texture page number; > 0 in FCE3/FCE4 officer models, FCE4 pursuit road objects, FCE4M damage textures. Requires NumArts=max(tex_pages)-1 apart from the last */
+/* 0x04 */  int   vidx[3];         /* Vertices local index */
+/* 0x10 */  char  unknown[3 * 4];  /* all items = 0xFF00 or 0xFFFF */
+/* 0x1C */  int   flag;            /* triangle flag */
+/* 0x20 */  float U[3];            /* Vertices texture U-coordinates */
+/* 0x2C */  float V[3];            /* Vertices texture V-coordinates */
 };
+#endif
 
 struct tVector {
   float x;  /* x->inf is to the right */
@@ -191,7 +182,7 @@ struct tColor4 {
 
 /* 0x1F04  -  size of this header */
 struct FceHeader3 {
-/* 0x0000 */  int      Unknown1           ;  /* != 0x14101000 && != 0x15101000, nullable, sometimes 0x13101000 (ex. render/pc/cone.fce) */
+/* 0x0000 */  int      Unknown1           ;  /* nullable, sometimes 0x13101000 (ex. render/pc/cone.fce) */
 /* 0x0004 */  int      NumTriangles       ;  /* Number of triangles in model */
 /* 0x0008 */  int      NumVertices        ;  /* Number of vertices in model */
 /* 0x000C */  int      NumArts            ;  /* Number of arts, == 1 unless non-zero tex_pages are used */
@@ -204,15 +195,13 @@ struct FceHeader3 {
 /* 0x0020 */  int      Reserve2offset     ;  /* len() = len(VertTbl) */
 /* 0x0024 */  int      Reserve3offset     ;  /* len() = len(VertTbl) */
 
-/* 0x0028 */  float    XHalfSize          ;  /* X half-size width of whole model, defines bounding box for collision detection */
-/* 0x002C */  float    YHalfSize          ;  /* Y half-size heigth of whole model, defines bounding box for collision detection */
-/* 0x0030 */  float    ZHalfSize          ;  /* Z half-size length of whole model, defines bounding box for collision detection */
+/* 0x0028 */  float    HalfSize[3]        ;  /* X,Y,Z half-size width of whole model, defines bounding box for collision detection */
 
 /* 0x0034 */  int      NumDummies         ;  /* Number of light sources 0..16 */
-/* 0x0038 */  tVector  Dummies[16]        ;  /* Coordinates of dummies */
+/* 0x0038 */  float    Dummies[16 * 3]    ;  /* Coordinates of dummies */
 
 /* 0x00F8 */  int      NumParts           ;  /* Number of car parts 0..64 */
-/* 0x00FC */  tVector  PartPos[64]        ;  /* Global position of car parts */
+/* 0x00FC */  float    PartPos[64 * 3]    ;  /* Global position of car parts */
 
 /* 0x03FC */  int      P1stVertices [64]  ;  /* First vertex index for each part */
 /* 0x04FC */  int      PNumVertices [64]  ;  /* Number of vertices for each part */
@@ -225,7 +214,7 @@ struct FceHeader3 {
 /* 0x0900 */  int      NumSecColors       ;  /* Number of secondary colors 0..16 */
 /* 0x0904 */  tColor3  SecColors[16]      ;  /* Secondary colors */
 
-/* 0x0A04 */  char     DummyNames[64 * 16];  /* Dummy object names (ASCIIZ, role only by name) */
+/* 0x0A04 */  char     DummyNames[16 * 64];  /* Dummy object names (ASCIIZ, role only by name) */
 
 /* 0x0E04 */  char     PartNames [64 * 64];  /* Part names (ASCIIZ, role only by order) */
 
@@ -295,37 +284,35 @@ struct FceHeader4 {
 /* 0x0000 */  int      Version             ;  /* FCE4: 0x00101014, FCE4M: 0x00101015 */
 /* 0x0004 */  int      Unknown1            ;  /* nullable */
 /* 0x0008 */  int      NumTriangles        ;  /* Number of triangles in model */
-/* 0x000c */  int      NumVertices         ;  /* Number of vertices in model */
+/* 0x000C */  int      NumVertices         ;  /* Number of vertices in model */
 /* 0x0010 */  int      NumArts             ;  /* Number of arts, == 1 (FCE4: unless non-zero tex_pages are used) */
                     /* offsets from 0x2038 */
 /* 0x0014 */  int      VertTblOffset       ;  /* usually 0x0000. len() = 12 * NumVertices */
 /* 0x0018 */  int      NormTblOffset       ;  /* len() = len(VertTbl) */
-/* 0x001c */  int      TriaTblOffset       ;  /* len() = 56 * NumTriangles */
+/* 0x001C */  int      TriaTblOffset       ;  /* len() = 56 * NumTriangles */
 
 /* 0x0020 */  int      Reserve1offset      ;  /* len() = 32 * NumVertices */
 /* 0x0024 */  int      Reserve2offset      ;  /* len() = len(VertTbl) */
 /* 0x0028 */  int      Reserve3offset      ;  /* len() = len(VertTbl) */
 
-/* 0x002c */  int      UndamgdVertTblOffset;  /* UndamgdVertTbl should be copy of VertTbl, unused in FCE4 */
+/* 0x002C */  int      UndamgdVertTblOffset;  /* UndamgdVertTbl should be copy of VertTbl, unused in FCE4 */
 /* 0x0030 */  int      UndamgdNormTblOffset;  /* UndamgdNormTbl should be copy of NormTbl, unused in FCE4 */
 /* 0x0034 */  int      DamgdVertTblOffset  ;  /* len() = len(VertTbl) */
 /* 0x0038 */  int      DamgdNormTblOffset  ;  /* len() = len(VertTbl) */
 
-/* 0x003c */  int      Reserve4offset      ;  /* len() = 4 * NumVertices, null */
+/* 0x003C */  int      Reserve4offset      ;  /* len() = 4 * NumVertices, null */
 /* 0x0040 */  int      AnimationTblOffset  ;  /* len() = 4 * NumVertices, flags (0x4 = immovable, 0x0 othw) */
 /* 0x0044 */  int      Reserve5offset      ;  /* len() = 4 * NumVertices, null */
 
 /* 0x0048 */  int      Reserve6offset      ;  /* len() = 12 * NumTriangles, null
                                                 FCE4M: len() += NumVertices */
-/* 0x004c */  float    XHalfSize           ;  /* X half-size width of whole model, defines bounding box for collision detection */
-/* 0x0050 */  float    YHalfSize           ;  /* Y half-size heigth of whole model, defines bounding box for collision detection */
-/* 0x0054 */  float    ZHalfSize           ;  /* Z half-size length of whole model, defines bounding box for collision detection */
+/* 0x004C */  float    HalfSize[3]         ;  /* X,Y,Z half-size width of whole model, defines bounding box for collision detection */
 
 /* 0x0058 */  int      NumDummies          ;  /* Number of light sources */
-/* 0x005c */  tVector  Dummies[16]         ;  /* Coordinates of dummies */
+/* 0x005C */  float    Dummies[16 * 3]     ;  /* Coordinates of dummies */
 
-/* 0x011c */  int      NumParts            ;  /* Number of car parts */
-/* 0x0120 */  tVector  PartPos[64]         ;  /* Global position of car parts */
+/* 0x011C */  int      NumParts            ;  /* Number of car parts */
+/* 0x0120 */  float    PartPos[64 * 3]     ;  /* Global position of car parts */
 
 /* 0x0420 */  int      P1stVertices[64]    ;  /* First vertex index for each part */
 /* 0x0520 */  int      PNumVertices[64]    ;  /* Number of vertices for each part */
@@ -334,20 +321,20 @@ struct FceHeader4 {
 /* 0x0720 */  int      PNumTriangles[64]   ;  /* Number of triangles for each part */
 
 /* 0x0820 */  int      NumColors           ;  /* FCE4: Number of colors 0..16
-                                                FCE4M: unknown */
+                                                FCE4M: unknown purpose */
 /* 0x0824 */  tColor4  PriColors[16]       ;  /* Primary colors */
 /* 0x0864 */  tColor4  IntColors[16]       ;  /* Interior colors */
-/* 0x08a4 */  tColor4  SecColors[16]       ;  /* Secondary colors */
-/* 0x08e4 */  tColor4  DriColors[16]       ;  /* Driver hair colors */
+/* 0x08A4 */  tColor4  SecColors[16]       ;  /* Secondary colors */
+/* 0x08E4 */  tColor4  DriColors[16]       ;  /* Driver hair colors */
 
-/* 0x0924 */  int      Unknown3            ;  /* FCE4: nullable, FCE4M: nullable */
+/* 0x0924 */  int      Unknown3            ;  /* FCE4: nullable; FCE4M: unknown purpose, nullable */
 /* 0x0928 */  char     Unknown2[256]       ;  /* nullable */
 
-/* 0x0a28 */  char     DummyNames[64 * 16] ;  /* Dummy object names (ASCIIZ, role only by name) */
+/* 0x0A28 */  char     DummyNames[16 * 64] ;  /* Dummy object names (ASCIIZ, role only by name) */
 
-/* 0x0e28 */  char     PartNames [64 * 64] ;  /* Part names (ASCIIZ, role only by name) */
+/* 0x0E28 */  char     PartNames [64 * 64] ;  /* Part names (ASCIIZ, role only by name) */
 
-/* 0x1e28 */  char     Unknown4[528]       ;  /* nullable */
+/* 0x1E28 */  char     Unknown4[528]       ;  /* nullable */
 };
 
 static
@@ -669,33 +656,17 @@ Omni01     0   POV
 :W_AXIS    1   far-end of steering column
 */
 
-/* Version ------------------------------------------------------------------ */
-
-/* Returns 3 (FCE3), 4 (FCE4), 5 (FCE4M), negative (invalid) */
-int FCELIB_FCETYPES_GetFceVersion(const void * const buf, const int bufsz)
-{
-  int version;
-  if (bufsz < 0x1F04) return -3;
-  memcpy(&version, buf, 4);
-  switch (version)
-  {
-    case 0x00101014:
-      if (bufsz < 0x2038) return -4;
-      return 4;
-    case 0x00101015:
-      if (bufsz < 0x2038) return -5;
-      return 5;
-    default:
-      return 3;
-  }
-}
-
 /* Get header --------------------------------------------------------------- */
 
 /* Assumes input has length >= 0x1F04 */
 void FCELIB_FCETYPES_GetFceHeader3(FceHeader3 *hdr, const unsigned char * const buf)
 {
   int i;
+#ifdef __cplusplus
+  *hdr = {};
+#else
+  memset(hdr, 0, sizeof(*hdr));
+#endif
 
   memcpy(&hdr->Unknown1, buf + 0x0000, 4);
   memcpy(&hdr->NumTriangles, buf + 0x0004, 4);
@@ -710,25 +681,13 @@ void FCELIB_FCETYPES_GetFceHeader3(FceHeader3 *hdr, const unsigned char * const 
   memcpy(&hdr->Reserve2offset, buf + 0x0020, 4);
   memcpy(&hdr->Reserve3offset, buf + 0x0024, 4);
 
-  memcpy(&hdr->XHalfSize, buf + 0x0028, 4);
-  memcpy(&hdr->YHalfSize, buf + 0x002C, 4);
-  memcpy(&hdr->ZHalfSize, buf + 0x0030, 4);
+  memcpy(&hdr->HalfSize, buf + 0x0028, 3 * 4);
 
   memcpy(&hdr->NumDummies, buf + 0x0034, 4);
-  for (i = 0; i < FCELIB_UTIL_Min(16, hdr->NumDummies); ++i)
-  {
-    memcpy(&hdr->Dummies[i].x, buf + 0x0038 + i * 12 + 0x0, 4);
-    memcpy(&hdr->Dummies[i].y, buf + 0x0038 + i * 12 + 0x4, 4);
-    memcpy(&hdr->Dummies[i].z, buf + 0x0038 + i * 12 + 0x8, 4);
-  }
+  memcpy(&hdr->Dummies, buf + 0x0038, SCL_clamp(hdr->NumDummies, 0, 16) * 3 * 4);
 
   memcpy(&hdr->NumParts, buf + 0x00F8, 4);
-  for (i = 0; i < FCELIB_UTIL_Min(64, hdr->NumParts); ++i)
-  {
-    memcpy(&hdr->PartPos[i].x, buf + 0x00FC + i * 12 + 0x0, 4);
-    memcpy(&hdr->PartPos[i].y, buf + 0x00FC + i * 12 + 0x4, 4);
-    memcpy(&hdr->PartPos[i].z, buf + 0x00FC + i * 12 + 0x8, 4);
-  }
+  memcpy(&hdr->PartPos, buf + 0x00FC, SCL_clamp(hdr->NumParts, 0, 64) * 3 * 4);
 
   memcpy(&hdr->P1stVertices, buf + 0x03FC, 64 * 4);
   memcpy(&hdr->PNumVertices, buf + 0x04FC, 64 * 4);
@@ -736,7 +695,7 @@ void FCELIB_FCETYPES_GetFceHeader3(FceHeader3 *hdr, const unsigned char * const 
   memcpy(&hdr->PNumTriangles, buf + 0x06FC, 64 * 4);
 
   memcpy(&hdr->NumPriColors, buf + 0x07FC, 4);
-  for (i = 0; i < FCELIB_UTIL_Min(16, hdr->NumPriColors); ++i)
+  for (i = 0; i < SCL_min(hdr->NumPriColors, 16); i++)
   {
     memcpy(&hdr->PriColors[i].hue,          buf + 0x0800 + i * 16 + 0x00, 4);
     memcpy(&hdr->PriColors[i].saturation,   buf + 0x0800 + i * 16 + 0x04, 4);
@@ -745,7 +704,7 @@ void FCELIB_FCETYPES_GetFceHeader3(FceHeader3 *hdr, const unsigned char * const 
   }
 
   memcpy(&hdr->NumSecColors, buf + 0x0900, 4);
-  for (i = 0; i < FCELIB_UTIL_Min(16, hdr->NumSecColors); ++i)
+  for (i = 0; i < SCL_min(hdr->NumSecColors, 16); i++)
   {
     memcpy(&hdr->SecColors[i].hue,          buf + 0x0904 + i * 16 + 0x00, 4);
     memcpy(&hdr->SecColors[i].saturation,   buf + 0x0904 + i * 16 + 0x04, 4);
@@ -754,61 +713,62 @@ void FCELIB_FCETYPES_GetFceHeader3(FceHeader3 *hdr, const unsigned char * const 
   }
 
   memcpy(&hdr->DummyNames, buf + 0x0A04, 64 * 16);
+  FCELIB_UTIL_EnsureStrings(hdr->DummyNames, 16, 64);
+  FCELIB_UTIL_UnprintableToNul(hdr->DummyNames, 16, 64);
+  FCELIB_UTIL_TidyUpNames(hdr->DummyNames, hdr->NumDummies, 16, 64);
 
   memcpy(&hdr->PartNames, buf + 0x0E04, 64 * 64);
+  FCELIB_UTIL_EnsureStrings(hdr->PartNames, 64, 64);
+  FCELIB_UTIL_UnprintableToNul(hdr->PartNames, 64, 64);
+  FCELIB_UTIL_TidyUpNames(hdr->PartNames, hdr->NumParts, 64, 64);
 
+#if defined(SCL_DEBUG) && SCL_DEBUG > 0
   memcpy(&hdr->Unknown2, buf + 0x1E04, 256);
+#endif
 }
 
 /* Assumes valid FCE data */
 void FCELIB_FCETYPES_GetFceHeader4(FceHeader4 *hdr, const unsigned char * const buf)
 {
   int i;
+#ifdef __cplusplus
+  *hdr = {};
+#else
+  memset(hdr, 0, sizeof(*hdr));
+#endif
 
   memcpy(&hdr->Version, buf + 0x0000, 4);
   memcpy(&hdr->Unknown1, buf + 0x0004, 4);
   memcpy(&hdr->NumTriangles, buf + 0x0008, 4);
-  memcpy(&hdr->NumVertices, buf + 0x000c, 4);
+  memcpy(&hdr->NumVertices, buf + 0x000C, 4);
   memcpy(&hdr->NumArts, buf + 0x0010, 4);
 
   memcpy(&hdr->VertTblOffset, buf + 0x0014, 4);
   memcpy(&hdr->NormTblOffset, buf + 0x0018, 4);
-  memcpy(&hdr->TriaTblOffset, buf + 0x001c, 4);
+  memcpy(&hdr->TriaTblOffset, buf + 0x001C, 4);
 
   memcpy(&hdr->Reserve1offset, buf + 0x0020, 4);
   memcpy(&hdr->Reserve2offset, buf + 0x0024, 4);
   memcpy(&hdr->Reserve3offset, buf + 0x0028, 4);
 
-  memcpy(&hdr->UndamgdVertTblOffset, buf + 0x002c, 4);
+  memcpy(&hdr->UndamgdVertTblOffset, buf + 0x002C, 4);
   memcpy(&hdr->UndamgdNormTblOffset, buf + 0x0030, 4);
   memcpy(&hdr->DamgdVertTblOffset, buf + 0x0034, 4);
   memcpy(&hdr->DamgdNormTblOffset, buf + 0x0038, 4);
 
-  memcpy(&hdr->Reserve4offset, buf + 0x003c, 4);
+  memcpy(&hdr->Reserve4offset, buf + 0x003C, 4);
   memcpy(&hdr->AnimationTblOffset, buf + 0x0040, 4);
   memcpy(&hdr->Reserve5offset, buf + 0x0044, 4);
 
   memcpy(&hdr->Reserve6offset, buf + 0x0048, 4);
 
-  memcpy(&hdr->XHalfSize, buf + 0x004c, 4);
-  memcpy(&hdr->YHalfSize, buf + 0x0050, 4);
-  memcpy(&hdr->ZHalfSize, buf + 0x0054, 4);
+  memcpy(&hdr->HalfSize, buf + 0x004C, 3 * 4);
 
   memcpy(&hdr->NumDummies, buf + 0x0058, 4);
-  for (i = 0; i < FCELIB_UTIL_Min(16, hdr->NumDummies); ++i)
-  {
-    memcpy(&hdr->Dummies[i].x, buf + 0x005c + i * 12 + 0x0, 4);
-    memcpy(&hdr->Dummies[i].y, buf + 0x005c + i * 12 + 0x4, 4);
-    memcpy(&hdr->Dummies[i].z, buf + 0x005c + i * 12 + 0x8, 4);
-  }
+  memcpy(&hdr->Dummies, buf + 0x005C, SCL_clamp(hdr->NumDummies, 0, 16) * 3 * 4);
 
-  memcpy(&hdr->NumParts, buf + 0x011c, 4);
-  for (i = 0; i < FCELIB_UTIL_Min(64, hdr->NumParts); ++i)
-  {
-    memcpy(&hdr->PartPos[i].x, buf + 0x0120 + i * 12 + 0x0, 4);
-    memcpy(&hdr->PartPos[i].y, buf + 0x0120 + i * 12 + 0x4, 4);
-    memcpy(&hdr->PartPos[i].z, buf + 0x0120 + i * 12 + 0x8, 4);
-  }
+  memcpy(&hdr->NumParts, buf + 0x011C, 4);
+  memcpy(&hdr->PartPos, buf + 0x0120, SCL_clamp(hdr->NumParts, 0, 64) * 3 * 4);
 
   memcpy(&hdr->P1stVertices, buf + 0x0420, 64 * 4);
   memcpy(&hdr->PNumVertices, buf + 0x0520, 64 * 4);
@@ -816,7 +776,7 @@ void FCELIB_FCETYPES_GetFceHeader4(FceHeader4 *hdr, const unsigned char * const 
   memcpy(&hdr->PNumTriangles, buf + 0x0720, 64 * 4);
 
   memcpy(&hdr->NumColors, buf + 0x0820, 4);
-  for (i = 0; i < FCELIB_UTIL_Min(16, hdr->NumColors); ++i)
+  for (i = 0; i < SCL_min(hdr->NumColors, 16); i++)
   {
     memcpy(&hdr->PriColors[i].hue,          buf + 0x0824 + i * 4 + 0, 1);
     memcpy(&hdr->PriColors[i].saturation,   buf + 0x0824 + i * 4 + 1, 1);
@@ -828,24 +788,33 @@ void FCELIB_FCETYPES_GetFceHeader4(FceHeader4 *hdr, const unsigned char * const 
     memcpy(&hdr->IntColors[i].brightness,   buf + 0x0864 + i * 4 + 2, 1);
     memcpy(&hdr->IntColors[i].transparency, buf + 0x0864 + i * 4 + 3, 1);
 
-    memcpy(&hdr->SecColors[i].hue,          buf + 0x08a4 + i * 4 + 0, 1);
-    memcpy(&hdr->SecColors[i].saturation,   buf + 0x08a4 + i * 4 + 1, 1);
-    memcpy(&hdr->SecColors[i].brightness,   buf + 0x08a4 + i * 4 + 2, 1);
-    memcpy(&hdr->SecColors[i].transparency, buf + 0x08a4 + i * 4 + 3, 1);
+    memcpy(&hdr->SecColors[i].hue,          buf + 0x08A4 + i * 4 + 0, 1);
+    memcpy(&hdr->SecColors[i].saturation,   buf + 0x08A4 + i * 4 + 1, 1);
+    memcpy(&hdr->SecColors[i].brightness,   buf + 0x08A4 + i * 4 + 2, 1);
+    memcpy(&hdr->SecColors[i].transparency, buf + 0x08A4 + i * 4 + 3, 1);
 
-    memcpy(&hdr->DriColors[i].hue,          buf + 0x08e4 + i * 4 + 0, 1);
-    memcpy(&hdr->DriColors[i].saturation,   buf + 0x08e4 + i * 4 + 1, 1);
-    memcpy(&hdr->DriColors[i].brightness,   buf + 0x08e4 + i * 4 + 2, 1);
-    memcpy(&hdr->DriColors[i].transparency, buf + 0x08e4 + i * 4 + 3, 1);
+    memcpy(&hdr->DriColors[i].hue,          buf + 0x08E4 + i * 4 + 0, 1);
+    memcpy(&hdr->DriColors[i].saturation,   buf + 0x08E4 + i * 4 + 1, 1);
+    memcpy(&hdr->DriColors[i].brightness,   buf + 0x08E4 + i * 4 + 2, 1);
+    memcpy(&hdr->DriColors[i].transparency, buf + 0x08E4 + i * 4 + 3, 1);
   }
 
   memcpy(&hdr->Unknown3, buf + 0x0924, 4);
+#if defined(SCL_DEBUG) && SCL_DEBUG > 0
   memcpy(&hdr->Unknown2, buf + 0x0928, 256);
+#endif
 
-  memcpy(&hdr->DummyNames, buf + 0x0a28, 64 * 16);
+  memcpy(&hdr->DummyNames, buf + 0x0A28, 64 * 16);
+  FCELIB_UTIL_UnprintableToNul(hdr->DummyNames, 16, 64);
+  FCELIB_UTIL_TidyUpNames(hdr->DummyNames, hdr->NumDummies, 16, 64);
 
-  memcpy(&hdr->PartNames, buf + 0x0e28, 64 * 64);
-  memcpy(&hdr->Unknown4, buf + 0x1e28, 528);
+  memcpy(&hdr->PartNames, buf + 0x0E28, 64 * 64);
+  FCELIB_UTIL_UnprintableToNul(hdr->PartNames, 64, 64);
+  FCELIB_UTIL_TidyUpNames(hdr->PartNames, hdr->NumParts, 64, 64);
+
+#if defined(SCL_DEBUG) && SCL_DEBUG > 0
+  memcpy(&hdr->Unknown4, buf + 0x1E28, 528);
+#endif
 }
 
 /* Fce3 validation ---------------------------------------------------------- */
@@ -938,7 +907,7 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const
     }
 
     /* Vertices, triangles counts */
-    for (i = 0; i < FCELIB_UTIL_Min(64, hdr->NumParts); ++i)
+    for (i = 0; i < SCL_min(64, hdr->NumParts); ++i)
     {
       if ((hdr->PNumTriangles[i] > 0) && (hdr->PNumVertices[i] < 3))
       {
@@ -983,7 +952,7 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const
       Vertices, triangles areas: parts non-overlapping, within bounds (do nothing
       when zero verts, triags)
     */
-    for (i = 0; i < FCELIB_UTIL_Min(64, hdr->NumParts) - 1; ++i)
+    for (i = 0; i < SCL_min(64, hdr->NumParts) - 1; ++i)
     {
       /*
         Combined with other checks, guarantees verts, triags stay within their
@@ -1126,9 +1095,9 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const
                       hdr->NumPriColors, hdr->NumSecColors);
     }
 
-    if ((hdr->XHalfSize < 0.001) || (hdr->ZHalfSize < 0.001) ||
-        (hdr->XHalfSize * hdr->ZHalfSize < 0.1) ||
-        (hdr->YHalfSize < 0.0))
+    if ((hdr->HalfSize[0] < 0.001) || (hdr->HalfSize[2] < 0.001) ||
+        (hdr->HalfSize[0] * hdr->HalfSize[2] < 0.1) ||
+        (hdr->HalfSize[1] < 0.0))
     {
       fprintf(stderr, "Fce3ValidateHeader: Warning HalfSizes may crash game\n");
     }
@@ -1182,18 +1151,18 @@ float FCELIB_FCETYPES_GetWheelbase4M(const FceHeader4 *hdr, int *count_wheels)
   int i;
   float wheelbase = 0.0;
   *count_wheels = 0;
-  for (i = 0; i < FCELIB_UTIL_Min(hdr->NumParts, 64); ++i)
+  for (i = 0; i < SCL_min(hdr->NumParts, 64); i++)
   {
     if (!strcmp(":PPLFwheel", hdr->PartNames + (i * 64)) || !strcmp(":PPLRwheel", hdr->PartNames + (i * 64)))
     {
       if (!*count_wheels)
       {
-        wheelbase = hdr->PartPos[i].z;
+        wheelbase = hdr->PartPos[i * 3 + 2];
         *count_wheels = 1;
       }
       else
       {
-        wheelbase = FCELIB_UTIL_Abs(hdr->PartPos[i].z - wheelbase);
+        wheelbase = SCL_abs(hdr->PartPos[i * 3 + 2] - wheelbase);
         *count_wheels = 2;
         break;
       }
@@ -1257,7 +1226,7 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
     }
 
     /* Vertices, triangles counts */
-    for (i = 0; i < FCELIB_UTIL_Min(64, hdr->NumParts); ++i)
+    for (i = 0; i < SCL_min(64, hdr->NumParts); ++i)
     {
       if ((hdr->PNumTriangles[i] > 0) && (hdr->PNumVertices[i] < 3))
       {
@@ -1324,7 +1293,7 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
       Vertices, triangles areas: parts non-overlapping, within bounds (do nothing
       when zero verts, triags)
     */
-    for (i = 0; i < FCELIB_UTIL_Min(64, hdr->NumParts) - 1; ++i)
+    for (i = 0; i < SCL_min(64, hdr->NumParts) - 1; ++i)
     {
       /*
         Combined with other checks, guarantees verts, triags stay within their
@@ -1559,9 +1528,9 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
                       hdr->VertTblOffset);
     }
 
-    if ((hdr->XHalfSize < 0.001) || (hdr->ZHalfSize < 0.001) ||
-        (hdr->XHalfSize * hdr->ZHalfSize < 0.1) ||
-        (hdr->YHalfSize < 0.0))
+    if ((hdr->HalfSize[0] < 0.001) || (hdr->HalfSize[2] < 0.001) ||
+        (hdr->HalfSize[0] * hdr->HalfSize[2] < 0.1) ||
+        (hdr->HalfSize[1] < 0.0))
     {
       fprintf(stderr, "Fce4ValidateHeader: Warning HalfSizes may crash game\n");
     }
@@ -1599,9 +1568,9 @@ void FCELIB_FCETYPES_PrintHeaderFce3(const void * const buf, const int fce_size)
     printf("NumVertices = %d (* 12 = %d)  (* 32 = %d)\n", hdr.NumVertices, 12 * hdr.NumVertices, 32 * hdr.NumVertices);
     printf("NumArts = %d\n", hdr.NumArts);
 
-    printf("XHalfSize = %f\n", hdr.XHalfSize);
-    printf("YHalfSize = %f\n", hdr.YHalfSize);
-    printf("ZHalfSize = %f\n", hdr.ZHalfSize);
+    printf("XHalfSize = %f\n", hdr.HalfSize[0]);
+    printf("YHalfSize = %f\n", hdr.HalfSize[1]);
+    printf("ZHalfSize = %f\n", hdr.HalfSize[2]);
 
     printf("NumParts = %d\n", hdr.NumParts);
     printf("NumDummies = %d\n", hdr.NumDummies);
@@ -1620,7 +1589,7 @@ void FCELIB_FCETYPES_PrintHeaderFce3(const void * const buf, const int fce_size)
 
     printf("Parts:\n"
            "Idx  Verts       Triags      (PartPos)                         Description          Name\n");
-    for (i = 0; i < FCELIB_UTIL_Min(FCELIB_UTIL_Fce3PartsImplemented, hdr.NumParts); ++i)
+    for (i = 0; i < SCL_min(FCELIB_UTIL_Fce3PartsImplemented, hdr.NumParts); i++)
     {
       printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %20s %s\n",
              i,
@@ -1628,14 +1597,14 @@ void FCELIB_FCETYPES_PrintHeaderFce3(const void * const buf, const int fce_size)
              hdr.PNumVertices[i],
              hdr.P1stTriangles[i],
              hdr.PNumTriangles[i],
-             hdr.PartPos[i].x, hdr.PartPos[i].y, hdr.PartPos[i].z,
+             hdr.PartPos[i * 3 + 0], hdr.PartPos[i * 3 + 1], hdr.PartPos[i * 3 + 2],
              kFce3PartsNames[i],
              hdr.PartNames + (i * 64));
 
       verts += hdr.PNumVertices[i];
       triags += hdr.PNumTriangles[i];
     }
-    for (i = FCELIB_UTIL_Min(FCELIB_UTIL_Fce3PartsImplemented, hdr.NumParts); i < FCELIB_UTIL_Min(64, hdr.NumParts); ++i)
+    for (i = SCL_min(FCELIB_UTIL_Fce3PartsImplemented, hdr.NumParts); i < SCL_min(64, hdr.NumParts); i++)
     {
       printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %20s %s\n",
              i,
@@ -1643,7 +1612,7 @@ void FCELIB_FCETYPES_PrintHeaderFce3(const void * const buf, const int fce_size)
              hdr.PNumVertices[i],
              hdr.P1stTriangles[i],
              hdr.PNumTriangles[i],
-             hdr.PartPos[i].x, hdr.PartPos[i].y, hdr.PartPos[i].z,
+             hdr.PartPos[i * 3 + 0], hdr.PartPos[i * 3 + 1], hdr.PartPos[i * 3 + 2],
              "",
              hdr.PartNames + (i * 64));
 
@@ -1659,15 +1628,15 @@ void FCELIB_FCETYPES_PrintHeaderFce3(const void * const buf, const int fce_size)
            fce_size - FCELIB_FCETYPES_Fce3ComputeSize(verts, triags));
 
     printf("DummyNames (Position):\n");
-    for (i = 0; i < FCELIB_UTIL_Min(hdr.NumDummies, 16); ++i)
+    for (i = 0; i < SCL_min(hdr.NumDummies, 16); i++)
     {
       printf(" (%9f, %9f, %9f) %s\n",
-             hdr.Dummies[i].x, hdr.Dummies[i].y, hdr.Dummies[i].z,
+             hdr.Dummies[i * 3 + 0], hdr.Dummies[i * 3 + 1], hdr.Dummies[i * 3 + 2],
              hdr.DummyNames + (i * 64));
     }
 
     printf("Car colors (hue, saturation, brightness, transparency):\n");
-    for (i = 0; i < FCELIB_UTIL_Min(hdr.NumPriColors, 16); ++i)
+    for (i = 0; i < SCL_min(hdr.NumPriColors, 16); i++)
     {
       printf("%2d  Primary     %3d, %3d, %3d, %3d\n", i,
              hdr.PriColors[i].hue, hdr.PriColors[i].saturation,
@@ -1700,9 +1669,9 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const void * const buf, const int fce_size)
     printf("NumVertices = %d (* 4 = %d)  (* 12 = %d)  (* 32 = %d)\n", hdr.NumVertices, 4 * hdr.NumVertices, 12 * hdr.NumVertices, 32 * hdr.NumVertices);
     printf("NumArts = %d\n", hdr.NumArts);
 
-    printf("XHalfSize = %f\n", hdr.XHalfSize);
-    printf("YHalfSize = %f\n", hdr.YHalfSize);
-    printf("ZHalfSize = %f\n", hdr.ZHalfSize);
+    printf("XHalfSize = %f\n", hdr.HalfSize[0]);
+    printf("YHalfSize = %f\n", hdr.HalfSize[1]);
+    printf("ZHalfSize = %f\n", hdr.HalfSize[2]);
     if (hdr.Version == 0x00101015)
     {
       int count_wheels;
@@ -1743,7 +1712,7 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const void * const buf, const int fce_size)
 
     printf("Parts:\n"
                     "Idx  Verts       Triangles   (PartPos)                         Name\n");
-    for (i = 0; i < FCELIB_UTIL_Min(hdr.NumParts, 64); ++i)
+    for (i = 0; i < SCL_min(hdr.NumParts, 64); i++)
     {
       printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %s\n",
              i,
@@ -1751,7 +1720,7 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const void * const buf, const int fce_size)
              hdr.PNumVertices[i],
              hdr.P1stTriangles[i],
              hdr.PNumTriangles[i],
-             hdr.PartPos[i].x, hdr.PartPos[i].y, hdr.PartPos[i].z,
+             hdr.PartPos[i * 3 + 0], hdr.PartPos[i * 3 + 1], hdr.PartPos[i * 3 + 2],
              hdr.PartNames + (i * 64));
 
       verts += hdr.PNumVertices[i];
@@ -1770,15 +1739,15 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const void * const buf, const int fce_size)
            fce_size - FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, verts, triags));
 
     printf("DummyNames (Position):\n");
-    for (i = 0; i < FCELIB_UTIL_Min(hdr.NumDummies, 16); ++i)
+    for (i = 0; i < SCL_min(hdr.NumDummies, 16); i++)
     {
       printf(" (%9f, %9f, %9f) %s\n",
-             hdr.Dummies[i].x, hdr.Dummies[i].y, hdr.Dummies[i].z,
+             hdr.Dummies[i * 3 + 0], hdr.Dummies[i * 3 + 1], hdr.Dummies[i * 3 + 2],
              hdr.DummyNames + (i * 64));
     }
 
     printf("Car colors (hue, saturation, brightness, transparency):\n");
-    for (i = 0; i < FCELIB_UTIL_Min(hdr.NumColors, 16); ++i)
+    for (i = 0; i < SCL_min(hdr.NumColors, 16); i++)
     {
       printf("%2d  Primary     %3d, %3d, %3d, %3d\n", i,
             hdr.PriColors[i].hue, hdr.PriColors[i].saturation,
@@ -1794,6 +1763,26 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const void * const buf, const int fce_size)
             hdr.DriColors[i].brightness, hdr.DriColors[i].transparency);
     }
   }
+}
+
+/* Version ------------------------------------------------------------------ */
+
+/* Returns 3 (FCE3), 4 (FCE4), 5 (FCE4M); negative (invalid); 0 input is NULL
+
+  Note: For return values 4|5, true version can still be FCE3. See FCELIB_FCETYPES_ValidateFceVersion()
+*/
+int FCELIB_FCETYPES_GetFceVersion(const void * const buf, const int bufsz)
+{
+  if (buf && bufsz > 0)
+  {
+    int version;
+    if (bufsz < 0x1F04)  return -3;
+    memcpy(&version, buf, 4);
+    if ((version != 0x00101014 && version != 0x00101015))  return 3;
+    else if (version == 0x00101014)  return bufsz >= 0x2038 ? 4 : -4;  /* can still be FCE3 */
+    else if (version == 0x00101015)  return bufsz >= 0x2038 ? 5 : -5;  /* can still be FCE3 */
+  }
+  return 0;
 }
 
 #endif  /* FCELIB_FCETYPES_H_ */

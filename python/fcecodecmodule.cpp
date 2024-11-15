@@ -53,8 +53,8 @@ namespace py = pybind11;
 class Mesh : public FcelibMesh
 {
 public:
-  Mesh() : mesh_(*this) { FCELIB_InitMesh(&mesh_); }
-  ~Mesh() { FCELIB_FreeMesh(&mesh_); }
+  Mesh() : mesh_(*this) { FCELIB_MeshInit(&mesh_); }
+  ~Mesh() { FCELIB_MeshRelease(&mesh_); }
 
   // Service
   bool MValid() const { return FCELIB_ValidateMesh(&mesh_); }
@@ -200,11 +200,11 @@ void Mesh::IoExportObj(const std::string &objpath, const std::string &mtlpath,
                        const int print_part_positions,
                        const int filter_triagflags_0xfff) const
 {
-  if (FCELIB_ExportObj(&mesh_, objpath.c_str(), mtlpath.c_str(),
+  if (!FCELIB_ExportObj(&mesh_, objpath.c_str(), mtlpath.c_str(),
                                texture_name.c_str(),
                                print_damage, print_dummies,
                                use_part_positions, print_part_positions,
-                               filter_triagflags_0xfff) == 0)
+                               filter_triagflags_0xfff))
     throw std::runtime_error("IoExportObj: Cannot export OBJ");
 }
 
@@ -1143,7 +1143,7 @@ int FCECODECMODULE_ValidateFce(const std::string &buf)
 
 /* -------------------------------------------------------------------------- */
 
-PYBIND11_MODULE(fcecodec, fcecodec_module)
+PYBIND11_MODULE(fcecodec, fcecodec_module, py::mod_gil_not_used())
 {
   fcecodec_module.doc() = "FCE decoder/encoder";
 

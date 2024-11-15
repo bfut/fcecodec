@@ -22,6 +22,7 @@
 #ifndef FCELIB_UTIL_H_
 #define FCELIB_UTIL_H_
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,8 +56,41 @@ const int kTrianglesDiamond[8 * 3] = {
   4, 5, 1
 };
 
-#define FCELIB_UTIL_Min(x,y) ((x)<(y)?(x):(y))
-#define FCELIB_UTIL_Abs(x) ((x)<0 ? -(x) : (x))
+#ifndef FCELIB_UTIL_max
+#define FCELIB_UTIL_max(x,y) ((x)<(y)?(y):(x))
+#define SCL_min(x,y) ((x)<(y)?(x):(y))
+#define SCL_abs(x) ((x)<0?-(x):(x))
+#define SCL_clamp(x,minv,maxv) ((maxv)<(minv)||(x)<(minv)?(minv):((x)>(maxv)?(maxv):(x)))
+#define SCL_ceil(x,y) ((x)/(y)+((x)%(y)!=0))  /* ceil(x/y) for x>=0,y>0 */
+#endif
+
+void FCELIB_UTIL_EnsureStrings(char *names, const int maxnum, const int len)
+{
+  int i;
+  for (i = 0; i < maxnum; i++)  names[(i + 1) * len - 1] = '\0';
+}
+
+void FCELIB_UTIL_UnprintableToNul(char *names, const int maxnum, const int len)
+{
+  int i;
+  for (i = 0; i < maxnum * len; i++)
+  {
+    if (!isprint(names[i]))  names[i] = '\0';
+  }
+}
+
+void FCELIB_UTIL_TidyUpNames(char *names, int num, const int maxnum, const int len)
+{
+  int i;
+  num = SCL_min(num, maxnum);
+  if (num < 0)  return;
+  for (i = 0; i < num; i++)
+  {
+    const int n = strlen(names + i * len);
+    memset(names + i * len + n, '\0', len - n);
+  }
+  memset(names + num * len, '\0', (maxnum - num) * len);
+}
 
 const char *FCELIB_UTIL_GetLastSlash(const char *path)
 {

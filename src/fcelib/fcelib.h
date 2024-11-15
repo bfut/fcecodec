@@ -56,16 +56,18 @@ extern "C" {
 
 /* mesh --------------------------------------------------------------------- */
 
-void FCELIB_FreeMesh(FcelibMesh *mesh)
+void FCELIB_MeshRelease(FcelibMesh *mesh)
 {
   if (mesh->release == &FCELIB_TYPES_FreeMesh)
     mesh->release(mesh);
 }
+#define FCELIB_FreeMesh(x) FCELIB_MeshRelease(x)
 
-FcelibMesh *FCELIB_InitMesh(FcelibMesh *mesh)
+FcelibMesh *FCELIB_MeshInit(FcelibMesh *mesh)
 {
   return FCELIB_TYPES_InitMesh(mesh);
 }
+#define FCELIB_InitMesh(x) FCELIB_MeshInit(x)
 
 void FCELIB_PrintMeshInfo(const FcelibMesh *mesh)
 {
