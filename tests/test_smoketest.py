@@ -386,19 +386,6 @@ def test_FceVersion(vers, path):
 #  7  Driver hair 170,  65, 128, 127
 # """
 
-# @pytest.mark.xfail(sys.platform.startswith("win"),
-#                    reason="test_PrintFceInfo() wurlitzer requires fcntl, n/a on windows")
-# @pytest.mark.parametrize("vers, path",
-#     [ (fcecodec_GetFceVersion_3, filepath_fce3_output),
-#       (fcecodec_GetFceVersion_4, filepath_fce4_output),
-#       (fcecodec_GetFceVersion_4m, filepath_fce4m_output) ])
-# def test_PrintFceInfo(vers, path):
-#     import wurlitzer
-#     with wurlitzer.pipes() as (out, err):
-#         fc.PrintFceInfo(path.read_bytes())
-#     stdout = out.read()
-#     assert len(err.read()) == 0 and stdout == vers
-
 def test_version():
     __version__ = re.findall(
         r"#define FCECVERS \"(.*)\"",

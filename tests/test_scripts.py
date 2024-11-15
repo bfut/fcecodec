@@ -82,8 +82,7 @@ def test_Fce2Obj():
     outpath.unlink()
     outpath.with_suffix(".mtl").unlink()
     assert p.returncode == 0 and obj_output == fcecodec_Fce2Obj_src
-    if sys.version_info.minor < 13 or sysconfig.get_config_var("Py_GIL_DISABLED") != 1 or sys._is_gil_enabled() == True:
-        len(p.stderr) == 0
+    assert len(p.stderr) == 0
 
 
 def test_MergeAllParts():
@@ -104,8 +103,7 @@ def test_MergeAllParts():
         print(p_cksum.stderr)
     outpath.unlink()
     assert p.returncode == 0
-    if sys.version_info.minor < 13 or sysconfig.get_config_var("Py_GIL_DISABLED") != 1 or sys._is_gil_enabled() == True:
-        len(p.stderr) == 0
+    assert len(p.stderr) == 0
     assert p_cmp.returncode == 0
 
 
@@ -188,6 +186,6 @@ Car colors (hue, saturation, brightness, transparency):
     p = subprocess.run(f"{PYTHON_EXECUTABLE} ./scripts/bfut_PrintFceInfo.py {str(filepath_fce_input)}",
                        shell=True, capture_output=True, encoding="utf8", check=True)
     assert p.returncode == 0 and p.stdout == fcecodec_PrintFceInfo_src
-    if sys.version_info.minor < 13 or sysconfig.get_config_var("Py_GIL_DISABLED") != 1 or sys._is_gil_enabled() == True:
-        len(p.stderr) == 0
+    assert len(p.stderr) == 0
+
 
