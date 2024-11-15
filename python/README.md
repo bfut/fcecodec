@@ -258,5 +258,5 @@ FUNCTIONS
         Returns 1 for valid FCE data, 0 otherwise.
 
 VERSION
-    1.10
+    1.14
 ```
