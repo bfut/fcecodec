@@ -308,8 +308,8 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh, FcelibMesh *mesh_src, const int p
     break;
   }  /* for (;;) */
 
-  if (old_global_to_new_global_idxs)
-    free(old_global_to_new_global_idxs);
+  free(old_global_to_new_global_idxs);
+  old_global_to_new_global_idxs = NULL;
 
   return pid_new;
 }
@@ -715,8 +715,8 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
     break;
   }  /* for (;;) */
 
-  if (old_global_to_new_global_idxs)
-    free(old_global_to_new_global_idxs);
+  free(old_global_to_new_global_idxs);
+  old_global_to_new_global_idxs = NULL;
 
   return pid_new;
 }

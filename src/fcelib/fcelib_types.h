@@ -175,10 +175,14 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
     free(mesh->parts[ mesh->hdr.Parts[i] ]);
   }  /* for i */
 
-  if (mesh->hdr.Parts)  free(mesh->hdr.Parts);
-  if (mesh->parts)  free(mesh->parts);
-  if (mesh->triangles)  free(mesh->triangles);
-  if (mesh->vertices)  free(mesh->vertices);
+  free(mesh->hdr.Parts);
+  mesh->hdr.Parts = NULL;
+  free(mesh->parts);
+  mesh->parts = NULL;
+  free(mesh->triangles);
+  mesh->triangles = NULL;
+  free(mesh->vertices);
+  mesh->vertices = NULL;
 
   mesh->release = NULL;
 }

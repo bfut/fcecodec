@@ -1297,8 +1297,8 @@ int FCELIB_IO_EncodeFce3(FcelibMesh *mesh, unsigned char **outbuf, const int out
     break;
   }  /* for (;;) */
 
-  if (global_mesh_to_local_fce_idxs)
-    free(global_mesh_to_local_fce_idxs);
+  free(global_mesh_to_local_fce_idxs);
+  global_mesh_to_local_fce_idxs = NULL;
 
   return retv;
 }
@@ -1706,8 +1706,8 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int out
     break;
   }  /* for (;;) */
 
-  if (global_mesh_to_local_fce_idxs)
-    free(global_mesh_to_local_fce_idxs);
+  free(global_mesh_to_local_fce_idxs);
+  global_mesh_to_local_fce_idxs = NULL;
 
   return retv;
 }
