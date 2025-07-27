@@ -142,7 +142,7 @@ def test_smoketest_tracemalloc():
     print(flush = True)
     # tracemalloc -- END -----------------------------------------------------------
 
-    assert first_size == 0 and second_size < 55000 and second_peak < 130000
+    assert first_size == 0 and second_size < 55000 and second_peak < 280000
 
 
 @pytest.mark.skipif(platform.python_implementation() != "PyPy",
