@@ -27,6 +27,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef SCL_max
+#define SCL_max(x,y) ((x)<(y)?(y):(x))
+#endif
+#ifndef SCL_min
+#define SCL_min(x,y) ((x)<(y)?(x):(y))
+#endif
+#ifndef SCL_abs
+#define SCL_abs(x) ((x)<0?-(x):(x))
+#endif
+#ifndef SCL_clamp
+#define SCL_clamp(x,minv,maxv) ((maxv)<(minv)||(x)<(minv)?(minv):((x)>(maxv)?(maxv):(x)))
+#endif
+#ifndef SCL_ceil
+#define SCL_ceil(x,y) ((x)/(y)+((x)%(y)!=0))  /* ceil(x/y) for x>=0,y>0 */
+#endif
+
 #define FCELIB_UTIL_Fce3PartsImplemented 13
 #define FCELIB_UTIL_Fce4PartsHighBody 18
 
@@ -56,13 +72,15 @@ const int kTrianglesDiamond[8 * 3] = {
   4, 5, 1
 };
 
-#ifndef FCELIB_UTIL_max
-#define FCELIB_UTIL_max(x,y) ((x)<(y)?(y):(x))
-#define SCL_min(x,y) ((x)<(y)?(x):(y))
-#define SCL_abs(x) ((x)<0?-(x):(x))
-#define SCL_clamp(x,minv,maxv) ((maxv)<(minv)||(x)<(minv)?(minv):((x)>(maxv)?(maxv):(x)))
-#define SCL_ceil(x,y) ((x)/(y)+((x)%(y)!=0))  /* ceil(x/y) for x>=0,y>0 */
-#endif
+int FCELIB_UTIL_Buf2Hex(const void *src, char *buf, const int sz)
+{
+  int result = 0;
+  int i;
+  if (!src || !buf || sz > 4)  return -1;
+  memcpy(buf, src, sz);
+  for (i = 0; i < sz; i++)  result += (buf[i] << (i * 8));
+  return result;
+}
 
 void FCELIB_UTIL_EnsureStrings(char *names, const int maxnum, const int len)
 {
@@ -158,6 +176,25 @@ int FCELIB_UTIL_StrIsInArray(char *str, const char **arr)
       retv = 1;
       break;
     }
+  }
+  return retv;
+}
+
+int FCELIB_UTIL_CheckTriagVidxBoundedness(const char *ptr_triag_vidx, const int PNumTriangles, const int PNumVertices)
+{
+  int retv = 1;
+  int j;
+  for (j = 0; j < PNumTriangles; j++)
+  {
+    const float *ptr_vidx = (const float *)ptr_triag_vidx;
+    if (ptr_vidx[0] < 0 || ptr_vidx[0] >= PNumVertices ||
+        ptr_vidx[1] < 0 || ptr_vidx[1] >= PNumVertices ||
+        ptr_vidx[2] < 0 || ptr_vidx[2] >= PNumVertices)
+    {
+      retv = 0;
+      break;
+    }
+    ptr_triag_vidx += 56;
   }
   return retv;
 }

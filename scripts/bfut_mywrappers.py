@@ -60,9 +60,8 @@ def GetFceVersion(path):
     return version
 
 def PrintFceInfo(path):
-    buf = fc.GetFceVersion(pathlib.Path(path).read_bytes())
+    buf = pathlib.Path(path).read_bytes()
     fc.PrintFceInfo(buf)
-    assert fc.ValidateFce(buf) == 1
 
 def LoadFce(mesh, path):
     mesh.IoDecode(pathlib.Path(path).read_bytes())
@@ -135,7 +134,7 @@ def FilterTexpageTriags(mesh, drop_texpages: int | list | None = None, select_te
     else:
         raise ValueError("FilterTexpageTriags: call with either drop_texpages or select_texpages, not both")
 
-    assert mesh.OpDelUnrefdVerts()
+    # assert mesh.OpDelUnrefdVerts()
     return mesh
 
 def DeleteEmptyParts(mesh):

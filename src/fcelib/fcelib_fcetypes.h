@@ -110,10 +110,6 @@ car.fce   body roof          no cull
 car.fce   windows            all windows + high chrome + no cull + semi-transparent
 dash.fce  mirror glass       high chrome + semi-transparent
 
-6 = 2 + 4
-A = 2 + 8
-E = 2 + 4 + 8
-
 Name    Application example                     Application example
 0x000   car.fce   body                          dash.fce  not mirror glass
 0x001   car.fce   underbody
@@ -154,11 +150,13 @@ struct tTriangle {
 };
 #endif
 
+#if 1
 struct tVector {
   float x;  /* x->inf is to the right */
   float y;  /* y->inf is up */
   float z;  /* z->inf is to the front */
 };
+#endif
 
 /*
   Valid values for all four components: 0..255
@@ -195,7 +193,7 @@ struct FceHeader3 {
 /* 0x0020 */  int      Reserve2offset     ;  /* len() = len(VertTbl) */
 /* 0x0024 */  int      Reserve3offset     ;  /* len() = len(VertTbl) */
 
-/* 0x0028 */  float    HalfSize[3]        ;  /* X,Y,Z half-size width of whole model, defines bounding box for collision detection */
+/* 0x0028 */  float    HalfSize[3]        ;  /* X,Y,Z half-size width of model, bounding box for collision detection */
 
 /* 0x0034 */  int      NumDummies         ;  /* Number of light sources 0..16 */
 /* 0x0038 */  float    Dummies[16 * 3]    ;  /* Coordinates of dummies */
@@ -281,7 +279,7 @@ Line06                   0    Y
 
 /* 0x2038  -  size of this header */
 struct FceHeader4 {
-/* 0x0000 */  int      Version             ;  /* FCE4: 0x00101014, FCE4M: 0x00101015 */
+/* 0x0000 */  int      Version             ;  /* FCE4: 0x00101014; FCE4M: nullable, usually 0x00101015 */
 /* 0x0004 */  int      Unknown1            ;  /* nullable */
 /* 0x0008 */  int      NumTriangles        ;  /* Number of triangles in model */
 /* 0x000C */  int      NumVertices         ;  /* Number of vertices in model */
@@ -306,7 +304,7 @@ struct FceHeader4 {
 
 /* 0x0048 */  int      Reserve6offset      ;  /* len() = 12 * NumTriangles, null
                                                 FCE4M: len() += NumVertices */
-/* 0x004C */  float    HalfSize[3]         ;  /* X,Y,Z half-size width of whole model, defines bounding box for collision detection */
+/* 0x004C */  float    HalfSize[3]         ;  /* X,Y,Z half-size width of model, bounding box for collision detection */
 
 /* 0x0058 */  int      NumDummies          ;  /* Number of light sources */
 /* 0x005C */  float    Dummies[16 * 3]     ;  /* Coordinates of dummies */
@@ -365,7 +363,9 @@ const char *kFce4HiBodyParts[FCELIB_UTIL_Fce4PartsHighBody] = {
 
 /*
 car.fce (FCE4)
-":HB" is the only mandatory part
+one of the LODs (high, mid, low, tiny) is mandatory
+  if ":HB" is missing, ignores high parts
+  if ":MB" is missing, ignores mid parts
 Name    Description              Damage  FallOf  UsesFlag  Light  Animated   Pursuit
 :HB     high body                Y       N       Y         N      N          N
 :MB     mid body                 Y       N       Y         N      N          N
@@ -656,17 +656,13 @@ Omni01     0   POV
 :W_AXIS    1   far-end of steering column
 */
 
-/* Get header --------------------------------------------------------------- */
+/* Get header ------------------------------------------------------------------------------------------------------- */
 
 /* Assumes input has length >= 0x1F04 */
 void FCELIB_FCETYPES_GetFceHeader3(FceHeader3 *hdr, const unsigned char * const buf)
 {
   int i;
-#ifdef __cplusplus
-  *hdr = {};
-#else
   memset(hdr, 0, sizeof(*hdr));
-#endif
 
   memcpy(&hdr->Unknown1, buf + 0x0000, 4);
   memcpy(&hdr->NumTriangles, buf + 0x0004, 4);
@@ -731,11 +727,7 @@ void FCELIB_FCETYPES_GetFceHeader3(FceHeader3 *hdr, const unsigned char * const 
 void FCELIB_FCETYPES_GetFceHeader4(FceHeader4 *hdr, const unsigned char * const buf)
 {
   int i;
-#ifdef __cplusplus
-  *hdr = {};
-#else
   memset(hdr, 0, sizeof(*hdr));
-#endif
 
   memcpy(&hdr->Version, buf + 0x0000, 4);
   memcpy(&hdr->Unknown1, buf + 0x0004, 4);
@@ -817,10 +809,10 @@ void FCELIB_FCETYPES_GetFceHeader4(FceHeader4 *hdr, const unsigned char * const 
 #endif
 }
 
-/* Fce3 validation ---------------------------------------------------------- */
+/* Fce3 validation -------------------------------------------------------------------------------------------------- */
 
 /* Bound-checks counts and offsets from FCE data */
-int FCELIB_FCETYPES_MiniValidateHdr3(const unsigned char * const buf)
+int FCELIB_FCETYPES_MiniValidateHdr3(const unsigned char * const buf, const int verbose)
 {
   int retv = 1;
   int tmp;
@@ -830,12 +822,12 @@ int FCELIB_FCETYPES_MiniValidateHdr3(const unsigned char * const buf)
     0x0010, 0x0014, 0x0018,
     0x001C, 0x0020, 0x0024
   };
-  for (i = 0; i < 8; ++i)
+  for (i = 0; i < 8; i++)
   {
     memcpy(&tmp, buf + kHdrPos3[i], sizeof(tmp));
     if ((tmp < INT_MIN / 80) || (tmp > INT_MAX / 80))
     {
-      fprintf(stderr, "MiniValidateHdr3: Invalid value at %#06x (%d)\n", kHdrPos3[i], tmp);
+      if (verbose)  fprintf(stderr, "MiniValidateHdr3: Invalid value at %#06x (%d)\n", kHdrPos3[i], tmp);
       retv = 0;
     }
   }
@@ -852,7 +844,7 @@ int FCELIB_FCETYPES_Fce3ComputeSize(const int NumVertices, const int NumTriangle
 }
 
 /* Assumes sizeof(*buf) >= 0x1F04. Returns boolean. */
-int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const buf, const int fce_size)
+int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const buf, const int fce_size, const char verbose)
 {
   int retv = 1;
   int i;
@@ -866,59 +858,67 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const
 
   for (;;)
   {
-    if (!FCELIB_FCETYPES_MiniValidateHdr3((const unsigned char *)buf))
+    if (!FCELIB_FCETYPES_MiniValidateHdr3((const unsigned char *)buf, verbose))
+    {
       retv = 0;
+      break;
+    }
 
     if (hdr->NumTriangles < 0)
     {
-      fprintf(stderr, "Fce3ValidateHeader: Invalid number of triangles (%d)\n", hdr->NumTriangles);
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Invalid number of triangles (%d)\n", hdr->NumTriangles);
       retv = 0;
+      break;
     }
 
     if (hdr->NumVertices < 0)
     {
-      fprintf(stderr, "Fce3ValidateHeader: Invalid number of vertices (%d)\n", hdr->NumVertices);
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Invalid number of vertices (%d)\n", hdr->NumVertices);
       retv = 0;
+      break;
     }
 
     if ((hdr->NumDummies > 16) || (hdr->NumDummies < 0))
     {
-      fprintf(stderr, "Fce3ValidateHeader: Invalid number of dummies (%d)\n", hdr->NumDummies);
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Invalid number of dummies (%d)\n", hdr->NumDummies);
       retv = 0;
+      break;
     }
 
     if ((hdr->NumParts > 64) || (hdr->NumParts < 0))
     {
-      fprintf(stderr, "Fce3ValidateHeader: Invalid number of parts (%d)\n", hdr->NumParts);
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Invalid number of parts (%d)\n", hdr->NumParts);
       retv = 0;
+      break;
     }
 
     if ((hdr->NumPriColors > 16) || (hdr->NumPriColors < 0))
     {
-      fprintf(stderr, "Fce3ValidateHeader: Invalid number of primary colors (%d)\n",
-                      hdr->NumPriColors);
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Invalid number of primary colors (%d)\n", hdr->NumPriColors);
       retv = 0;
+      break;
     }
     if ((hdr->NumSecColors > 16) || (hdr->NumSecColors < 0))
     {
-      fprintf(stderr, "Fce3ValidateHeader: Invalid number of secondary colors (%d)\n",
-                      hdr->NumSecColors);
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Invalid number of secondary colors (%d)\n", hdr->NumSecColors);
       retv = 0;
+      break;
     }
 
     /* Vertices, triangles counts */
-    for (i = 0; i < SCL_min(64, hdr->NumParts); ++i)
+    for (i = 0; i < SCL_min(hdr->NumParts, 64); i++)
     {
       if ((hdr->PNumTriangles[i] > 0) && (hdr->PNumVertices[i] < 3))
       {
-        fprintf(stderr, "Fce3ValidateHeader: Part %d requires at least 3 vertices in total, found %d\n",
+        if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Part %d requires at least 3 vertices in total, found %d\n",
                         i, hdr->PNumVertices[i]);
         retv = 0;
+        break;
       }
       if ((hdr->PNumTriangles[i] < 0) || (hdr->PNumTriangles[i] > INT_MAX - count_triags) ||
                (hdr->PNumVertices[i] < 0) || (hdr->PNumVertices[i] > INT_MAX - count_verts))
       {
-        fprintf(stderr, "Fce3ValidateHeader: Part %d number of triangles (%d) or vertices (%d) out of bounds.\n",
+        if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Part %d number of triangles (%d) or vertices (%d) out of bounds.\n",
                         i, hdr->PNumTriangles[i], hdr->PNumVertices[i]);
         retv = 0;
         break;
@@ -929,22 +929,25 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const
     }
     if (hdr->NumVertices < count_verts)
     {
-      fprintf(stderr, "Fce3ValidateHeader: Expects %d vertices in total, found %d\n",
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Expects %d vertices in total, found %d\n",
                       hdr->NumVertices, count_verts);
       retv = 0;
+      break;
     }
     if (hdr->NumTriangles < count_triags)
     {
-      fprintf(stderr, "Fce3ValidateHeader: Expects %d triangles in total, found %d\n",
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Expects %d triangles in total, found %d\n",
                       hdr->NumTriangles, count_triags);
       retv = 0;
+      break;
     }
     if ((size = FCELIB_FCETYPES_Fce3ComputeSize(count_verts, count_triags)) > fce_size)
     {
-      fprintf(stderr, "Fce3ValidateHeader: FCE filesize too small %d (requires %d) %d\n",
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: FCE filesize too small %d (requires %d) %d\n",
                       size,
                       fce_size, fce_size - size);
       retv = 0;
+      break;
     }
     size = 0;
 
@@ -952,7 +955,7 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const
       Vertices, triangles areas: parts non-overlapping, within bounds (do nothing
       when zero verts, triags)
     */
-    for (i = 0; i < SCL_min(64, hdr->NumParts) - 1; ++i)
+    for (i = 0; i < SCL_min(hdr->NumParts, 64) - 1; i++)
     {
       /*
         Combined with other checks, guarantees verts, triags stay within their
@@ -961,13 +964,13 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const
       if ((hdr->P1stVertices[i] < 0) ||
           (hdr->P1stVertices[i] + hdr->PNumVertices[i] > hdr->NumVertices))
       {
-        fprintf(stderr, "Fce3ValidateHeader: Part out of bounds %d (vertices)\n", i);
+        if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Part out of bounds %d (vertices)\n", i);
         retv = 0;
         break;
       }
       if (hdr->P1stVertices[i] + hdr->PNumVertices[i] > hdr->P1stVertices[i + 1])
       {
-        fprintf(stderr, "Fce3ValidateHeader: Overlapping parts %d, %d (vertices)\n", i, i + 1);
+        if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Overlapping parts %d, %d (vertices)\n", i, i + 1);
         retv = 0;
         break;
       }
@@ -975,31 +978,33 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const
       if ((hdr->P1stTriangles[i] < 0) ||
           (hdr->P1stTriangles[i] + hdr->PNumTriangles[i] > hdr->NumTriangles))
       {
-        fprintf(stderr, "Fce3ValidateHeader: Part out of bounds %d (triangles)\n", i);
+        if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Part out of bounds %d (triangles)\n", i);
         retv = 0;
         break;
       }
       if (hdr->P1stTriangles[i] + hdr->PNumTriangles[i] > hdr->P1stTriangles[i + 1])
       {
-        fprintf(stderr, "Fce3ValidateHeader: Overlapping parts %d, %d (triangles)\n", i, i + 1);
+        if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Overlapping parts %d, %d (triangles)\n", i, i + 1);
         retv = 0;
         break;
       }
-    }
+    }  /* for i */
     if ((hdr->NumParts > 0) && (hdr->NumParts <= 64))
     {
       if ((hdr->P1stVertices[hdr->NumParts - 1] < 0) ||
           (hdr->P1stVertices[hdr->NumParts - 1] + hdr->PNumVertices[hdr->NumParts - 1] > hdr->NumVertices))
       {
-        fprintf(stderr, "Fce3ValidateHeader: Part out of bounds %d (vertices)\n", hdr->NumParts - 1);
+        if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Part out of bounds %d (vertices)\n", hdr->NumParts - 1);
         retv = 0;
+        break;
       }
 
       if ((hdr->P1stTriangles[hdr->NumParts - 1] < 0) ||
           (hdr->P1stTriangles[hdr->NumParts - 1] + hdr->PNumTriangles[hdr->NumParts - 1] > hdr->NumTriangles))
       {
-        fprintf(stderr, "Fce3ValidateHeader: Part out of bounds %d (triangles)\n", hdr->NumParts - 1);
+        if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Part out of bounds %d (triangles)\n", hdr->NumParts - 1);
         retv = 0;
+        break;
       }
     }
 
@@ -1014,55 +1019,62 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const
     */
     if ((size = FCELIB_FCETYPES_Fce3ComputeSize(hdr->NumVertices, hdr->NumTriangles)) != fce_size)
     {
-      fprintf(stderr, "Fce3ValidateHeader: FCE filesize mismatch %d (expects %d) %d\n",
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: FCE filesize mismatch %d (expects %d) %d\n",
                       fce_size,
                       size, fce_size - size);
       retv = 0;
+      break;
     }
 
     dist_to_eof = 0;
     dist_to_eof += 12 * hdr->NumVertices;
     if ((hdr->Reserve3offset < 0) || (fce_size - 0x1F04 - hdr->Reserve3offset) != dist_to_eof)
     {
-      fprintf(stderr, "Fce3ValidateHeader: Reserve3offset invalid 0x%04x (expects 0x%04x)\n",
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Reserve3offset invalid 0x%04x (expects 0x%04x)\n",
                       hdr->Reserve3offset, dist_to_eof);
       retv = 0;
+      break;
     }
     dist_to_eof += 12 * hdr->NumVertices;
     if ((hdr->Reserve2offset < 0) || (fce_size - 0x1F04 - hdr->Reserve2offset) != dist_to_eof)
     {
-      fprintf(stderr, "Fce3ValidateHeader: Reserve2offset invalid 0x%04x (expects 0x%04x)\n",
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Reserve2offset invalid 0x%04x (expects 0x%04x)\n",
                       hdr->Reserve2offset, dist_to_eof);
       retv = 0;
+      break;
     }
     dist_to_eof += 32 * hdr->NumVertices;
     if ((hdr->Reserve1offset < 0) || (fce_size - 0x1F04 - hdr->Reserve1offset) != dist_to_eof)
     {
-      fprintf(stderr, "Fce3ValidateHeader: Reserve1offset invalid 0x%04x (expects 0x%04x)\n",
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Reserve1offset invalid 0x%04x (expects 0x%04x)\n",
                       hdr->Reserve1offset, dist_to_eof);
       retv = 0;
+      break;
     }
 
     dist_to_eof += 56 * hdr->NumTriangles;
     if ((hdr->TriaTblOffset < 0) || (fce_size - 0x1F04 - hdr->TriaTblOffset) != dist_to_eof)
     {
-      fprintf(stderr, "Fce3ValidateHeader: TriaTblOffset invalid 0x%04x (expects 0x%04x)\n",
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: TriaTblOffset invalid 0x%04x (expects 0x%04x)\n",
                       hdr->TriaTblOffset, dist_to_eof);
       retv = 0;
+      break;
     }
     dist_to_eof += 12 * hdr->NumVertices;
     if ((hdr->NormTblOffset < 0) || (fce_size - 0x1F04 - hdr->NormTblOffset) != dist_to_eof)
     {
-      fprintf(stderr, "Fce3ValidateHeader: NormTblOffset invalid 0x%04x (expects 0x%04x)\n",
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: NormTblOffset invalid 0x%04x (expects 0x%04x)\n",
                       hdr->NormTblOffset, dist_to_eof);
       retv = 0;
+      break;
     }
     dist_to_eof += 12 * hdr->NumVertices;
     if ((hdr->VertTblOffset < 0) || (fce_size - 0x1F04 - hdr->VertTblOffset) != dist_to_eof)
     {
-      fprintf(stderr, "Fce3ValidateHeader: VertTblOffset invalid 0x%04x (expects 0x%04x)\n",
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: VertTblOffset invalid 0x%04x (expects 0x%04x)\n",
                       hdr->VertTblOffset, dist_to_eof);
       retv = 0;
+      break;
     }
 
     /* warnings */
@@ -1070,28 +1082,28 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const
     {
       if (hdr->NumVertices != count_verts)
       {
-        fprintf(stderr, "Fce3ValidateHeader: Warning Expects %d vertices in total, found %d\n",
+        if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Warning Expects %d vertices in total, found %d\n",
                         hdr->NumVertices, count_verts);
       }
       if (hdr->NumTriangles != count_triags)
       {
-        fprintf(stderr, "Fce3ValidateHeader: Warning Expects %d triangles in total, found %d\n",
+        if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Warning Expects %d triangles in total, found %d\n",
                         hdr->NumTriangles, count_triags);
       }
     }
 
     if (hdr->NumArts != 1)
-      fprintf(stderr, "Fce3ValidateHeader: Warning NumArts != 1 (%d)\n", hdr->NumArts);
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Warning NumArts != 1 (%d)\n", hdr->NumArts);
 
     if (hdr->VertTblOffset)
     {
-      fprintf(stderr, "Fce3ValidateHeader: Warning VertTblOffset = 0x%04x (expects 0x0000)\n",
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Warning VertTblOffset = 0x%04x (expects 0x0000)\n",
                       hdr->VertTblOffset);
     }
 
     if (hdr->NumPriColors < hdr->NumSecColors)
     {
-      fprintf(stderr, "Fce3ValidateHeader: Warning NumPriColors < NumSecColors (%d, %d)\n",
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Warning NumPriColors < NumSecColors (%d, %d)\n",
                       hdr->NumPriColors, hdr->NumSecColors);
     }
 
@@ -1099,7 +1111,7 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const
         (hdr->HalfSize[0] * hdr->HalfSize[2] < 0.1) ||
         (hdr->HalfSize[1] < 0.0))
     {
-      fprintf(stderr, "Fce3ValidateHeader: Warning HalfSizes may crash game\n");
+      if (verbose)  fprintf(stderr, "Fce3ValidateHeader: Warning HalfSizes may crash game\n");
     }
     break;
   }
@@ -1107,10 +1119,10 @@ int FCELIB_FCETYPES_Fce3ValidateHeader(const FceHeader3 *hdr, const void * const
   return retv;
 }
 
-/* Fce4 validation ---------------------------------------------------------- */
+/* Fce4 validation -------------------------------------------------------------------------------------------------- */
 
 /* Bound-checks counts and offsets from FCE data */
-int FCELIB_FCETYPES_MiniValidateHdr4(const unsigned char * const buf)
+int FCELIB_FCETYPES_MiniValidateHdr4(const unsigned char * const buf, const int verbose)
 {
   int retv = 1;
   int tmp;
@@ -1123,26 +1135,25 @@ int FCELIB_FCETYPES_MiniValidateHdr4(const unsigned char * const buf)
     0x003c, 0x0040, 0x0044,
     0x0048
   };
-  for (i = 0; i < 16; ++i)
+  for (i = 0; i < 16; i++)
   {
     memcpy(&tmp, buf + kHdrPos4[i], sizeof(tmp));
     if ((tmp < INT_MIN / 140) || (tmp > INT_MAX / 140))
     {
-      fprintf(stderr, "MiniValidateHdr4: Invalid value at %#06x (%d)\n", kHdrPos4[i], tmp);
+      if (verbose)  fprintf(stderr, "MiniValidateHdr4: Invalid value at %#06x (%d)\n", kHdrPos4[i], tmp);
       retv = 0;
     }
   }
   return retv;
 }
 
-int FCELIB_FCETYPES_Fce4ComputeSize(const int Version, const int NumVertices, const int NumTriangles)
+int FCELIB_FCETYPES_Fce4ComputeSize(const int version, const int NumVertices, const int NumTriangles)
 {
   int fsize = 0;
   fsize += 0x2038;             /* FCE4 / FCE4M header size */
   fsize += 140 * NumVertices;  /* ((8*12) + 32 + (3*4)) x NumVertices */
   fsize += 68 * NumTriangles;  /* (56 + 12) x NumTriangles*/
-  if (Version == 0x00101015)
-    fsize += NumVertices;  /* Reserve6 is larger */
+  if (version != 0x00101014)  fsize += NumVertices;  /* Reserve6 is larger */
   return fsize;
 }
 
@@ -1168,14 +1179,11 @@ float FCELIB_FCETYPES_GetWheelbase4M(const FceHeader4 *hdr, int *count_wheels)
       }
     }
   }
-  if (*count_wheels < 2)
-    return 0.0;
-  else
-    return wheelbase;
+  return *count_wheels >= 2 ? wheelbase : 0.0;
 }
 
 /* Assumes sizeof(*buf) = 0x2038. Returns boolean */
-int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const buf, const int fce_size)
+int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const buf, const int fce_size, const char verbose)
 {
   int retv = 1;
   int i;
@@ -1186,30 +1194,30 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
 
   for (;;)
   {
-    if (!FCELIB_FCETYPES_MiniValidateHdr4((const unsigned char *)buf))
+    if (!FCELIB_FCETYPES_MiniValidateHdr4((const unsigned char *)buf, verbose))
       retv = 0;
 
     if (hdr->NumTriangles < 0)
     {
-      fprintf(stderr, "Fce4ValidateHeader: Invalid number of triangles (%d)\n", hdr->NumTriangles);
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Invalid number of triangles (%d)\n", hdr->NumTriangles);
       retv = 0;
     }
 
     if (hdr->NumVertices < 0)
     {
-      fprintf(stderr, "Fce4ValidateHeader: Invalid number of vertices (%d)\n", hdr->NumVertices);
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Invalid number of vertices (%d)\n", hdr->NumVertices);
       retv = 0;
     }
 
     if ((hdr->NumDummies > 16) || (hdr->NumDummies < 0))
     {
-      fprintf(stderr, "Fce4ValidateHeader: Invalid number of dummies (%d is not in [0, 16]\n", hdr->NumDummies);
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Invalid number of dummies (%d is not in [0, 16]\n", hdr->NumDummies);
       retv = 0;
     }
 
     if ((hdr->NumParts > 64) || (hdr->NumParts < 0))
     {
-      fprintf(stderr, "Fce4ValidateHeader: Invalid number of parts (%d)\n", hdr->NumParts);
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Invalid number of parts (%d)\n", hdr->NumParts);
       retv = 0;
     }
 
@@ -1218,27 +1226,27 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
       /* FCE4M does not use colors and may allow invalid values */
       if (hdr->Version == 0x00101014)
       {
-        fprintf(stderr, "Fce4ValidateHeader: Invalid number of colors (%d is not in [0, 16])\n", hdr->NumColors);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Invalid number of colors (%d is not in [0, 16])\n", hdr->NumColors);
         retv = 0;
       }
-      else if (hdr->Version == 0x00101015)
-        printf("Fce4ValidateHeader: Warning: Invalid number of colors (%d is not in [0, 16])\n", hdr->NumColors);
+      else
+        if (verbose)  printf("Fce4ValidateHeader: Warning: Invalid number of colors (%d is not in [0, 16])\n", hdr->NumColors);
     }
 
     /* Vertices, triangles counts */
-    for (i = 0; i < SCL_min(64, hdr->NumParts); ++i)
+    for (i = 0; i < SCL_min(64, hdr->NumParts); i++)
     {
       if ((hdr->PNumTriangles[i] > 0) && (hdr->PNumVertices[i] < 3))
       {
-        fprintf(stderr, "Fce4ValidateHeader: Part %d requires at least 3 vertices in total, found %d\n",
-                        i, hdr->PNumVertices[i]);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Part %d requires at least 3 vertices in total, found %d\n",
+                                      i, hdr->PNumVertices[i]);
         retv = 0;
       }
       if ((hdr->PNumTriangles[i] < 0) || (hdr->PNumTriangles[i] > INT_MAX - count_triags) ||
                (hdr->PNumVertices[i] < 0) || (hdr->PNumVertices[i] > INT_MAX - count_verts))
       {
-        fprintf(stderr, "Fce4ValidateHeader: Part %d number of triangles (%d) or vertices (%d) out of bounds.\n",
-                        i, hdr->PNumTriangles[i], hdr->PNumVertices[i]);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Part %d number of triangles (%d) or vertices (%d) out of bounds.\n",
+                                      i, hdr->PNumTriangles[i], hdr->PNumVertices[i]);
         retv = 0;
         break;
       }
@@ -1248,14 +1256,12 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
     }
     if (hdr->NumVertices < count_verts)
     {
-      fprintf(stderr, "Fce4ValidateHeader: Expects %d vertices in total, found %d\n",
-                      hdr->NumVertices, count_verts);
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Expects %d vertices in total, found %d\n", hdr->NumVertices, count_verts);
       retv = 0;
     }
     if (hdr->NumTriangles < count_triags)
     {
-      fprintf(stderr, "Fce4ValidateHeader: Expects %d triangles in total, found %d\n",
-                      hdr->NumTriangles, count_triags);
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Expects %d triangles in total, found %d\n", hdr->NumTriangles, count_triags);
       retv = 0;
     }
     if (!retv)
@@ -1267,24 +1273,25 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
       /* Are just Reserve5, Reserve6 invalid? ex. 99viper/?.fce */
 
       int area_5_6_size = 4 * hdr->NumVertices + 12 * hdr->NumTriangles;
-      if (hdr->Version == 0x00101015)
+      if (hdr->Version != 0x00101014)
         area_5_6_size += hdr->NumVertices;
 
       if (size - area_5_6_size > fce_size - abs(fce_size - 0x2038 - hdr->Reserve5offset))
       {
-        fprintf(stderr, "Fce4ValidateHeader: FCE filesize mismatch %d (expects %d) %d\n",
-                        fce_size,
-                        size, fce_size - size);
-        fprintf(stderr, "Fce4ValidateHeader: count_verts=%d , count_triags=%d\n", count_verts, count_triags);
-        fprintf(stderr, "Fce4ValidateHeader: until 5: %d (expects %d) %d\n",
-                        fce_size - abs(fce_size - 0x2038 - hdr->Reserve5offset),
-                        size - area_5_6_size,
-                        fce_size - abs(fce_size - 0x2038 - hdr->Reserve5offset) - (size - area_5_6_size));
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: FCE filesize mismatch %d (expects %d) %d\n",
+                                      fce_size,
+                                      size, fce_size - size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: count_verts=%d , count_triags=%d\n",
+                                      count_verts, count_triags);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: until 5: %d (expects %d) %d\n",
+                                      fce_size - abs(fce_size - 0x2038 - hdr->Reserve5offset),
+                                      size - area_5_6_size,
+                                      fce_size - abs(fce_size - 0x2038 - hdr->Reserve5offset) - (size - area_5_6_size));
         retv = 0;
       }
       else
       {
-        fprintf(stderr, "Fce4ValidateHeader: Warning FCE filesize mismatch (Reserve5offset, Reserve6offset invalid)\n");
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Warning FCE filesize mismatch (Reserve5offset, Reserve6offset invalid)\n");
       }
     }
     size = 0;
@@ -1293,7 +1300,7 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
       Vertices, triangles areas: parts non-overlapping, within bounds (do nothing
       when zero verts, triags)
     */
-    for (i = 0; i < SCL_min(64, hdr->NumParts) - 1; ++i)
+    for (i = 0; i < SCL_min(64, hdr->NumParts) - 1; i++)
     {
       /*
         Combined with other checks, guarantees verts, triags stay within their
@@ -1302,13 +1309,13 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
       if ((hdr->P1stVertices[i] < 0) ||
           (hdr->P1stVertices[i] + hdr->PNumVertices[i] > hdr->NumVertices))
       {
-        fprintf(stderr, "Fce4ValidateHeader: Part out of bounds %d (vertices)\n", i);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Part out of bounds %d (vertices)\n", i);
         retv = 0;
         break;
       }
       if (hdr->P1stVertices[i] + hdr->PNumVertices[i] > hdr->P1stVertices[i + 1])
       {
-        fprintf(stderr, "Fce4ValidateHeader: Overlapping parts %d, %d (vertices)\n", i, i + 1);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Overlapping parts %d, %d (vertices)\n", i, i + 1);
         retv = 0;
         break;
       }
@@ -1316,13 +1323,13 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
       if ((hdr->P1stTriangles[i] < 0) ||
           (hdr->P1stTriangles[i] + hdr->PNumTriangles[i] > hdr->NumTriangles))
       {
-        fprintf(stderr, "Fce4ValidateHeader: Part out of bounds %d (triangles)\n", i);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Part out of bounds %d (triangles)\n", i);
         retv = 0;
         break;
       }
       if (hdr->P1stTriangles[i] + hdr->PNumTriangles[i] > hdr->P1stTriangles[i + 1])
       {
-        fprintf(stderr, "Fce4ValidateHeader: Overlapping parts %d, %d (triangles)\n", i, i + 1);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Overlapping parts %d, %d (triangles)\n", i, i + 1);
         retv = 0;
         break;
       }
@@ -1332,14 +1339,14 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
       if ((hdr->P1stVertices[hdr->NumParts - 1] < 0) ||
           (hdr->P1stVertices[hdr->NumParts - 1] + hdr->PNumVertices[hdr->NumParts - 1] > hdr->NumVertices))
       {
-        fprintf(stderr, "Fce4ValidateHeader: Part out of bounds %d (vertices)\n", hdr->NumParts - 1);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Part out of bounds %d (vertices)\n", hdr->NumParts - 1);
         retv = 0;
       }
 
       if ((hdr->P1stTriangles[hdr->NumParts - 1] < 0) ||
           (hdr->P1stTriangles[hdr->NumParts - 1] + hdr->PNumTriangles[hdr->NumParts - 1] > hdr->NumTriangles))
       {
-        fprintf(stderr, "Fce4ValidateHeader: Part out of bounds %d (triangles)\n", hdr->NumParts - 1);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Part out of bounds %d (triangles)\n", hdr->NumParts - 1);
         retv = 0;
       }
     }
@@ -1357,24 +1364,25 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
       /* Are just Reserve5, Reserve6 invalid? ex. 99viper/?.fce */
 
       int area_5_6_size = 4 * hdr->NumVertices + 12 * hdr->NumTriangles;
-      if (hdr->Version == 0x00101015)
+      if (hdr->Version != 0x00101014)
         area_5_6_size += hdr->NumVertices;
 
       if (size - area_5_6_size != fce_size - abs(fce_size - 0x2038 - hdr->Reserve5offset))
       {
-        fprintf(stderr, "Fce4ValidateHeader: FCE filesize mismatch %d (expects %d) %d\n",
-                        fce_size,
-                        size, fce_size - size);
-        fprintf(stderr, "Fce4ValidateHeader: NumVertices=%d , NumTriangles=%d\n", hdr->NumVertices, hdr->NumTriangles);
-        fprintf(stderr, "Fce4ValidateHeader: until 5: %d (expects %d) %d\n",
-                        fce_size - abs(fce_size - 0x2038 - hdr->Reserve5offset),
-                        size - area_5_6_size,
-                        fce_size - abs(fce_size - 0x2038 - hdr->Reserve5offset) - (size - area_5_6_size));
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: FCE filesize mismatch %d (expects %d) %d\n",
+                                      fce_size,
+                                      size, fce_size - size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: NumVertices=%d , NumTriangles=%d\n",
+                                      hdr->NumVertices, hdr->NumTriangles);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: until 5: %d (expects %d) %d\n",
+                                      fce_size - abs(fce_size - 0x2038 - hdr->Reserve5offset),
+                                      size - area_5_6_size,
+                                      fce_size - abs(fce_size - 0x2038 - hdr->Reserve5offset) - (size - area_5_6_size));
         retv = 0;
       }
       else
       {
-        fprintf(stderr, "Fce4ValidateHeader: Warning FCE filesize mismatch (Reserve5offset, Reserve6offset invalid)\n");
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Warning FCE filesize mismatch (Reserve5offset, Reserve6offset invalid)\n");
       }
     }
 
@@ -1387,27 +1395,29 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
         (0x2038 + hdr->Reserve6offset > fce_size) ||
         (0x2038 + hdr->Reserve5offset > fce_size))
     {
-      fprintf(stderr, "Fce4ValidateHeader: Reserve5offset or Reserve6offset out of bounds\n");
-      fprintf(stderr, "Fce4ValidateHeader: Reserve5offset = 0x%04x (0x%x), Size = %d\n", hdr->Reserve5offset, 0x2038 + hdr->Reserve5offset, hdr->Reserve6offset - hdr->Reserve5offset);
-      fprintf(stderr, "Fce4ValidateHeader: Reserve6offset = 0x%04x (0x%x), Size = %d\n", hdr->Reserve6offset, 0x2038 + hdr->Reserve6offset, fce_size - 0x2038 - hdr->Reserve6offset);
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Reserve5offset or Reserve6offset out of bounds\n");
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Reserve5offset = 0x%04x (0x%x), Size = %d\n",
+                                    hdr->Reserve5offset, 0x2038 + hdr->Reserve5offset, hdr->Reserve6offset - hdr->Reserve5offset);
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Reserve6offset = 0x%04x (0x%x), Size = %d\n",
+                                    hdr->Reserve6offset, 0x2038 + hdr->Reserve6offset, fce_size - 0x2038 - hdr->Reserve6offset);
       retv = 0;
     }
 
     dist_to_eof = 12 * hdr->NumTriangles;
-    if (hdr->Version == 0x00101015)
+    if (hdr->Version != 0x00101014)
       dist_to_eof += hdr->NumVertices;
     if ((hdr->Reserve6offset < 0) || (fce_size - 0x2038 - hdr->Reserve6offset) != dist_to_eof)
     {
-      fprintf(stderr, "Fce4ValidateHeader: Warning Reserve6offset invalid 0x%04x (expects 0x%04x) %d\n",
-                      hdr->Reserve6offset, fce_size - 0x2038 - dist_to_eof,
-                      hdr->Reserve6offset - (fce_size - 0x2038 - dist_to_eof));
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Warning Reserve6offset invalid 0x%04x (expects 0x%04x) %d\n",
+                                    hdr->Reserve6offset, fce_size - 0x2038 - dist_to_eof,
+                                    hdr->Reserve6offset - (fce_size - 0x2038 - dist_to_eof));
     }
 
     dist_to_eof += 4 * hdr->NumVertices;
     if ((hdr->Reserve5offset < 0) || (fce_size - 0x2038 - hdr->Reserve5offset) != dist_to_eof)
     {
-      fprintf(stderr, "Fce4ValidateHeader: Warning Reserve5offset invalid 0x%04x (expects 0x%04x)\n",
-                      hdr->Reserve5offset, fce_size - 0x2038 - dist_to_eof);
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Warning Reserve5offset invalid 0x%04x (expects 0x%04x)\n",
+                                    hdr->Reserve5offset, fce_size - 0x2038 - dist_to_eof);
     }
 
     /* Forget about Reserve5, Reserve6 */
@@ -1418,88 +1428,88 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
       dist_to_eof += 4 * hdr->NumVertices;
       if ((hdr->AnimationTblOffset < 0) || (fce_size - 0x2038 - hdr->AnimationTblOffset - area_5_6_size) != dist_to_eof)
       {
-        fprintf(stderr, "Fce4ValidateHeader: AnimationTblOffset invalid 0x%04x (expects 0x%04x)\n",
-                        hdr->AnimationTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: AnimationTblOffset invalid 0x%04x (expects 0x%04x)\n",
+                                      hdr->AnimationTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
         retv = 0;
       }
       dist_to_eof += 4 * hdr->NumVertices;
       if ((hdr->Reserve4offset < 0) || (fce_size - 0x2038 - hdr->Reserve4offset - area_5_6_size) != dist_to_eof)
       {
-        fprintf(stderr, "Fce4ValidateHeader: Reserve4offset invalid 0x%04x (expects 0x%04x)\n",
-                        hdr->Reserve4offset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Reserve4offset invalid 0x%04x (expects 0x%04x)\n",
+                                      hdr->Reserve4offset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
         retv = 0;
       }
 
       dist_to_eof += 12 * hdr->NumVertices;
       if ((hdr->DamgdNormTblOffset < 0) || (fce_size - 0x2038 - hdr->DamgdNormTblOffset - area_5_6_size) != dist_to_eof)
       {
-        fprintf(stderr, "Fce4ValidateHeader: DamgdNormTblOffset invalid 0x%04x (expects 0x%04x)\n",
-                        hdr->DamgdNormTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: DamgdNormTblOffset invalid 0x%04x (expects 0x%04x)\n",
+                                      hdr->DamgdNormTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
         retv = 0;
       }
       dist_to_eof += 12 * hdr->NumVertices;
       if ((hdr->DamgdVertTblOffset < 0) || (fce_size - 0x2038 - hdr->DamgdVertTblOffset - area_5_6_size) != dist_to_eof)
       {
-        fprintf(stderr, "Fce4ValidateHeader: DamgdVertTblOffset invalid 0x%04x (expects 0x%04x)\n",
-                        hdr->DamgdVertTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: DamgdVertTblOffset invalid 0x%04x (expects 0x%04x)\n",
+                                      hdr->DamgdVertTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
         retv = 0;
       }
       dist_to_eof += 12 * hdr->NumVertices;
       if ((hdr->UndamgdNormTblOffset < 0) || (fce_size - 0x2038 - hdr->UndamgdNormTblOffset - area_5_6_size) != dist_to_eof)
       {
-        fprintf(stderr, "Fce4ValidateHeader: UndamgdNormTblOffset invalid 0x%04x (expects 0x%04x)\n",
-                        hdr->UndamgdNormTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: UndamgdNormTblOffset invalid 0x%04x (expects 0x%04x)\n",
+                                      hdr->UndamgdNormTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
         retv = 0;
       }
       dist_to_eof += 12 * hdr->NumVertices;
       if ((hdr->UndamgdVertTblOffset < 0) || (fce_size - 0x2038 - hdr->UndamgdVertTblOffset - area_5_6_size) != dist_to_eof)
       {
-        fprintf(stderr, "Fce4ValidateHeader: UndamgdVertTblOffset invalid 0x%04x (expects 0x%04x)\n",
-                        hdr->UndamgdVertTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: UndamgdVertTblOffset invalid 0x%04x (expects 0x%04x)\n",
+                                      hdr->UndamgdVertTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
         retv = 0;
       }
 
       dist_to_eof += 12 * hdr->NumVertices;
       if ((hdr->Reserve3offset < 0) || (fce_size - 0x2038 - hdr->Reserve3offset - area_5_6_size) != dist_to_eof)
       {
-        fprintf(stderr, "Fce4ValidateHeader: Reserve3offset invalid 0x%04x (expects 0x%04x)\n",
-                        hdr->Reserve3offset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Reserve3offset invalid 0x%04x (expects 0x%04x)\n",
+                                      hdr->Reserve3offset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
         retv = 0;
       }
       dist_to_eof += 12 * hdr->NumVertices;
       if ((hdr->Reserve2offset < 0) || (fce_size - 0x2038 - hdr->Reserve2offset - area_5_6_size) != dist_to_eof)
       {
-        fprintf(stderr, "Fce4ValidateHeader: Reserve2offset invalid 0x%04x (expects 0x%04x)\n",
-                        hdr->Reserve2offset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Reserve2offset invalid 0x%04x (expects 0x%04x)\n",
+                                      hdr->Reserve2offset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
         retv = 0;
       }
       dist_to_eof += 32 * hdr->NumVertices;
       if ((hdr->Reserve1offset < 0) || (fce_size - 0x2038 - hdr->Reserve1offset - area_5_6_size) != dist_to_eof)
       {
-        fprintf(stderr, "Fce4ValidateHeader: Reserve1offset invalid 0x%04x (expects 0x%04x)\n",
-                        hdr->Reserve1offset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Reserve1offset invalid 0x%04x (expects 0x%04x)\n",
+                                      hdr->Reserve1offset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
         retv = 0;
       }
 
       dist_to_eof += 56 * hdr->NumTriangles;
       if ((hdr->TriaTblOffset < 0) || (fce_size - 0x2038 - hdr->TriaTblOffset - area_5_6_size) != dist_to_eof)
       {
-        fprintf(stderr, "Fce4ValidateHeader: TriaTblOffset invalid 0x%04x (expects 0x%04x)\n",
-                        hdr->TriaTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: TriaTblOffset invalid 0x%04x (expects 0x%04x)\n",
+                                      hdr->TriaTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
         retv = 0;
       }
       dist_to_eof += 12 * hdr->NumVertices;
       if ((hdr->NormTblOffset < 0) || (fce_size - 0x2038 - hdr->NormTblOffset - area_5_6_size) != dist_to_eof)
       {
-        fprintf(stderr, "Fce4ValidateHeader: NormTblOffset invalid 0x%04x (expects 0x%04x)\n",
-                        hdr->NormTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: NormTblOffset invalid 0x%04x (expects 0x%04x)\n",
+                                      hdr->NormTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
         retv = 0;
       }
       dist_to_eof += 12 * hdr->NumVertices;
       if ((hdr->VertTblOffset < 0) || (fce_size - 0x2038 - hdr->VertTblOffset - area_5_6_size) != dist_to_eof)
       {
-        fprintf(stderr, "Fce4ValidateHeader: VertTblOffset invalid 0x%04x (expects 0x%04x)\n",
-                        hdr->VertTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: VertTblOffset invalid 0x%04x (expects 0x%04x)\n",
+                                      hdr->VertTblOffset, fce_size - 0x2038 - dist_to_eof - area_5_6_size);
         retv = 0;
       }
     }  /* end: Forget about Reserve5, Reserve6 */
@@ -1509,38 +1519,39 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
     {
       if (hdr->NumVertices != count_verts)
       {
-        fprintf(stderr, "Fce4ValidateHeader: Warning Expects %d vertices in total, found %d\n",
-                        hdr->NumVertices, count_verts);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Warning Expects %d vertices in total, found %d\n",
+                                      hdr->NumVertices, count_verts);
       }
       if (hdr->NumTriangles != count_triags)
       {
-        fprintf(stderr, "Fce4ValidateHeader: Warning Expects %d triangles in total, found %d\n",
-                        hdr->NumTriangles, count_triags);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Warning Expects %d triangles in total, found %d\n",
+                                      hdr->NumTriangles, count_triags);
       }
     }
 
     if (hdr->NumArts != 1)
-      fprintf(stderr, "Fce4ValidateHeader: Warning NumArts != 1 (%d)\n", hdr->NumArts);
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Warning NumArts != 1 (%d)\n", hdr->NumArts);
 
     if (hdr->VertTblOffset)
     {
-      fprintf(stderr, "Fce4ValidateHeader: Warning VertTblOffset = 0x%04x (expects 0x0000)\n",
-                      hdr->VertTblOffset);
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Warning VertTblOffset = 0x%04x (expects 0x0000)\n",
+                                    hdr->VertTblOffset);
     }
 
     if ((hdr->HalfSize[0] < 0.001) || (hdr->HalfSize[2] < 0.001) ||
         (hdr->HalfSize[0] * hdr->HalfSize[2] < 0.1) ||
         (hdr->HalfSize[1] < 0.0))
     {
-      fprintf(stderr, "Fce4ValidateHeader: Warning HalfSizes may crash game\n");
+      if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Warning HalfSizes may crash game\n");
     }
 
-    if (hdr->Version == 0x00101015)
+    if (hdr->Version != 0x00101014)
     {
       int count_wheels;
       float wheelbase = FCELIB_FCETYPES_GetWheelbase4M(hdr, &count_wheels);
+      char hextemp[sizeof(wheelbase)];
       if (wheelbase < 2.45 || wheelbase > 3.44)
-        fprintf(stderr, "Fce4ValidateHeader: Warning Wheelbase may crash game (%f; %d)\n", wheelbase, count_wheels);
+        if (verbose)  fprintf(stderr, "Fce4ValidateHeader: Warning Wheelbase may crash game (%f (0x%x); %d)\n", wheelbase, FCELIB_UTIL_Buf2Hex(&wheelbase, hextemp, sizeof(wheelbase)), count_wheels);
     }
     break;
   }
@@ -1548,9 +1559,130 @@ int FCELIB_FCETYPES_Fce4ValidateHeader(const FceHeader4 *hdr, const void * const
   return retv;
 }
 
-/* print info --------------------------------------------------------------- */
+/* Version / validation --------------------------------------------------------------------------------------------- */
 
-void FCELIB_FCETYPES_PrintHeaderFce3(const void * const buf, const int fce_size)
+int FCELIB_FCETYPES_Fce3ValidateBuf(const void * const buf, const int bufsz, const int verbose)
+{
+  int i;
+  int valid;
+  FceHeader3 hdr;
+  SCL_printf("FCELIB_FCETYPES_Fce3ValidateBuf: verbose %d\n", verbose);
+  FCELIB_FCETYPES_GetFceHeader3(&hdr, (const unsigned char *)buf);
+  valid = FCELIB_FCETYPES_Fce3ValidateHeader(&hdr, buf, bufsz, verbose);
+  for (i = 0; i < SCL_min(hdr.NumParts, 64) && valid == 1; i++)
+  {
+    const int PNumTriangles = hdr.PNumTriangles[i];
+    const int PNumVertices = hdr.PNumVertices[i];
+    const char *ptr_triag_vidx = (char *)buf + 0x2038 + hdr.TriaTblOffset + hdr.P1stTriangles[i] * 56 + 0x4;  /* *buf boundary checked in FCELIB_FCETYPES_Fce3ValidateHeader() */
+    if (!FCELIB_UTIL_CheckTriagVidxBoundedness(ptr_triag_vidx, PNumTriangles, PNumVertices))
+    {
+      if (verbose)  fprintf(stderr, "ValidateFce: Triangle vertex index out of bounds (part: %d)\n", i);
+      valid = 0;
+    }
+  }
+  return valid;
+}
+
+int FCELIB_FCETYPES_Fce4ValidateBuf(const void * const buf, const int bufsz, const int verbose)
+{
+  int i;
+  int valid;
+  FceHeader4 hdr;
+  FCELIB_FCETYPES_GetFceHeader4(&hdr, (const unsigned char *)buf);
+  valid = FCELIB_FCETYPES_Fce4ValidateHeader(&hdr, buf, bufsz, verbose);
+  for (i = 0; i < SCL_min(hdr.NumParts, 64) && valid == 1; i++)
+  {
+    const int PNumTriangles = hdr.PNumTriangles[i];
+    const int PNumVertices = hdr.PNumVertices[i];
+    const char *ptr_triag_vidx = (char *)buf + 0x2038 + hdr.TriaTblOffset + hdr.P1stTriangles[i] * 56 + 0x4;  /* *buf boundary checked in FCELIB_FCETYPES_Fce4ValidateHeader() */
+    if (!FCELIB_UTIL_CheckTriagVidxBoundedness(ptr_triag_vidx, PNumTriangles, PNumVertices))
+    {
+      if (verbose)  fprintf(stderr, "Fce4Validate: Triangle vertex index out of bounds (part: %d)\n", i);
+      valid = 0;
+    }
+  }
+  return valid;
+}
+
+/*
+  Returns 3 (FCE3), 4 (FCE4), 5 (FCE4M); negative (invalid); 0 input is NULL
+
+  FCE3 requires bufsz >= 0x1F04
+  FCE4 requires bufsz >= 0x2038 and 0x00101014
+  FCE4M requires bufsz >= 0x2038 (NB: vanilla files have 0x00101015, but allow any)
+
+  It is impossible to distinguish FCE3 and FCE4M from filesize and version.
+  As a consequence, this function is convoluted and slow.
+*/
+int FCELIB_FCETYPES_GetFceVersion(const void * const buf, const int bufsz)
+{
+  SCL_printf("FCELIB_FCETYPES_GetFceVersion(%p, %d):\n", buf, bufsz);
+  if (buf && bufsz > 0)
+  {
+    if (bufsz >= 0x1F04)
+    {
+      int valid3 = -1;  /* -1 untested, 0 invalid, 1 valid */
+      int valid4 = -1;  /* -1 untested, 0 invalid, 1 valid */
+      int version;
+      memcpy(&version, buf, 4);
+      SCL_printf("GetFceVersion: 0x%08x\n", version);
+
+      /* can be anything */
+      SCL_printf("GetFceVersion: can be anything\n");
+      if (bufsz >= 0x2038)
+      {
+        valid4 = FCELIB_FCETYPES_Fce4ValidateBuf(buf, bufsz, 0);
+
+        /* FCE4 or FCE4M */
+        SCL_printf("GetFceVersion: FCE4 or FCE4M\n");
+        if (valid4 == 1 && version == 0x00101014)  return 4;
+      }
+
+      /* can be anything */
+      SCL_printf("GetFceVersion: can be anything\n");
+      valid3 = FCELIB_FCETYPES_Fce3ValidateBuf(buf, bufsz, 0);
+
+      if (bufsz < 0x2038 && valid3 == 1)  return 3;
+      if (bufsz < 0x2038 && valid3 == 0)
+      {
+        SCL_printf("GetFceVersion: -3\n");
+        FCELIB_FCETYPES_Fce3ValidateBuf(buf, bufsz, 1);  /* verbose diagnostics */
+        return -3;
+      }
+
+      if (valid4 == 1)
+      {
+        SCL_printf("GetFceVersion: 5\n");
+        if (valid3 == 1)  fprintf(stderr, "GetVersion: Warning header has valid FCE3 and FCE4M data\n");  /* unlikely */
+        return 5;
+      }
+
+      if (valid3 == 0 && (version == 0x00101014 || version == 0x00101015))
+      {
+        SCL_printf("GetFceVersion: -4\n");
+        FCELIB_FCETYPES_Fce4ValidateBuf(buf, bufsz, 1);  /* verbose diagnostics */
+        return -4;
+      }
+
+      if (valid3 == 1)
+      {
+        SCL_printf("GetFceVersion: 3\n");
+        return 3;
+      }
+
+      SCL_printf("GetFceVersion: -3\n");
+      FCELIB_FCETYPES_Fce3ValidateBuf(buf, bufsz, 1);  /* verbose diagnostics */
+      return -3;
+    }  /* valid data */
+    return -10;
+  }  /* valid input */
+  return 0;
+}
+
+/* print header ----------------------------------------------------------------------------------------------------- */
+
+/* no bounds checking */
+void FCELIB_FCETYPES_PrintHeaderFce3(const void *buf, int fce_size)
 {
   int i;
   FceHeader3 hdr;
@@ -1562,93 +1694,91 @@ void FCELIB_FCETYPES_PrintHeaderFce3(const void * const buf, const int fce_size)
   printf("Filesize = %d (0x%x)\n", fce_size, fce_size);
   printf("Version = FCE3\n");
 
-  if (FCELIB_FCETYPES_MiniValidateHdr3((const unsigned char *)buf))
+  printf("NumTriangles = %d (* 56 = %d)\n", hdr.NumTriangles, 56 * hdr.NumTriangles);
+  printf("NumVertices = %d (* 12 = %d)  (* 32 = %d)\n", hdr.NumVertices, 12 * hdr.NumVertices, 32 * hdr.NumVertices);
+  printf("NumArts = %d\n", hdr.NumArts);
+
+  printf("XHalfSize = %f\n", hdr.HalfSize[0]);
+  printf("YHalfSize = %f\n", hdr.HalfSize[1]);
+  printf("ZHalfSize = %f\n", hdr.HalfSize[2]);
+
+  printf("NumParts = %d\n", hdr.NumParts);
+  printf("NumDummies = %d\n", hdr.NumDummies);
+  printf("NumPriColors = %d\n", hdr.NumPriColors);
+  printf("NumSecColors = %d\n", hdr.NumSecColors);
+
+  printf("VertTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.VertTblOffset, 0x1F04 + hdr.VertTblOffset, hdr.NormTblOffset - hdr.VertTblOffset);
+  printf("NormTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.NormTblOffset, 0x1F04 + hdr.NormTblOffset, hdr.TriaTblOffset - hdr.NormTblOffset);
+  printf("TriaTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.TriaTblOffset, 0x1F04 + hdr.TriaTblOffset, hdr.Reserve1offset - hdr.TriaTblOffset);
+
+  printf("Reserve1offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve1offset, 0x1F04 + hdr.Reserve1offset, hdr.Reserve2offset - hdr.Reserve1offset);
+  printf("Reserve2offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve2offset, 0x1F04 + hdr.Reserve2offset, hdr.Reserve3offset - hdr.Reserve2offset);
+  printf("Reserve3offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve3offset, 0x1F04 + hdr.Reserve3offset, fce_size - 0x1F04 - hdr.Reserve3offset);
+
+  printf("Unknown1 (0x0004) = %d (0x%04x)\n", hdr.Unknown1, hdr.Unknown1);
+
+  printf("Parts:\n"
+          "Idx  Verts       Triags      (PartPos)                         Description          Name\n");
+  for (i = 0; i < SCL_min(FCELIB_UTIL_Fce3PartsImplemented, hdr.NumParts); i++)
   {
-    printf("NumTriangles = %d (* 56 = %d)\n", hdr.NumTriangles, 56 * hdr.NumTriangles);
-    printf("NumVertices = %d (* 12 = %d)  (* 32 = %d)\n", hdr.NumVertices, 12 * hdr.NumVertices, 32 * hdr.NumVertices);
-    printf("NumArts = %d\n", hdr.NumArts);
+    printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %20s %s\n",
+            i,
+            hdr.P1stVertices[i],
+            hdr.PNumVertices[i],
+            hdr.P1stTriangles[i],
+            hdr.PNumTriangles[i],
+            hdr.PartPos[i * 3 + 0], hdr.PartPos[i * 3 + 1], hdr.PartPos[i * 3 + 2],
+            kFce3PartsNames[i],
+            hdr.PartNames + (i * 64));
 
-    printf("XHalfSize = %f\n", hdr.HalfSize[0]);
-    printf("YHalfSize = %f\n", hdr.HalfSize[1]);
-    printf("ZHalfSize = %f\n", hdr.HalfSize[2]);
+    verts += hdr.PNumVertices[i];
+    triags += hdr.PNumTriangles[i];
+  }
+  for (i = SCL_min(FCELIB_UTIL_Fce3PartsImplemented, hdr.NumParts); i < SCL_min(64, hdr.NumParts); i++)
+  {
+    printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %20s %s\n",
+            i,
+            hdr.P1stVertices[i],
+            hdr.PNumVertices[i],
+            hdr.P1stTriangles[i],
+            hdr.PNumTriangles[i],
+            hdr.PartPos[i * 3 + 0], hdr.PartPos[i * 3 + 1], hdr.PartPos[i * 3 + 2],
+            "",
+            hdr.PartNames + (i * 64));
 
-    printf("NumParts = %d\n", hdr.NumParts);
-    printf("NumDummies = %d\n", hdr.NumDummies);
-    printf("NumPriColors = %d\n", hdr.NumPriColors);
-    printf("NumSecColors = %d\n", hdr.NumSecColors);
+    verts += hdr.PNumVertices[i];
+    triags += hdr.PNumTriangles[i];
+  }
+  printf("         = %5d     = %5d\n",
+          verts, triags);
 
-    printf("VertTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.VertTblOffset, 0x1F04 + hdr.VertTblOffset, hdr.NormTblOffset - hdr.VertTblOffset);
-    printf("NormTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.NormTblOffset, 0x1F04 + hdr.NormTblOffset, hdr.TriaTblOffset - hdr.NormTblOffset);
-    printf("TriaTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.TriaTblOffset, 0x1F04 + hdr.TriaTblOffset, hdr.Reserve1offset - hdr.TriaTblOffset);
+  printf("Filesize (verts, triags) = %d (0x%x), diff=%d\n",
+          FCELIB_FCETYPES_Fce3ComputeSize(verts, triags),
+          FCELIB_FCETYPES_Fce3ComputeSize(verts, triags),
+          fce_size - FCELIB_FCETYPES_Fce3ComputeSize(verts, triags));
 
-    printf("Reserve1offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve1offset, 0x1F04 + hdr.Reserve1offset, hdr.Reserve2offset - hdr.Reserve1offset);
-    printf("Reserve2offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve2offset, 0x1F04 + hdr.Reserve2offset, hdr.Reserve3offset - hdr.Reserve2offset);
-    printf("Reserve3offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve3offset, 0x1F04 + hdr.Reserve3offset, fce_size - 0x1F04 - hdr.Reserve3offset);
+  printf("DummyNames (Position):\n");
+  for (i = 0; i < SCL_min(hdr.NumDummies, 16); i++)
+  {
+    printf(" (%9f, %9f, %9f) %s\n",
+            hdr.Dummies[i * 3 + 0], hdr.Dummies[i * 3 + 1], hdr.Dummies[i * 3 + 2],
+            hdr.DummyNames + (i * 64));
+  }
 
-    printf("Unknown1 (0x0004) = %d (0x%04x)\n", hdr.Unknown1, hdr.Unknown1);
-
-    printf("Parts:\n"
-           "Idx  Verts       Triags      (PartPos)                         Description          Name\n");
-    for (i = 0; i < SCL_min(FCELIB_UTIL_Fce3PartsImplemented, hdr.NumParts); i++)
-    {
-      printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %20s %s\n",
-             i,
-             hdr.P1stVertices[i],
-             hdr.PNumVertices[i],
-             hdr.P1stTriangles[i],
-             hdr.PNumTriangles[i],
-             hdr.PartPos[i * 3 + 0], hdr.PartPos[i * 3 + 1], hdr.PartPos[i * 3 + 2],
-             kFce3PartsNames[i],
-             hdr.PartNames + (i * 64));
-
-      verts += hdr.PNumVertices[i];
-      triags += hdr.PNumTriangles[i];
-    }
-    for (i = SCL_min(FCELIB_UTIL_Fce3PartsImplemented, hdr.NumParts); i < SCL_min(64, hdr.NumParts); i++)
-    {
-      printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %20s %s\n",
-             i,
-             hdr.P1stVertices[i],
-             hdr.PNumVertices[i],
-             hdr.P1stTriangles[i],
-             hdr.PNumTriangles[i],
-             hdr.PartPos[i * 3 + 0], hdr.PartPos[i * 3 + 1], hdr.PartPos[i * 3 + 2],
-             "",
-             hdr.PartNames + (i * 64));
-
-      verts += hdr.PNumVertices[i];
-      triags += hdr.PNumTriangles[i];
-    }
-    printf("         = %5d     = %5d\n",
-           verts, triags);
-
-    printf("Filesize (verts, triags) = %d (0x%x), diff=%d\n",
-           FCELIB_FCETYPES_Fce3ComputeSize(verts, triags),
-           FCELIB_FCETYPES_Fce3ComputeSize(verts, triags),
-           fce_size - FCELIB_FCETYPES_Fce3ComputeSize(verts, triags));
-
-    printf("DummyNames (Position):\n");
-    for (i = 0; i < SCL_min(hdr.NumDummies, 16); i++)
-    {
-      printf(" (%9f, %9f, %9f) %s\n",
-             hdr.Dummies[i * 3 + 0], hdr.Dummies[i * 3 + 1], hdr.Dummies[i * 3 + 2],
-             hdr.DummyNames + (i * 64));
-    }
-
-    printf("Car colors (hue, saturation, brightness, transparency):\n");
-    for (i = 0; i < SCL_min(hdr.NumPriColors, 16); i++)
-    {
-      printf("%2d  Primary     %3d, %3d, %3d, %3d\n", i,
-             hdr.PriColors[i].hue, hdr.PriColors[i].saturation,
-             hdr.PriColors[i].brightness, hdr.PriColors[i].transparency);
-      printf("%2d  Secondary   %3d, %3d, %3d, %3d\n", i,
-             hdr.SecColors[i].hue, hdr.SecColors[i].saturation,
-             hdr.SecColors[i].brightness, hdr.SecColors[i].transparency);
-    }
+  printf("Car colors (hue, saturation, brightness, transparency):\n");
+  for (i = 0; i < SCL_min(hdr.NumPriColors, 16); i++)
+  {
+    printf("%2d  Primary     %3d, %3d, %3d, %3d\n", i,
+            hdr.PriColors[i].hue, hdr.PriColors[i].saturation,
+            hdr.PriColors[i].brightness, hdr.PriColors[i].transparency);
+    printf("%2d  Secondary   %3d, %3d, %3d, %3d\n", i,
+            hdr.SecColors[i].hue, hdr.SecColors[i].saturation,
+            hdr.SecColors[i].brightness, hdr.SecColors[i].transparency);
   }
 }
 
-void FCELIB_FCETYPES_PrintHeaderFce4(const void * const buf, const int fce_size)
+/* no bounds checking */
+void FCELIB_FCETYPES_PrintHeaderFce4(const void *buf, int fce_size)
 {
   int i;
   FceHeader4 hdr;
@@ -1660,129 +1790,124 @@ void FCELIB_FCETYPES_PrintHeaderFce4(const void * const buf, const int fce_size)
   printf("Filesize = %d (0x%x)\n", fce_size, fce_size);
   if (hdr.Version == 0x00101014)
     printf("Version = FCE4\n");
-  else  /* 0x00101015 */
+  else
     printf("Version = FCE4M\n");
 
-  if (FCELIB_FCETYPES_MiniValidateHdr4((const unsigned char *)buf))
+  printf("NumTriangles = %d (* 12 = %d) (* 56 = %d)\n", hdr.NumTriangles, 12 * hdr.NumTriangles, 56 * hdr.NumTriangles);
+  printf("NumVertices = %d (* 4 = %d)  (* 12 = %d)  (* 32 = %d)\n", hdr.NumVertices, 4 * hdr.NumVertices, 12 * hdr.NumVertices, 32 * hdr.NumVertices);
+  printf("NumArts = %d\n", hdr.NumArts);
+
+  printf("XHalfSize = %f\n", hdr.HalfSize[0]);
+  printf("YHalfSize = %f\n", hdr.HalfSize[1]);
+  printf("ZHalfSize = %f\n", hdr.HalfSize[2]);
+  if (hdr.Version != 0x00101014)
   {
-    printf("NumTriangles = %d (* 12 = %d) (* 56 = %d)\n", hdr.NumTriangles, 12 * hdr.NumTriangles, 56 * hdr.NumTriangles);
-    printf("NumVertices = %d (* 4 = %d)  (* 12 = %d)  (* 32 = %d)\n", hdr.NumVertices, 4 * hdr.NumVertices, 12 * hdr.NumVertices, 32 * hdr.NumVertices);
-    printf("NumArts = %d\n", hdr.NumArts);
+    int count_wheels;
+    float wheelbase = FCELIB_FCETYPES_GetWheelbase4M(&hdr, &count_wheels);
+    if (count_wheels < 1)
+      printf("Wheelbase = %f (%d wheels)\n", wheelbase, count_wheels);
+    if (count_wheels == 1)
+      printf("Wheelbase = %f (%d wheel)\n", wheelbase, count_wheels);
+    else
+      printf("Wheelbase = %f (%d wheels)\n", wheelbase, count_wheels);
+  }
 
-    printf("XHalfSize = %f\n", hdr.HalfSize[0]);
-    printf("YHalfSize = %f\n", hdr.HalfSize[1]);
-    printf("ZHalfSize = %f\n", hdr.HalfSize[2]);
-    if (hdr.Version == 0x00101015)
-    {
-      int count_wheels;
-      float wheelbase = FCELIB_FCETYPES_GetWheelbase4M(&hdr, &count_wheels);
-      if (count_wheels < 1)
-        printf("Wheelbase = %f (%d wheels)\n", wheelbase, count_wheels);
-      if (count_wheels == 1)
-        printf("Wheelbase = %f (%d wheel)\n", wheelbase, count_wheels);
-      else
-        printf("Wheelbase = %f (%d wheels)\n", wheelbase, count_wheels);
-    }
+  printf("NumParts = %d\n", hdr.NumParts);
+  printf("NumDummies = %d\n", hdr.NumDummies);
+  printf("NumColors = %d\n", hdr.NumColors);
 
-    printf("NumParts = %d\n", hdr.NumParts);
-    printf("NumDummies = %d\n", hdr.NumDummies);
-    printf("NumColors = %d\n", hdr.NumColors);
+  printf("VertTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.VertTblOffset, 0x2038 + hdr.VertTblOffset, hdr.NormTblOffset - hdr.VertTblOffset);
+  printf("NormTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.NormTblOffset, 0x2038 + hdr.NormTblOffset, hdr.TriaTblOffset - hdr.NormTblOffset);
+  printf("TriaTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.TriaTblOffset, 0x2038 + hdr.TriaTblOffset, hdr.Reserve1offset - hdr.TriaTblOffset);
 
-    printf("VertTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.VertTblOffset, 0x2038 + hdr.VertTblOffset, hdr.NormTblOffset - hdr.VertTblOffset);
-    printf("NormTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.NormTblOffset, 0x2038 + hdr.NormTblOffset, hdr.TriaTblOffset - hdr.NormTblOffset);
-    printf("TriaTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.TriaTblOffset, 0x2038 + hdr.TriaTblOffset, hdr.Reserve1offset - hdr.TriaTblOffset);
+  printf("Reserve1offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve1offset, 0x2038 + hdr.Reserve1offset, hdr.Reserve2offset - hdr.Reserve1offset);
+  printf("Reserve2offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve2offset, 0x2038 + hdr.Reserve2offset, hdr.Reserve3offset - hdr.Reserve2offset);
+  printf("Reserve3offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve3offset, 0x2038 + hdr.Reserve3offset, hdr.UndamgdVertTblOffset - hdr.Reserve3offset);
 
-    printf("Reserve1offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve1offset, 0x2038 + hdr.Reserve1offset, hdr.Reserve2offset - hdr.Reserve1offset);
-    printf("Reserve2offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve2offset, 0x2038 + hdr.Reserve2offset, hdr.Reserve3offset - hdr.Reserve2offset);
-    printf("Reserve3offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve3offset, 0x2038 + hdr.Reserve3offset, hdr.UndamgdVertTblOffset - hdr.Reserve3offset);
+  printf("UndamgdVertTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.UndamgdVertTblOffset, 0x2038 + hdr.UndamgdVertTblOffset, hdr.UndamgdNormTblOffset - hdr.UndamgdVertTblOffset);
+  printf("UndamgdNormTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.UndamgdNormTblOffset, 0x2038 + hdr.UndamgdNormTblOffset, hdr.DamgdVertTblOffset - hdr.UndamgdNormTblOffset);
+  printf("DamgdVertTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.DamgdVertTblOffset, 0x2038 + hdr.DamgdVertTblOffset, hdr.DamgdNormTblOffset - hdr.DamgdVertTblOffset);
+  printf("DamgdNormTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.DamgdNormTblOffset, 0x2038 + hdr.DamgdNormTblOffset, hdr.Reserve4offset - hdr.DamgdNormTblOffset);
 
-    printf("UndamgdVertTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.UndamgdVertTblOffset, 0x2038 + hdr.UndamgdVertTblOffset, hdr.UndamgdNormTblOffset - hdr.UndamgdVertTblOffset);
-    printf("UndamgdNormTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.UndamgdNormTblOffset, 0x2038 + hdr.UndamgdNormTblOffset, hdr.DamgdVertTblOffset - hdr.UndamgdNormTblOffset);
-    printf("DamgdVertTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.DamgdVertTblOffset, 0x2038 + hdr.DamgdVertTblOffset, hdr.DamgdNormTblOffset - hdr.DamgdVertTblOffset);
-    printf("DamgdNormTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.DamgdNormTblOffset, 0x2038 + hdr.DamgdNormTblOffset, hdr.Reserve4offset - hdr.DamgdNormTblOffset);
+  printf("Reserve4offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve4offset, 0x2038 + hdr.Reserve4offset, hdr.AnimationTblOffset - hdr.Reserve4offset);
+  printf("AnimationTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.AnimationTblOffset, 0x2038 + hdr.AnimationTblOffset, hdr.Reserve5offset - hdr.AnimationTblOffset);
+  printf("Reserve5offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve5offset, 0x2038 + hdr.Reserve5offset, hdr.Reserve6offset - hdr.Reserve5offset);
 
-    printf("Reserve4offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve4offset, 0x2038 + hdr.Reserve4offset, hdr.AnimationTblOffset - hdr.Reserve4offset);
-    printf("AnimationTblOffset = 0x%04x (0x%x), Size = %d\n", hdr.AnimationTblOffset, 0x2038 + hdr.AnimationTblOffset, hdr.Reserve5offset - hdr.AnimationTblOffset);
-    printf("Reserve5offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve5offset, 0x2038 + hdr.Reserve5offset, hdr.Reserve6offset - hdr.Reserve5offset);
+  printf("Reserve6offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve6offset, 0x2038 + hdr.Reserve6offset, fce_size - 0x2038 - hdr.Reserve6offset);
 
-    printf("Reserve6offset = 0x%04x (0x%x), Size = %d\n", hdr.Reserve6offset, 0x2038 + hdr.Reserve6offset, fce_size - 0x2038 - hdr.Reserve6offset);
+  printf("Unknown1 (0x0004) = %d (0x%04x)\n", hdr.Unknown1, hdr.Unknown1);
+  printf("Unknown3 (0x0924) = %d (0x%04x)\n", hdr.Unknown3, hdr.Unknown3);
 
-    printf("Unknown1 (0x0004) = %d (0x%04x)\n", hdr.Unknown1, hdr.Unknown1);
-    printf("Unknown3 (0x0924) = %d (0x%04x)\n", hdr.Unknown3, hdr.Unknown3);
+  printf("Parts:\n"
+                  "Idx  Verts       Triangles   (PartPos)                         Name\n");
+  for (i = 0; i < SCL_min(hdr.NumParts, 64); i++)
+  {
+    printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %s\n",
+            i,
+            hdr.P1stVertices[i],
+            hdr.PNumVertices[i],
+            hdr.P1stTriangles[i],
+            hdr.PNumTriangles[i],
+            hdr.PartPos[i * 3 + 0], hdr.PartPos[i * 3 + 1], hdr.PartPos[i * 3 + 2],
+            hdr.PartNames + (i * 64));
 
-    printf("Parts:\n"
-                    "Idx  Verts       Triangles   (PartPos)                         Name\n");
-    for (i = 0; i < SCL_min(hdr.NumParts, 64); i++)
-    {
-      printf(" %2d  %5d %5d %5d %5d (%9f, %9f, %9f) %s\n",
-             i,
-             hdr.P1stVertices[i],
-             hdr.PNumVertices[i],
-             hdr.P1stTriangles[i],
-             hdr.PNumTriangles[i],
-             hdr.PartPos[i * 3 + 0], hdr.PartPos[i * 3 + 1], hdr.PartPos[i * 3 + 2],
-             hdr.PartNames + (i * 64));
+    verts += hdr.PNumVertices[i];
+    triags += hdr.PNumTriangles[i];
+  }
+  printf("         = %5d     = %5d\n",
+          verts, triags);
 
-      verts += hdr.PNumVertices[i];
-      triags += hdr.PNumTriangles[i];
-    }
-    printf("         = %5d     = %5d\n",
-           verts, triags);
+  printf("FCE4 Filesize (verts, triags) = %d (0x%x), diff=%d\n",
+          FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, verts, triags),
+          FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, verts, triags),
+          fce_size - FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, verts, triags));
+  printf("FCE4M Filesize (verts, triags) = %d (0x%x), diff=%d\n",
+          FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, verts, triags),
+          FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, verts, triags),
+          fce_size - FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, verts, triags));
 
-    printf("FCE4 Filesize (verts, triags) = %d (0x%x), diff=%d\n",
-           FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, verts, triags),
-           FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, verts, triags),
-           fce_size - FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, verts, triags));
-    printf("FCE4M Filesize (verts, triags) = %d (0x%x), diff=%d\n",
-           FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, verts, triags),
-           FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, verts, triags),
-           fce_size - FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, verts, triags));
+  printf("DummyNames (Position):\n");
+  for (i = 0; i < SCL_min(hdr.NumDummies, 16); i++)
+  {
+    printf(" (%9f, %9f, %9f) %s\n",
+            hdr.Dummies[i * 3 + 0], hdr.Dummies[i * 3 + 1], hdr.Dummies[i * 3 + 2],
+            hdr.DummyNames + (i * 64));
+  }
 
-    printf("DummyNames (Position):\n");
-    for (i = 0; i < SCL_min(hdr.NumDummies, 16); i++)
-    {
-      printf(" (%9f, %9f, %9f) %s\n",
-             hdr.Dummies[i * 3 + 0], hdr.Dummies[i * 3 + 1], hdr.Dummies[i * 3 + 2],
-             hdr.DummyNames + (i * 64));
-    }
-
-    printf("Car colors (hue, saturation, brightness, transparency):\n");
-    for (i = 0; i < SCL_min(hdr.NumColors, 16); i++)
-    {
-      printf("%2d  Primary     %3d, %3d, %3d, %3d\n", i,
-            hdr.PriColors[i].hue, hdr.PriColors[i].saturation,
-            hdr.PriColors[i].brightness, hdr.PriColors[i].transparency);
-      printf("%2d  Interior    %3d, %3d, %3d, %3d\n", i,
-            hdr.IntColors[i].hue, hdr.IntColors[i].saturation,
-            hdr.IntColors[i].brightness, hdr.IntColors[i].transparency);
-      printf("%2d  Secondary   %3d, %3d, %3d, %3d\n", i,
-            hdr.SecColors[i].hue, hdr.SecColors[i].saturation,
-            hdr.SecColors[i].brightness, hdr.SecColors[i].transparency);
-      printf("%2d  Driver hair %3d, %3d, %3d, %3d\n", i,
-            hdr.DriColors[i].hue, hdr.DriColors[i].saturation,
-            hdr.DriColors[i].brightness, hdr.DriColors[i].transparency);
-    }
+  printf("Car colors (hue, saturation, brightness, transparency):\n");
+  for (i = 0; i < SCL_min(hdr.NumColors, 16); i++)
+  {
+    printf("%2d  Primary     %3d, %3d, %3d, %3d\n", i,
+          hdr.PriColors[i].hue, hdr.PriColors[i].saturation,
+          hdr.PriColors[i].brightness, hdr.PriColors[i].transparency);
+    printf("%2d  Interior    %3d, %3d, %3d, %3d\n", i,
+          hdr.IntColors[i].hue, hdr.IntColors[i].saturation,
+          hdr.IntColors[i].brightness, hdr.IntColors[i].transparency);
+    printf("%2d  Secondary   %3d, %3d, %3d, %3d\n", i,
+          hdr.SecColors[i].hue, hdr.SecColors[i].saturation,
+          hdr.SecColors[i].brightness, hdr.SecColors[i].transparency);
+    printf("%2d  Driver hair %3d, %3d, %3d, %3d\n", i,
+          hdr.DriColors[i].hue, hdr.DriColors[i].saturation,
+          hdr.DriColors[i].brightness, hdr.DriColors[i].transparency);
   }
 }
 
-/* Version ------------------------------------------------------------------ */
-
-/* Returns 3 (FCE3), 4 (FCE4), 5 (FCE4M); negative (invalid); 0 input is NULL
-
-  Note: For return values 4|5, true version can still be FCE3. See FCELIB_FCETYPES_ValidateFceVersion()
+/*
+  version and bounds checked
 */
-int FCELIB_FCETYPES_GetFceVersion(const void * const buf, const int bufsz)
+void FCELIB_FCETYPES_PrintHeaderFce(const void *buf, int bufsz)
 {
-  if (buf && bufsz > 0)
+  switch (FCELIB_FCETYPES_GetFceVersion(buf, bufsz))
   {
-    int version;
-    if (bufsz < 0x1F04)  return -3;
-    memcpy(&version, buf, 4);
-    if ((version != 0x00101014 && version != 0x00101015))  return 3;
-    else if (version == 0x00101014)  return bufsz >= 0x2038 ? 4 : -4;  /* can still be FCE3 */
-    else if (version == 0x00101015)  return bufsz >= 0x2038 ? 5 : -5;  /* can still be FCE3 */
+    case 4: case 5:
+      FCELIB_FCETYPES_PrintHeaderFce4(buf, bufsz);
+      break;
+    case 3:
+      FCELIB_FCETYPES_PrintHeaderFce3(buf, bufsz);
+      break;
+    default:
+      break;
   }
-  return 0;
 }
 
 #endif  /* FCELIB_FCETYPES_H_ */

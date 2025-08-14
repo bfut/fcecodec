@@ -67,7 +67,7 @@ int FCELIB_OP_AddHelperPart(FcelibMesh *mesh)
   Center specified part around local centroid.
   Does not move part w.r.t. to global coordinates
 */
-int FCELIB_OP_CenterPart(FcelibMesh *mesh, const int pid)
+int FCELIB_OP_CenterPart(FcelibMesh *mesh, int pid)
 {
   int retv = 0;
   int internal_pid;
@@ -98,7 +98,7 @@ int FCELIB_OP_CenterPart(FcelibMesh *mesh, const int pid)
   Center specified part around new_center.
   Does not move part w.r.t. to global coordinates
 */
-int FCELIB_OP_SetPartCenter(FcelibMesh *mesh, const int pid, const float new_center[3])
+int FCELIB_OP_SetPartCenter(FcelibMesh *mesh, int pid, const float new_center[3])
 {
   int retv = 0;
   int internal_pid;
@@ -131,7 +131,7 @@ int FCELIB_OP_SetPartCenter(FcelibMesh *mesh, const int pid, const float new_cen
   Returns mesh new part index (order) on success, -1 on failure.
   Allows (mesh == mesh_src)
 */
-int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh, FcelibMesh *mesh_src, const int pid_src)
+int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh, FcelibMesh *mesh_src, int pid_src)
 {
   int pid_new = -1;
   int internal_pid_new;
@@ -313,9 +313,8 @@ int FCELIB_OP_CopyPartToMesh(FcelibMesh *mesh, FcelibMesh *mesh_src, const int p
   return pid_new;
 }
 
-int FCELIB_OP_DeletePart(FcelibMesh *mesh, const int pid)
+void FCELIB_OP_DeletePart(FcelibMesh *mesh, int pid)
 {
-  int retv = 0;
   int i;
   int internal_pid;
   FcelibPart *part;
@@ -355,15 +354,12 @@ int FCELIB_OP_DeletePart(FcelibMesh *mesh, const int pid)
     mesh->parts[ mesh->hdr.Parts[internal_pid] ] = NULL;
     mesh->hdr.Parts[internal_pid] = -1;
 
-    retv = 1;
     break;
   }  /* for (;;) */
-
-  return retv;
 }
 
 /* Delete part triangles by order. */
-int FCELIB_OP_DeletePartTriags(FcelibMesh *mesh, const int pid, const int *idxs, const int idxs_len)
+int FCELIB_OP_DeletePartTriags(FcelibMesh *mesh, const int pid, const int *idxs, int idxs_len)
 {
   int retv = 0;
   int i;
@@ -489,7 +485,7 @@ int FCELIB_OP_DeleteUnrefdVerts(FcelibMesh *mesh)
 }
 
 /* Returns new part index (order) on success, -1 on failure. */
-int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
+int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, int pid1, int pid2)
 {
   int pid_new = -1;
   int internal_pid_new = -1;
@@ -568,7 +564,7 @@ int FCELIB_OP_MergePartsToNew(FcelibMesh *mesh, const int pid1, const int pid2)
 
     ++mesh->hdr.NumParts;
 
-#if FCECVERBOSE >= 1
+#if SCL_DEBUG >= 1
     printf("triangles %d + %d = %d\n", part_src1->PNumTriangles, part_src2->PNumTriangles, part_new->PNumTriangles);
     printf("vertices %d + %d = %d\n", part_src1->PNumVertices, part_src2->PNumVertices, part_new->PNumVertices);
 #endif

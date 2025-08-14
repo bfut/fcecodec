@@ -56,14 +56,18 @@ public:
   Mesh() : mesh_(*this) { FCELIB_MeshInit(&mesh_); }
   ~Mesh() { FCELIB_MeshRelease(&mesh_); }
 
+#if !defined(SCL_DEBUG) || SCL_DEBUG != 0
   // Service
-  bool MValid() const { return FCELIB_ValidateMesh(&mesh_); }
+  bool MValid() const { return FCELIB_MeshValidate(&mesh_); }
+#endif
 
   // Stats
   void PrintInfo() const { FCELIB_PrintMeshInfo(&mesh_); }
+#if !defined(SCL_DEBUG) || SCL_DEBUG != 0
   void PrintParts(void) const { FCELIB_PrintMeshParts(&mesh_); }
   void PrintTriags(void) const { FCELIB_PrintMeshTriangles(&mesh_); }
   void PrintVerts(void) const { FCELIB_PrintMeshVertices(&mesh_); }
+#endif
   int MNumParts() const { return mesh_.hdr.NumParts; }
   int MNumTriags() const { return mesh_.hdr.NumTriangles; }
   int MNumVerts() const { return mesh_.hdr.NumVertices; }
@@ -1090,7 +1094,8 @@ bool Mesh::OpDeletePart(const int pid)
 {
   if (pid > mesh_.hdr.NumParts || pid < 0)
     throw std::out_of_range("OpDeletePart: part index (pid) out of range");
-  return FCELIB_DeletePart(&mesh_, pid);
+  FCELIB_DeletePart(&mesh_, pid);
+  return 1;
 }
 
 bool Mesh::OpDeletePartTriags(const int pid, const std::vector<int> &idxs)
@@ -1149,17 +1154,21 @@ PYBIND11_MODULE(fcecodec, fcecodec_module, py::mod_gil_not_used())
 
   fcecodec_module.def("GetFceVersion", &FCECODECMODULE_GetFceVersion, py::arg("buf"), R"pbdoc( Returns 3 (FCE3), 4 (FCE4), 5 (FCE4M), negative (invalid) )pbdoc");
   fcecodec_module.def("PrintFceInfo", &FCECODECMODULE_PrintFceInfo, py::arg("buf"));
-  fcecodec_module.def("ValidateFce", &FCECODECMODULE_ValidateFce, py::arg("buf"), R"pbdoc( Returns 1 for valid FCE data, 0 otherwise. )pbdoc");
+  fcecodec_module.def("ValidateFce", &FCECODECMODULE_ValidateFce, py::arg("buf"), R"pbdoc( DEPRECATED as of 1.15 Returns 1 for valid FCE data, 0 otherwise. )pbdoc");  /* DEPRECATED as of 1.15 */
 
   py::class_<Mesh>(fcecodec_module, "Mesh", py::buffer_protocol())
     .def(py::init<>())
 
+#if !defined(SCL_DEBUG) || SCL_DEBUG != 0
     .def("MValid", &Mesh::MValid)
+#endif
 
     .def("PrintInfo", &Mesh::PrintInfo)
+#if !defined(SCL_DEBUG) || SCL_DEBUG != 0
     .def("PrintParts", &Mesh::PrintParts)
     .def("PrintTriags", &Mesh::PrintTriags)
     .def("PrintVerts", &Mesh::PrintVerts)
+#endif
     .def_property_readonly("MNumParts", &Mesh::MNumParts)
     .def_property_readonly("MNumTriags", &Mesh::MNumTriags)
     .def_property_readonly("MNumVerts", &Mesh::MNumVerts)

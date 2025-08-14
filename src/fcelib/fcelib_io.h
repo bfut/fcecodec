@@ -142,13 +142,14 @@ int __FCELIB_IO_DECODE_GETPARTS(FcelibMesh *mesh, const char *header_PartNames, 
   Assumes (mesh != NULL). Silently releases and re-initializes existing mesh.
   Assumes valid FCE data.
 */
-int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *inbuf, int inbufsz)
+int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const void *inbuf_, int inbufsz)
 {
   int retv = 0;
   int i;
   int j;
   int n;
   int fce_version;
+  const unsigned char *inbuf = (const unsigned char *)inbuf_;
 
   for (;;)
   {
@@ -158,15 +159,15 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *inbuf, int inbufs
       break;
     }
 
-    if (mesh->release == &FCELIB_TYPES_FreeMesh)
+    if (mesh->release == &FCELIB_TYPES_MeshRelease)
     {
       mesh->release(mesh);
-      FCELIB_TYPES_InitMesh(mesh);
+      FCELIB_TYPES_MeshInit(mesh);
     }
 #ifndef FCELIB_PYTHON_BINDINGS
-    else if (!mesh->release || mesh->release != &FCELIB_TYPES_FreeMesh)
+    else if (!mesh->release || mesh->release != &FCELIB_TYPES_MeshRelease)
     {
-      FCELIB_TYPES_InitMesh(mesh);
+      FCELIB_TYPES_MeshInit(mesh);
     }
 #endif
 
@@ -193,7 +194,7 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *inbuf, int inbufs
 
         FCELIB_FCETYPES_GetFceHeader4(&hdr, inbuf);
 
-        if (!FCELIB_FCETYPES_Fce4ValidateHeader(&hdr, inbuf, inbufsz))
+        if (!FCELIB_FCETYPES_Fce4ValidateHeader(&hdr, inbuf, inbufsz, 1))
           return 0;
 
         /* Header ----------------------------------------------------------- */
@@ -343,7 +344,7 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *inbuf, int inbufs
         FceHeader3 hdr;
         FCELIB_FCETYPES_GetFceHeader3(&hdr, inbuf);
 
-        if (!FCELIB_FCETYPES_Fce3ValidateHeader(&hdr, inbuf, inbufsz))
+        if (!FCELIB_FCETYPES_Fce3ValidateHeader(&hdr, inbuf, inbufsz, 1))
           return 0;
 
         /* Header ----------------------------------------------------------- */
@@ -510,12 +511,12 @@ int FCELIB_IO_DecodeFce(FcelibMesh *mesh, const unsigned char *inbuf, int inbufs
   Assumes *objpath, *mtlpath, and *texture_name are strings.
 */
 int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
-                        const void *objpath, const void *mtlpath,
+                        const char *objpath, const char *mtlpath,
                         const char *texture_name,
-                        const int print_damage, const int print_dummies,
-                        const int use_part_positions,
-                        const int print_part_positions,
-                        const int filter_triagflags_0xfff)
+                        int print_damage, int print_dummies,
+                        int use_part_positions,
+                        int print_part_positions,
+                        int filter_triagflags_0xfff)
 {
   int retv = 1;
   int i;
@@ -555,10 +556,10 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
         }
       }
 
-      outf = fopen((const char *)mtlpath, "wb");
+      outf = fopen(mtlpath, "wb");
       if (!outf)
       {
-        fprintf(stderr, "ExportObj: cannot create file '%s'\n", (const char *)mtlpath);
+        fprintf(stderr, "ExportObj: cannot create file '%s'\n", mtlpath);
         retv = 0;
         break;
       }
@@ -566,7 +567,7 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
       fprintf(outf,
               "# fcecodec MTL File: '%s'\n"
               "# Material Count: %d\n",
-              FCELIB_UTIL_GetFileName((const char *)objpath), count_mtls);
+              FCELIB_UTIL_GetFileName(objpath), count_mtls);
 
       for (i = 0; i < 4096; ++i)
       {
@@ -589,7 +590,7 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
 
       if (fclose(outf) != 0)
       {
-        fprintf(stderr, "ExportObj: cannot close file '%s'\n", (const char *)mtlpath);
+        fprintf(stderr, "ExportObj: cannot close file '%s'\n", mtlpath);
         retv = 0;
         break;
       }
@@ -597,10 +598,10 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
     }
 
     /* Print obj ------------------------------------------------------------ */
-    outf = fopen((const char *)objpath, "wb");
+    outf = fopen(objpath, "wb");
     if (!outf)
     {
-      fprintf(stderr, "ExportObj: cannot create file '%s'\n", (const char *)objpath);
+      fprintf(stderr, "ExportObj: cannot create file '%s'\n", objpath);
       retv = 0;
       break;
     }
@@ -608,7 +609,7 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
     fprintf(outf,
             "# fcecodec OBJ File: '%s'\n"
             "# github.com/bfut/fcecodec\n"
-            "mtllib %s\n", FCELIB_UTIL_GetFileName((const char *)objpath), FCELIB_UTIL_GetFileName((const char *)mtlpath));
+            "mtllib %s\n", FCELIB_UTIL_GetFileName(objpath), FCELIB_UTIL_GetFileName(mtlpath));
     fflush(outf);
 
     for (i = 0; i < mesh->parts_len; ++i)
@@ -1000,7 +1001,7 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
 
     if (fclose(outf) != 0)
     {
-      fprintf(stderr, "ExportObj: cannot close file '%s'\n", (const char *)objpath);
+      fprintf(stderr, "ExportObj: cannot close file '%s'\n", objpath);
       retv = 0;
       break;
     }
@@ -1017,7 +1018,7 @@ int FCELIB_IO_ExportObj(const FcelibMesh *mesh,
 
   If center_parts == 1, centroids and vert positions will be recalculated and reset for all parts. This would change *mesh.
 */
-int FCELIB_IO_EncodeFce3(FcelibMesh *mesh, unsigned char **outbuf, const int outbufsz, const int center_parts)
+int FCELIB_IO_EncodeFce3(const FcelibMesh *mesh, unsigned char **outbuf, int outbufsz, int center_parts)
 {
   int retv = 0;
   int i;
@@ -1308,7 +1309,7 @@ int FCELIB_IO_EncodeFce3(FcelibMesh *mesh, unsigned char **outbuf, const int out
 
   If center_parts == 1, centroids and vert positions will be recalculated and reset for all parts. This would change *mesh.
 */
-int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int outbufsz, const int center_parts, const int fce_version)
+int FCELIB_IO_EncodeFce4(const FcelibMesh *mesh, unsigned char **outbuf, int outbufsz, int center_parts, int fce_version)
 {
   int retv = 0;
   int *global_mesh_to_local_fce_idxs = NULL;
@@ -1397,11 +1398,11 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int out
           continue;
         part = mesh->parts[ mesh->hdr.Parts[i] ];
         FCELIB_TYPES_GetPartCentroid(mesh, part, &centroid);
-#if FCECVERBOSE >= 1
+#if SCL_DEBUG >= 1
         printf("<%s> centroid: (%f, %f, %f) partpos: (%f, %f, %f)\n", part->PartName, centroid.x, centroid.y, centroid.z, part->PartPos.x, part->PartPos.y, part->PartPos.z);
 #endif
         FCELIB_TYPES_ResetPartCenter(mesh, part, centroid);
-#if FCECVERBOSE >= 1
+#if SCL_DEBUG >= 1
         printf("<%s> new partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
 #endif
         ++j;
@@ -1439,7 +1440,7 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int out
           if (!FCELIB_UTIL_StrIsInArray(part->PartName, kFce4HiBodyParts))
             continue;
         }
-#if FCECVERBOSE >= 1
+#if SCL_DEBUG >= 1
         printf("HalfSize: <%s> partpos: (%f, %f, %f)\n", part->PartName, part->PartPos.x, part->PartPos.y, part->PartPos.z);
         printf("HalfSize: PNumVertices: %d\n", part->PNumVertices);
 #endif
@@ -1723,9 +1724,9 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int out
 */
 int FCELIB_IO_GeomDataToNewPart(FcelibMesh *mesh,
                                 int *vert_idxs, const int vert_idxs_len,  /* N*3, N triags */
-                                const float *vert_texcoords, const int vert_texcoords_len,  /* N*6 */
-                                const float *vert_pos, const int vert_pos_len,  /* M*3, M verts */
-                                const float *normals, const int normals_len)  /* M*3 */
+                                float *vert_texcoords, int vert_texcoords_len,  /* N*6 */
+                                float *vert_pos, int vert_pos_len,  /* M*3, M verts */
+                                float *normals, int normals_len)  /* M*3 */
 {
   int pid_new = -1;
   int internal_pid_new = -1;

@@ -44,7 +44,7 @@ int main(void)
 
   for (int i = 0; i < FSTDMAXNUMLODS; ++i)
   {
-    FCELIB_InitMesh(&mesh[i]);
+    FCELIB_MeshInit(&mesh[i]);
   }
 
   for (;;)

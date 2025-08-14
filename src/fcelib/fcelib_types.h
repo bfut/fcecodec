@@ -135,7 +135,7 @@ struct FcelibMesh {
 
   Afterwards (!mesh->release).
 */
-void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
+void FCELIB_TYPES_MeshRelease(FcelibMesh *mesh)
 {
   int i;
   int k;
@@ -186,10 +186,10 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
 /*
   Assumes (mesh). memset's mesh to 0. Silently re-initializes.
 */
-FcelibMesh *FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
+FcelibMesh *FCELIB_TYPES_MeshInit(FcelibMesh *mesh)
 {
 #ifndef FCELIB_PYTHON_BINDINGS
-  if (mesh->release && mesh->release == &FCELIB_TYPES_FreeMesh)
+  if (mesh->release && mesh->release == &FCELIB_TYPES_MeshRelease)
     mesh->release(mesh);
 #endif
 
@@ -199,7 +199,7 @@ FcelibMesh *FCELIB_TYPES_InitMesh(FcelibMesh *mesh)
   memset(mesh, 0, sizeof(*mesh));
 #endif
   mesh->hdr.NumArts = 1;
-  mesh->release = &FCELIB_TYPES_FreeMesh;
+  mesh->release = &FCELIB_TYPES_MeshRelease;
   return mesh;
 }
 
@@ -213,7 +213,7 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh *mesh)
   int sum_verts = 0;
   FcelibPart *part = NULL;
 
-  if (!mesh->release || mesh->release != &FCELIB_TYPES_FreeMesh)  return 0;
+  if (!mesh->release || mesh->release != &FCELIB_TYPES_MeshRelease)  return 0;
 
   if (mesh->parts_len == 0     && !mesh->parts     && !mesh->hdr.Parts &&
       mesh->triangles_len == 0 && !mesh->triangles &&
@@ -358,6 +358,25 @@ int FCELIB_TYPES_ValidateMesh(const FcelibMesh *mesh)
   }  /* for i */
 
   return 1;
+}
+
+/* util ------------------------------------------------------------------------------------------------------------- */
+
+/* Returns size in bytes. target_fce_version: 3 (FCE3), 4 (FCE4), 5 (FCE4M) */
+int FCELIB_TYPES_FceComputeSize(const FcelibMesh *mesh, const int target_fce_version)
+{
+  switch (target_fce_version)
+  {
+    case 4:
+      return FCELIB_FCETYPES_Fce4ComputeSize(0x00101014, mesh->hdr.NumVertices, mesh->hdr.NumTriangles);
+      break;
+    case 5:
+      return FCELIB_FCETYPES_Fce4ComputeSize(0x00101015, mesh->hdr.NumVertices, mesh->hdr.NumTriangles);
+      break;
+    default:
+      return FCELIB_FCETYPES_Fce3ComputeSize(mesh->hdr.NumVertices, mesh->hdr.NumTriangles);
+      break;
+  }
 }
 
 /* service ------------------------------------------------------------------ */
@@ -672,7 +691,7 @@ int FCELIB_TYPES_GetPartCentroid(const FcelibMesh *mesh, const FcelibPart *part,
       x_arr[count_verts] = vert->VertPos.x + part->PartPos.x;
       y_arr[count_verts] = vert->VertPos.y + part->PartPos.y;
       z_arr[count_verts] = vert->VertPos.z + part->PartPos.z;
-#if FCECVERBOSE >= 2
+#if SCL_DEBUG >= 2
       printf("%d: %f = %f + %f\n", count_verts, x_arr[count_verts], vert->VertPos.x, part->PartPos.x);
       printf("%d: %f = %f + %f\n", count_verts, y_arr[count_verts], vert->VertPos.y, part->PartPos.y);
       printf("%d: %f = %f + %f\n", count_verts, z_arr[count_verts], vert->VertPos.z, part->PartPos.z);
@@ -685,13 +704,13 @@ int FCELIB_TYPES_GetPartCentroid(const FcelibMesh *mesh, const FcelibPart *part,
     qsort(x_arr, count_verts, sizeof(*x_arr), FCELIB_UTIL_CompareFloats);
     qsort(y_arr, count_verts, sizeof(*y_arr), FCELIB_UTIL_CompareFloats);
     qsort(z_arr, count_verts, sizeof(*z_arr), FCELIB_UTIL_CompareFloats);
-#if FCECVERBOSE >= 2
+#if SCL_DEBUG >= 2
     printf("<%s> min: (%f, %f, %f) max: (%f, %f, %f)\n", part->PartName, x_arr[0], y_arr[0], z_arr[0], x_arr[count_verts - 1], y_arr[count_verts - 1], z_arr[count_verts - 1]);
 #endif
     centroid->x = 0.5f * SCL_abs(x_arr[count_verts - 1] - x_arr[0]) + x_arr[0];
     centroid->y = 0.5f * SCL_abs(y_arr[count_verts - 1] - y_arr[0]) + y_arr[0];
     centroid->z = 0.5f * SCL_abs(z_arr[count_verts - 1] - z_arr[0]) + z_arr[0];
-#if FCECVERBOSE >= 2
+#if SCL_DEBUG >= 2
     printf("centroid->x: %f (%f, %f)\n", centroid->x, x_arr[count_verts - 1], x_arr[0]);
     printf("centroid->y: %f (%f, %f)\n", centroid->y, y_arr[count_verts - 1], y_arr[0]);
     printf("centroid->z: %f (%f, %f)\n", centroid->z, z_arr[count_verts - 1], z_arr[0]);
@@ -759,9 +778,9 @@ void FCELIB_TYPES_WriteFceColors(unsigned char *dest, const tColor4 * const src,
   }
 }
 
-/* stats -------------------------------------------------------------------- */
+/* stats ------------------------------------------------------------------------------------------------------------ */
 
-void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh * const mesh)
+void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh *mesh)
 {
   int i;
   int j;
@@ -831,73 +850,6 @@ void FCELIB_TYPES_PrintMeshInfo(const FcelibMesh * const mesh)
     printf(" %2d  Driver hair %3d, %3d, %3d, %3d\n", i,
           mesh->hdr.DriColors[i].hue, mesh->hdr.DriColors[i].saturation,
           mesh->hdr.DriColors[i].brightness, mesh->hdr.DriColors[i].transparency);
-  }
-#ifndef FCELIB_PYTHON_BINDINGS
-  fflush(stdout);
-#endif
-}
-
-/* Debug: Prints ref'ed global part indexes. */
-void FCELIB_TYPES_PrintMeshParts(const FcelibMesh * const mesh)
-{
-  int j;
-
-  printf("NumParts = %d, parts_len = %d, [\n",
-         mesh->hdr.NumParts, mesh->parts_len);
-
-  for (j = 0; j < mesh->parts_len; ++j)
-    printf("%d, ", mesh->hdr.Parts[j]);
-
-  printf("\n]\n");
-#ifndef FCELIB_PYTHON_BINDINGS
-  fflush(stdout);
-#endif
-}
-
-/* Debug: Prints ref'ed global triag indexes for each part. */
-void FCELIB_TYPES_PrintMeshTriangles(const FcelibMesh * const mesh)
-{
-  int i;
-  int j;
-
-  for (i = 0; i < mesh->parts_len; ++i)
-  {
-    if (mesh->hdr.Parts[i] < 0)
-      continue;
-
-    printf("Part %d '%s', PNumTriangles = %d, ptriangles_len = %d, [\n",
-           i, mesh->parts[mesh->hdr.Parts[i]]->PartName,
-           mesh->parts[mesh->hdr.Parts[i]]->PNumTriangles, mesh->parts[mesh->hdr.Parts[i]]->ptriangles_len);
-
-    for (j = 0; j < mesh->parts[mesh->hdr.Parts[i]]->ptriangles_len; ++j)
-      printf("%d, ", mesh->parts[mesh->hdr.Parts[i]]->PTriangles[j]);
-
-    printf("\n]\n");
-  }
-#ifndef FCELIB_PYTHON_BINDINGS
-  fflush(stdout);
-#endif
-}
-
-/* Debug: Prints ref'ed global vert indexes for each part. */
-void FCELIB_TYPES_PrintMeshVertices(const FcelibMesh * const mesh)
-{
-  int i;
-  int j;
-
-  for (i = 0; i < mesh->parts_len; ++i)
-  {
-    if (mesh->hdr.Parts[i] < 0)
-      continue;
-
-    printf("Part %d '%s', PNumVertices = %d, pvertices_len = %d, [\n",
-           i, mesh->parts[mesh->hdr.Parts[i]]->PartName,
-           mesh->parts[mesh->hdr.Parts[i]]->PNumVertices, mesh->parts[mesh->hdr.Parts[i]]->pvertices_len);
-
-    for (j = 0; j < mesh->parts[mesh->hdr.Parts[i]]->pvertices_len; ++j)
-      printf("%d, ", mesh->parts[mesh->hdr.Parts[i]]->PVertices[j]);
-
-    printf("\n]\n");
   }
 #ifndef FCELIB_PYTHON_BINDINGS
   fflush(stdout);

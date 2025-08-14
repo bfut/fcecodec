@@ -29,8 +29,8 @@ import sysconfig
 # Available at setup time due to pyproject.toml
 from pybind11.setup_helpers import Pybind11Extension, build_ext
 
-if os.environ.get("FCECVERBOSE") is not None:
-    print(f'FCECVERBOSE={os.environ["FCECVERBOSE"]}')
+if os.environ.get("SCL_DEBUG") is not None:
+    print(f'SCL_DEBUG={os.environ["SCL_DEBUG"]}')
 
 script_path = pathlib.Path(__file__).parent.resolve()
 os.chdir(script_path)
@@ -137,7 +137,7 @@ ext_modules = [
             # https://github.com/pybind/python_example/issues/12
             # https://github.com/pybind/python_example/blob/master/src/main.cpp
             ("VERSION_INFO", __version__),
-            ("FCECVERBOSE", os.environ.get("FCECVERBOSE", 0)),  # 0 if key not set
+            ("SCL_DEBUG", os.environ.get("SCL_DEBUG", 0)),  # 0 if key not set
         ],
         extra_compile_args=extra_compile_args
     ),
