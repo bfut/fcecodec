@@ -18,6 +18,9 @@
 """
     bfut_mywrappers.py - wrapping i/o functions etc.
 """
+
+import pathlib
+
 import fcecodec as fc
 import numpy as np
 
@@ -52,35 +55,30 @@ def HiBody_ReorderTriagsTransparentToLast(mesh, version):
     return mesh
 
 def GetFceVersion(path):
-    with open(path, "rb") as f:
-        version = fc.GetFceVersion(f.read(0x2038))
-        assert version > 0
-        return version
+    version = fc.GetFceVersion(pathlib.Path(path).read_bytes())
+    assert version > 0
+    return version
 
 def PrintFceInfo(path):
-    with open(path, "rb") as f:
-        buf = f.read()
-        fc.PrintFceInfo(buf)
-        assert fc.ValidateFce(buf) == 1
+    buf = fc.GetFceVersion(pathlib.Path(path).read_bytes())
+    fc.PrintFceInfo(buf)
+    assert fc.ValidateFce(buf) == 1
 
 def LoadFce(mesh, path):
-    with open(path, "rb") as f:
-        mesh.IoDecode(f.read())
-        assert mesh.MValid() is True
-        return mesh
+    mesh.IoDecode(pathlib.Path(path).read_bytes())
+    return mesh
 
 def WriteFce(version, mesh, path, center_parts=False, mesh_function=None):
     if mesh_function is not None:  # e.g., HiBody_ReorderTriagsTransparentToLast
         mesh = mesh_function(mesh, version)
-    with open(path, "wb") as f:
-        if version in ("3", 3):
-            buf = mesh.IoEncode_Fce3(center_parts)
-        elif version in ("4", 4):
-            buf = mesh.IoEncode_Fce4(center_parts)
-        else:
-            buf = mesh.IoEncode_Fce4M(center_parts)
-        assert fc.ValidateFce(buf) == 1
-        f.write(buf)
+    if version in ("3", 3):
+        buf = mesh.IoEncode_Fce3(center_parts)
+    elif version in ("4", 4):
+        buf = mesh.IoEncode_Fce4(center_parts)
+    else:
+        buf = mesh.IoEncode_Fce4M(center_parts)
+    assert fc.ValidateFce(buf) == 1
+    pathlib.Path(path).write_bytes(buf)
 
 def ExportObj(mesh, objpath, mtlpath, texname,
               print_damage, print_dummies, use_part_positions, print_part_positions,
