@@ -38,17 +38,14 @@ conversion tutorial
 FCE3 specifications taken from [1].
 FCE4 specifications are loosely adapted from [1] and [2].
 [2] was apparently based on [3].
-FCE4M specifications own work.
+Unofficial FCE4M specifications, own work.
 
-[1] D. Auroux et al. [_The unofficial Need For Speed III file format specifications - Version 1.0_](/references/unofficial_nfs3_file_specs_10.txt) [1998]<br/>
-[2] A. Sadhra [_NFS4Loader.h_](/references/OpenNFS/NFS4Loader.h) via _OpenNFS_ [2015]<br/>
-[3] Addict [_NFS4 FCE file format specifications_](/references/nfs4_fce_spec_by_Addict.txt) [1999]<br/>
+[1] D. Auroux et al. (1998) [_The unofficial Need For Speed III file format specifications - Version 1.0_](/references/unofficial_nfs3_file_specs_10.txt)<br/>
+[2] A. Sadhra (2015) [_NFS4Loader.h_](/references/OpenNFS/NFS4Loader.h), OpenNFS<br/>
+[3] Addict (1999) [_NFS4 FCE file format specifications_](/references/nfs4_fce_spec_by_Addict.txt)<br/>
 
 ## Information
 __fcecodec License:__ GNU General Public License v2.0+<br/>
 __Website:__ <https://github.com/bfut/fcecodec>
 
-Third party licenses
-
-__sclpython.h:__ zlib License<br/>
-__fcecodec scripts:__ zlib License
+Portions copyright, see each source file for more information.

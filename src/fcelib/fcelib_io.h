@@ -1,6 +1,6 @@
 /*
   fcelib_io.h
-  fcecodec Copyright (C) 2021-2024 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -1297,8 +1297,7 @@ int FCELIB_IO_EncodeFce3(FcelibMesh *mesh, unsigned char **outbuf, const int out
     break;
   }  /* for (;;) */
 
-  if (global_mesh_to_local_fce_idxs)
-    free(global_mesh_to_local_fce_idxs);
+  free(global_mesh_to_local_fce_idxs);
 
   return retv;
 }
@@ -1706,8 +1705,7 @@ int FCELIB_IO_EncodeFce4(FcelibMesh *mesh, unsigned char **outbuf, const int out
     break;
   }  /* for (;;) */
 
-  if (global_mesh_to_local_fce_idxs)
-    free(global_mesh_to_local_fce_idxs);
+  free(global_mesh_to_local_fce_idxs);
 
   return retv;
 }

@@ -1,6 +1,6 @@
 /*
   fcelib_fcetypes.h
-  fcecodec Copyright (C) 2021-2024 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 

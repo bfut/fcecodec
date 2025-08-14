@@ -1,6 +1,6 @@
 /*
   fcelib_types.h
-  fcecodec Copyright (C) 2021-2024 Benjamin Futasz <https://github.com/bfut>
+  fcecodec Copyright (C) 2021 and later Benjamin Futasz <https://github.com/bfut>
 
   You may not redistribute this program without its source code.
 
@@ -175,10 +175,10 @@ void FCELIB_TYPES_FreeMesh(FcelibMesh *mesh)
     free(mesh->parts[ mesh->hdr.Parts[i] ]);
   }  /* for i */
 
-  if (mesh->hdr.Parts)  free(mesh->hdr.Parts);
-  if (mesh->parts)  free(mesh->parts);
-  if (mesh->triangles)  free(mesh->triangles);
-  if (mesh->vertices)  free(mesh->vertices);
+  free(mesh->hdr.Parts);
+  free(mesh->parts);
+  free(mesh->triangles);
+  free(mesh->vertices);
 
   mesh->release = NULL;
 }

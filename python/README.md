@@ -6,7 +6,7 @@ module.
 Requires Python 3.10+
 
 ```sh
-python -m pip install fcecodec
+python -m pip install --upgrade fcecodec
 ```
 
 Though `numpy` is not required, it is recommended.
@@ -258,5 +258,5 @@ FUNCTIONS
         Returns 1 for valid FCE data, 0 otherwise.
 
 VERSION
-    1.14
+    1.15
 ```
