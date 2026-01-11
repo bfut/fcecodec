@@ -1,12 +1,7 @@
-name: linux
+name: macos-latest
 
 on:
   workflow_dispatch:
-
-  push:
-    branches:
-  pull_request:
-    branches:
 
 jobs:
   python:
@@ -14,19 +9,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest ]
-        python-version: [ "3.10", "3.11", "3.12", "3.13", "3.14" ]
-
+        os: [ macos-latest ]
+        python-version: [ "3.14", "3.14t"  ] 
+        exclude:
+          - os: ubuntu-latest
+            python-version: "3.11"
+          - os: macos-latest
+            python-version: "3.11" 
     name: Python ${{ matrix.python-version }} (${{ matrix.os }})
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
-        allow-prereleases: true  # 3.14
+        # allow-prereleases: true  # 3.15
         cache: pip
 
     - name: "pip install"
@@ -40,7 +39,7 @@ jobs:
       run: |
         echo "import fcecodec as fc; print(f'import fcecodec as fc; fc.__version__={fc.__version__}')" > _version.py; cat _version.py
         python -c "import subprocess; import sys; retcode = subprocess.call([ sys.executable, '_version.py' ]); print('Exit code', retcode); sys.exit(0)"
-        python -c "import fcecodec as fc; help(fc)"
+        python -c "import fcecodec as fc; help(fc)" 
     - name: "Install requirements"
       shell: bash
       timeout-minutes: 1
@@ -51,4 +50,7 @@ jobs:
     - name: "pytest"
       shell: bash
       run: |
-        pytest -s -vv
+        pytest -s -vv ./tests/test_smoketest.py
+        pytest -s -vv ./tests/test_diff.py
+        pytest -s -vv ./tests/test_scripts.py
+        pytest -s -vv ./tests/blender/test_fixblender.py

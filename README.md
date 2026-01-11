@@ -22,7 +22,7 @@ conversion tutorial
 [fcecodec-example.ipynb](https://colab.research.google.com/github/bfut/notebooks/blob/main/fcecodec/fcecodec-example.ipynb)
 [![fcecodec-example.ipynb](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/bfut/notebooks/blob/main/fcecodec/fcecodec-example.ipynb)
 
-## Key features
+## Features
 * Io: full FCE implementation (FCE3, FCE4, FCE4M) with validation
 * Io: decodes/encodes transparently
 * Io: exports to Wavefront OBJ
@@ -32,7 +32,7 @@ conversion tutorial
 * Op: inserts part from another mesh
 * Op: changes part order, copies part, merges parts, deletes part
 * Op: deletes triangles, vertices
-* Stats: print stats
+* Stats: prints stats
 
 ## References
 FCE3 specifications taken from [1].
@@ -45,7 +45,7 @@ Unofficial FCE4M specifications, own work.
 [3] Addict (1999) [_NFS4 FCE file format specifications_](/references/nfs4_fce_spec_by_Addict.txt)<br/>
 
 ## Information
-__fcecodec License:__ GNU General Public License v2.0+<br/>
+__fcecodec License:__ GNU General Public License v3.0+<br/>
 __Website:__ <https://github.com/bfut/fcecodec>
 
 Portions copyright, see each source file for more information.
